@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python check_uniqueness.py --dirs train_instances_10x25_10000 --max_solutions 5)",
+      "Bash(python check_uniqueness.py --dirs train_instances_10x25_10000 --max_solutions 3)",
+      "Bash(tee /tmp/uniqueness_result.txt)",
+      "Bash(grep -v \"^$\")",
+      "Read(//tmp/**)",
+      "Bash(python check_uniqueness.py --dirs test_instances_10x25_1000 --max_solutions 5)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

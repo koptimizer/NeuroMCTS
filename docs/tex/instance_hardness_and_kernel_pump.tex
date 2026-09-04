@@ -1,0 +1,125 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage[round]{natbib}
+\usepackage{hyperref}
+\doublespacing
+
+\title{Instance Hardness in Binary Linear Systems and the Kernel-Pump Heuristic:\\
+Why the Original DNS Family Was Easy, and How the Market-Split-Style\\
+Replacement Is Constructed}
+\author{neuroMCTS project}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The v5 evaluation of the neuroMCTS pipeline reported near-perfect accuracy on the original DNS instance family ($10 \times 25$), yet exact solvers closed the same instances in about one millisecond, which indicates that the family itself was easy rather than that the search problem had been mastered. In this note, three questions are answered with supporting evidence. First, it is explained why the original generator produced easy instances: the right-hand side leaked the planted solution's density, the size regime placed the instances in a solution-abundant phase, and constraint propagation was disproportionately strong at the resulting boundary values. Second, the replacement generator is documented: a market-split-style construction in the tradition of \citet{cornuejols1998market}, with planted half-density solutions, noise-perturbed certified-infeasible counterparts, and a zero-cost gauge augmentation that defeats memorization without altering difficulty. Third, the kernel-pump heuristic is derived as an alternating-projection method between the affine solution subspace and the hypercube, and its speed, its safety (it cannot mislabel an infeasible instance), and its failure mode are explained, connecting it to the feasibility pump of \citet{fischetti2005feasibility} and to classical alternating-projection theory \citep{bauschke1996projection}. A 30-instance probe of the new family shows the symbolic front end collapsing from closing 61.1\% of the old test set to closing almost nothing at $20 \times 50$, confirming that the new family shifts the burden onto learned search.
+\end{abstract}
+
+\section{Why the Original DNS Family Was Easy}
+\label{sec:easy}
+
+Three mechanisms are identified, in decreasing order of importance.
+
+\subsection{The right-hand side leaked the planted solution}
+
+The original generator drew a planted solution $\mathbf{x}$ with independent Bernoulli entries and set $\mathbf{b} = A\mathbf{x}$. For a row $i$ with row sum $s_i = \sum_j a_{ij}$, the ratio $b_i / s_i$ is then an unbiased estimate of the density of $\mathbf{x}$ restricted to the row's support, and its fluctuation across rows reveals which variables are likelier to be one. Rounding heuristics exploit this directly: the LP relaxation concentrates near the planted solution, so a rounding-based method starts inside the correct basin. This is consistent with the observation that the kernel pump alone closed 463 of 800 feasible test instances (57.9\%) in the v5 evaluation, and that LP rounding baselines already achieved 54.9--58.8\% solution accuracy.
+
+The market-split literature avoids exactly this leak. In the hard family of \citet{cornuejols1998market}, the right-hand side is set to $b_i = \lfloor \frac{1}{2}\sum_j a_{ij} \rfloor$ --- the mid-range value --- so that the right-hand side carries no directional information about any particular solution, and every branching decision looks locally balanced. These small 0--1 programs were designed to be maximally difficult for LP-based branch and bound, and instances with as few as $m = 7$ equations defeated contemporary solvers until basis-reduction reformulations were applied \citep{aardal2000market}; lattice enumeration remains the state of the art on the family today \citep{wassermann2025market}.
+
+\subsection{The size regime was solution-abundant}
+
+A first-moment estimate explains why $10 \times 25$ with mid-range $b_i$ is still not hard. For a random dense row with support size $s_i \approx n/2$, the probability that a uniformly random binary vector satisfies row $i$ at a mid-range target is approximately $\binom{s_i}{b_i} 2^{-s_i} = \Theta(1/\sqrt{s_i})$ by the local central-limit estimate. Treating rows as approximately independent, the expected number of binary solutions is
+\[
+\mathbb{E}[\#\mathcal{S}] \;\approx\; 2^{n} \prod_{i=1}^{m} \Theta\!\big(s_i^{-1/2}\big),
+\]
+which at $m{=}10$, $n{=}25$, $s_i \approx 12$ evaluates to order $10$: a typical instance has \emph{multiple} solutions, so many search trajectories succeed and infeasibility (after small perturbations) is often repaired by a nearby alternative solution. The same estimate at $m{=}40$, $n{=}100$ is astronomically below one, so unplanted instances are almost surely infeasible and planted ones have essentially unique, well-hidden solutions. The fixed aspect ratio $n/m = 2.5$ of the new three-size family therefore sweeps from a solution-abundant regime ($10 \times 25$) toward a solution-starved regime ($40 \times 100$), which is the standard picture of hardness concentrating near the feasibility phase boundary.
+
+\subsection{Boundary values made constraint propagation strong}
+
+Bernoulli-planted right-hand sides frequently produce extreme rows ($b_i = 0$ or $b_i = s_i$), each of which fixes every variable in its support by pure propagation and cascades. In the v5 evaluation, propagation plus the LP hard rule alone certified 148 of 200 infeasible test instances. Mid-range right-hand sides eliminate such rows by construction: in a 30-instance probe of the new family (Table~\ref{tab:probe}), propagation closed zero instances at both probed sizes, and at $20 \times 50$ the LP hard rule certified none of the ten perturbed-infeasible instances, because a $\pm 1$ perturbation of a mid-range target almost never leaves the LP polytope empty.
+
+\begin{table}[t]
+\centering
+\caption{Symbolic front-end penetration, old family (v5 test set, 1{,}000 instances) versus a 30-instance probe of the new market-split-style family (20 feasible, 10 certified infeasible per size). Front end = propagation/probing, LP hard rule, and kernel pump.}
+\label{tab:probe}
+\begin{tabular}{lcccc}
+\toprule
+Family & Propagation & LP hard rule & Kernel pump & Hard residue \\
+\midrule
+Old DNS $10{\times}25$ (of 1{,}000) & 13 & 135 & 463 & 389 (38.9\%) \\
+New $10{\times}25$ (of 30) & 0 & 8 & 5 & 17 (56.7\%) \\
+New $20{\times}50$ (of 30) & 0 & 0 & 1 & 29 (96.7\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The Replacement Generator}
+\label{sec:generator}
+
+\subsection{Construction}
+
+For each size $(m, n) \in \{(10,25), (20,50), (40,100)\}$, the generator (\texttt{proposed\_src/generate\_dns\_marketsplit.py}) produces:
+
+\paragraph{Feasible instances (planted, leak-free).} $A$ is drawn dense Bernoulli$(1/2)$ with no empty row or column; a solution $\mathbf{x}$ with \emph{exactly} $\lfloor n/2 \rfloor$ ones is planted, and $\mathbf{b} = A\mathbf{x}$. Because the planted density is fixed at one half, every $b_i$ concentrates at the mid-range value $s_i/2$ that the market-split construction uses deliberately, and the density estimate of Section~\ref{sec:easy} is rendered uninformative (it returns the same value for every instance). Feasibility is guaranteed by construction, so no solver call is needed.
+
+\paragraph{Infeasible instances (DNS noise semantics, certified).} A planted instance is drawn, $k \in \{1,2,3\}$ rows of $\mathbf{b}$ are perturbed by $\pm 1$ (clipped to $[0, s_i]$), and the result is kept only if CP-SAT \emph{proves} infeasibility within a 30-second limit; unresolved or still-feasible perturbations are discarded and redrawn. This mirrors the physical scenario --- dust corrupting a handful of measurements --- and produces \emph{barely infeasible} instances whose refutation requires genuine counting arguments rather than a single empty row, which is why they are the hard true-negative cases the feasibility stage must handle. Labels are certified, never assumed.
+
+\subsection{Defeating memorization: fresh feasible instances, complement views of infeasible ones}
+
+Training on a fixed pool caused measurable memorization in v5 (test accuracy peaked at epoch 10 and declined thereafter). Two mechanisms replace the fixed pool, chosen after a false start that is documented here for the record.
+
+\paragraph{A cautionary note on partial flips.} It is tempting to augment by complementing a variable subset $S$: substituting $y_j = 1 - x_j$ for $j \in S$ maps solutions bijectively, but the substituted system reads $\sum_{j \notin S} A_{\cdot j} x_j - \sum_{j \in S} A_{\cdot j} y_j = \mathbf{b} - \sum_{j \in S} A_{\cdot j}$: the columns in $S$ acquire \emph{negative} signs. Since the problem class fixes $A \in \{0,1\}^{m \times n}$, partial flips leave the domain and are \emph{not} a valid augmentation. Only the full complement $S = \{1,\dots,n\}$ keeps $A$ intact: $\mathbf{x}$ solves $(A, \mathbf{b})$ if and only if $\mathbf{1} - \mathbf{x}$ solves $(A, \mathbf{s} - \mathbf{b})$, where $\mathbf{s}$ is the vector of row sums. This yields exactly one alternative view per instance --- useful, but insufficient on its own.
+
+\paragraph{Fresh feasible instances at negligible cost.} The expensive step in generation is CP-SAT certification, which only \emph{infeasible} instances require; planted feasible instances are feasible by construction and cost one LP solve (milliseconds) to featurize. Feasible training samples are therefore generated \emph{on the fly} --- drawn fresh each epoch, used once, and discarded --- which removes the memorization channel for the 80\% majority class entirely, at a per-epoch overhead of a few seconds and no additional memory. Because fresh draws come from the same generator distribution, the difficulty distribution is unchanged, addressing the concern that naive right-hand-side resampling would produce easier problems.
+
+\paragraph{Certified infeasible pool with complement views.} Infeasible instances remain a fixed certified pool (regenerable offline), augmented by the valid full-complement view, giving two exact-difficulty views per pooled instance. Memorization pressure on this class is inherently lower: it is consumed only by the feasibility objective, not by the policy trajectories. Reported test metrics are unaffected by any of this: test instances are never augmented or regenerated.
+
+\section{The Kernel Pump}
+\label{sec:pump}
+
+\subsection{Derivation as alternating projection}
+
+A solution of the BLS is a point of the intersection $\tilde{\mathcal{S}} \cap \{0,1\}^n$, where $\tilde{\mathcal{S}} = \{\mathbf{x} \in \mathbb{R}^n : A\mathbf{x} = \mathbf{b}\}$ is an affine subspace of dimension $n - \operatorname{rank}(A)$. The method of alternating projections \citep{bauschke1996projection} finds a point in the intersection of two sets by repeatedly projecting onto each in turn. Both projections are here available in closed form:
+\begin{align*}
+P_{\{0,1\}^n}(\mathbf{x}) &= \operatorname{round}(\operatorname{clip}(\mathbf{x}, 0, 1)), \\
+P_{\tilde{\mathcal{S}}}(\mathbf{x}) &= \mathbf{x} - A^{+}(A\mathbf{x} - \mathbf{b}),
+\end{align*}
+where $A^{+}$ is the Moore--Penrose pseudo-inverse. The second identity is the orthogonal projector onto $\tilde{\mathcal{S}}$: the correction $-A^{+}(A\mathbf{x}-\mathbf{b})$ removes the residual exactly, and the subsequent motion is confined to $\mathbf{x}_p + \mathcal{N}(A)$ --- every pump iterate on the affine side satisfies $A\mathbf{x} = \mathbf{b}$ \emph{exactly}, which is the sense in which the pump ``walks the null space'' emphasized in the project formulation. The iteration starts from the LP solution (a point already in $\tilde{\mathcal{S}} \cap [0,1]^n$), alternates the two projections, declares success when a rounded iterate satisfies the system, and breaks two-cycles with random partial reflips.
+
+This is precisely the feasibility-pump template of \citet{fischetti2005feasibility}, which alternates rounding with a projection onto the LP polyhedron and has become a standard primal heuristic in MIP solvers. Two features distinguish the BLS specialization favorably: the constraint set is a plain affine subspace, so the polyhedral projection step (an LP in the general pump) collapses to one precomputable matrix--vector identity; and the problem is pure feasibility, so the pump terminates on the first exact hit rather than optimizing further.
+
+\subsection{Why it is fast, why it is safe, and when it fails}
+
+\paragraph{Speed.} One iteration costs two multiplications by $10 \times 25$-to-$40 \times 100$ matrices; $A^{+}$ is computed once per instance ($O(m^2 n)$). Two hundred iterations complete in well under a millisecond at $10 \times 25$ (0.78\,ms measured in isolation), which is why the pump is placed \emph{before} any neural inference in the pipeline.
+
+\paragraph{Safety.} The pump's only positive output is a binary vector that has been verified to satisfy $A\mathbf{x} = \mathbf{b}$. It therefore constitutes a constructive feasibility certificate and can never convert an infeasible instance into a false positive; on infeasible input it simply exhausts its iteration budget. Asymmetry of failure matters operationally: a pump failure is uninformative (the instance may be feasible with a well-hidden solution, or infeasible), which is exactly why pump failure statistics are informative \emph{features} for the downstream feasibility model rather than a decision rule.
+
+\paragraph{Failure mode.} Alternating projections converge to the intersection for convex sets, but $\{0,1\}^n$ is not convex, so the pump inherits the feasibility pump's known behavior: it can stall in short cycles between a non-solution vertex and its affine projection \citep{fischetti2005feasibility}. Stalls occur precisely when no solution lies in the rounding basin reachable from the LP point --- on the old leak-prone family this was rare (58\% success), while on the leak-free family it becomes the norm (1 of 21 feasible probes at $20 \times 50$), by design: the residue is deliberately left to the learned search stages.
+
+\section{Consequences for the v6 Evaluation}
+
+Because the new family removes the density leak, weakens propagation, and starves the LP hard rule, headline metrics are expected to drop sharply relative to v5, and the burden of both solving and refutation shifts to the MCTS and policy-guided DFS stages. This is intended: on the old family the learned components' marginal contribution was structurally capped by a symbolic front end that closed 61.1\% of instances, whereas the new family makes the learned contribution measurable. Baseline solvers will be re-run on the new family under identical conditions, and it is anticipated --- consistent with the market-split literature \citep{aardal2000market, wassermann2025market} --- that exact-solver runtimes will now grow visibly with $m$, giving the speed--accuracy trade-off room to be meaningful.
+
+\begin{thebibliography}{9}
+\bibitem[Aardal et al.(2000)]{aardal2000market}
+Aardal, K., Bixby, R. E., Hurkens, C. A. J., Lenstra, A. K., \& Smeltink, J. W. (2000). Market split and basis reduction: Towards a solution of the Cornu\'ejols--Dawande instances. \emph{INFORMS Journal on Computing, 12}(3), 192--202.
+
+\bibitem[Bauschke \& Borwein(1996)]{bauschke1996projection}
+Bauschke, H. H., \& Borwein, J. M. (1996). On projection algorithms for solving convex feasibility problems. \emph{SIAM Review, 38}(3), 367--426.
+
+\bibitem[Cornu\'ejols \& Dawande(1998)]{cornuejols1998market}
+Cornu\'ejols, G., \& Dawande, M. (1998). A class of hard small 0--1 programs. In \emph{Integer Programming and Combinatorial Optimization} (pp. 284--293). Springer.
+
+\bibitem[Fischetti et al.(2005)]{fischetti2005feasibility}
+Fischetti, M., Glover, F., \& Lodi, A. (2005). The feasibility pump. \emph{Mathematical Programming, 104}(1), 91--104.
+
+\bibitem[Wassermann(2025)]{wassermann2025market}
+Wassermann, A. (2025). Solving the market split problem with lattice enumeration. \emph{arXiv preprint arXiv:2508.08702}.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,85 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[round]{natbib}
+\usepackage{hyperref}
+\doublespacing
+\graphicspath{{../../figures/}}
+
+\title{Toward Size-Robust Zero-Shot Search for Binary Linear Systems:\\
+v7 --- Expert Imitation, Test-Time Iteration Scaling, and\\
+What the Ablations Attribute}
+\author{neuroMCTS project}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Motivated by a literature review of zero-shot generalization in reinforcement learning and neural combinatorial optimization, the v7 system replaced self-play with imitation of a propagation-impact expert, trained on a discrete-uniform instance-size distribution ($m \sim U\{6,\dots,20\}$, $n = 2.5m$) with state-dependent size-invariant features, and decoupled the recurrent GNN's message-passing iteration count so it can be scaled at inference time. Evaluation followed a strict zero-shot protocol: training never saw $m > 20$, and $40 \times 100$ was evaluated as pure size extrapolation. Three attributions emerge from matched ablations, reported with timing throughout. First, imitation of a fail-first expert perfected the smallest size --- $100\%$ feasibility and $100\%$ solution accuracy at $10 \times 25$ (1.52\,s), removing all seven residual budget false positives of v6 by shortening infeasibility proofs (DFS infeasibility proofs rose from 48 to 55) --- the first non-exact method in the project's benchmark to saturate this size (the best inexact baseline, BKZ, reaches 72.1\% solution accuracy there; v6 report, Table 2). Second, the same imitation \emph{degraded} solution search at $20 \times 50$ (5.50\% vs.\ 8.50\% for the pre-trained-only checkpoint at identical budgets and iterations), and the iteration count was ruled out as a cause; combined with v6's self-play result, two independent forms of open-loop policy training have now been shown to harm the pre-trained policy's search utility at the hard boundary, while helping refutation --- consistent with the classical fail-first/succeed-first asymmetry in constraint programming. Third, test-time iteration scaling (8 $\rightarrow$ 32 rounds at $40 \times 100$) changed nothing: zero-shot extrapolation remains pump-bound at 2.25\% solution accuracy, indicating that no adjustment of the current network's inference regime bridges the gap, and reinforcing the previously identified roadmap (conflict-driven search and lattice-basis enumeration) as the binding path forward.
+\end{abstract}
+
+\section{Design, from the Literature}
+
+Five lessons were extracted from the survey (\texttt{ref/zero-shot-size-generalization-rl.md}) and mapped to v7: imitation rather than self-play as the size-transfer signal \citep{gasse2019exact}; test-time iteration scaling of a weight-shared recurrent GNN \citep{selsam2019learning}; explicit size-normalized nonlinear features, since ReLU networks extrapolate linearly \citep{xu2021extrapolate} and size-dependent local statistics break GNN size generalization \citep{yehudai2021local}; feature construction aligned with the propagation algorithm \citep{xu2020reason}; and a randomized training-size distribution in the spirit of procedural-generation benchmarks \citep{cobbe2020procgen}. The expert is a propagation-impact oracle: for each unassigned variable both values are probed, contradictions rank highest (fail-first), and propagation-fixed counts break ties; half of the imitation rollouts follow the planted solution for assignment targets, half follow the expert greedily. Training used masked-solution pre-training (60 epochs, mask accuracy 79.2\%) followed by 20 imitation epochs, entirely on fresh instances with $m \in [6, 20]$.
+
+\section{Zero-Shot Protocol and Results}
+
+Training never saw an instance with $m > 20$. Test sets are the hard-family sets of the v6 cycle: full 1{,}000-instance sets at $10 \times 25$ and $20 \times 50$ (both inside the training size range) and the stratified 500-instance subset at $40 \times 100$ (pure extrapolation). Search budgets match v6 (50 simulations, DFS budget $20\mathrm{k} \cdot n/25$ nodes); message-passing iterations default to $\lceil 8n/25 \rceil$.
+
+\begin{table}[t]
+\centering
+\caption{v7 results with matched v6 references. Feas $=$ feasibility accuracy (\%), Sol $=$ solution accuracy (\%), $t$ $=$ average seconds per instance including preprocessing. The $40 \times 100$ column is zero-shot for v7 (size never trained); v6 trained on all three sizes.}
+\label{tab:v7}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{$10 \times 25$} & \multicolumn{3}{c}{$20 \times 50$} & \multicolumn{3}{c}{$40 \times 100$ (v7: zero-shot)} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+Model & Feas & Sol & $t$ & Feas & Sol & $t$ & Feas & Sol & $t$ \\
+\midrule
+v6 (pretrain, best) & 99.3 & 100.0 & 1.50 & 82.5 & 9.6 & 7.12 & 80.2 & 2.25 & 25.0 \\
+v7 (pretrain + imitation) & \textbf{100.0} & \textbf{100.0} & 1.52 & 82.5 & 5.5 & 10.8 & 80.2 & 2.25 & 31.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Attribution ablations at $20 \times 50$}
+
+The 5.5\% headline conflates three design changes; matched ablations separate them (all at 50 simulations on the same 1{,}000 instances). Running the imitation checkpoint at the \emph{trained} iteration count (8 instead of 16) leaves solution accuracy unchanged at 5.50\% (8.10\,s), ruling out iteration-count extrapolation as the cause. Running the v7 \emph{pre-trained-only} checkpoint at the same settings yields 8.50\% (6.27\,s), close to the v6 pre-trained reference (9.62\%); the residual gap is plausibly due to the size-distribution pre-training spreading exposure across fifteen sizes, though this attribution is a single-seed point estimate. All comparisons in this section are single runs; the main regression (44 vs.\ 68 solved of 800) is individually significant ($z \approx 2.4$) but multi-seed confirmation is future work. The regression is therefore caused by the imitation phase itself.
+
+\subsection{The fail-first asymmetry}
+
+The same imitation that harms solution search at $20 \times 50$ \emph{perfected} $10 \times 25$: v6's seven residual false positives --- infeasible instances whose refutation exhausted the DFS budget --- are all closed by v7 (proofs 48 $\rightarrow$ 55, false positives 7 $\rightarrow$ 0), because a fail-first ordering shortens proof trees. This is the classical constraint-programming asymmetry: fail-first branching is the right heuristic for refutation, while solution-finding on satisfiable instances favors succeed-first guidance. The expert's contradiction-dominated scoring taught the former at the expense of the latter. Together with v6's self-play result, two independent open-loop policy-training signals have now degraded the pre-trained policy's search utility at the hard boundary; the masked-prediction prior remains the strongest solution-search policy tested.
+
+\subsection{Test-time iteration scaling: a null result}
+
+At $40 \times 100$, scaled iterations (32) and trained iterations (8) produce identical zero-shot outcomes (80.2\% / 2.25\%), with an unexplained $\sim$11\% time difference between the variants (31.5\,s vs.\ 35.3\,s) that per-stage node logging, absent in the current harness, would be needed to attribute. All nine solved instances come from the kernel pump in both configurations. The NeuroSAT-style mechanism \citep{selsam2019learning} does not transfer to this architecture and problem: whatever additional message passing computes, the policy it feeds cannot exploit at four times the trained size. Zero-shot extrapolation remains bounded by the pump, whose flat cost curve and size-independent contribution are again the pipeline's only scale-robust element.
+
+\section{Consequences}
+
+Three cycles of evidence now triangulate the same conclusion. Learned open-loop policies --- whether self-play-trained (v6) or expert-imitated (v7) --- do not carry solution search across the hardness boundary, and inference-regime adjustments (budget in v6, iterations in v7) do not either. What does work is structural: propagation, the null-space pump, and complete search whose ordering matters differently for proofs (fail-first, now learned and paying off at $10 \times 25$) than for solutions. The reinforcement roadmap of the v6 report is therefore unchanged in content but sharpened in emphasis: (1) conflict-driven search (no-good learning) attacks the proof side where learned orderings already demonstrably help; (2) lattice-basis enumeration attacks the solution side where every learned and budget-based lever has now been exhausted; (3) if policy training is attempted again, it should target \emph{proof-tree size} on infeasible instances --- the one objective where imitation has produced a measurable, transferable gain --- rather than solution construction. A per-size deployment recommendation follows from Table~\ref{tab:v7} at equal honesty: the imitation checkpoint where proofs dominate (small sizes), the pre-trained checkpoint where search dominates (larger sizes); a principled selector between them is future work, and the split itself is evidence that ordering policy is not one-size-fits-all.
+
+\begin{thebibliography}{9}
+\bibitem[Cobbe et al.(2020)]{cobbe2020procgen}
+Cobbe, K., Hesse, C., Hilton, J., \& Schulman, J. (2020). Leveraging procedural generation to benchmark reinforcement learning. \emph{ICML}.
+
+\bibitem[Gasse et al.(2019)]{gasse2019exact}
+Gasse, M., Ch\'etelat, D., Ferroni, N., Charlin, L., \& Lodi, A. (2019). Exact combinatorial optimization with graph convolutional neural networks. \emph{NeurIPS 32}.
+
+\bibitem[Selsam et al.(2019)]{selsam2019learning}
+Selsam, D., Lamm, M., B\"unz, B., Liang, P., de Moura, L., \& Dill, D. L. (2019). Learning a SAT solver from single-bit supervision. \emph{ICLR}.
+
+\bibitem[Xu et al.(2020)]{xu2020reason}
+Xu, K., Li, J., Zhang, M., Du, S. S., Kawarabayashi, K., \& Jegelka, S. (2020). What can neural networks reason about? \emph{ICLR}.
+
+\bibitem[Xu et al.(2021)]{xu2021extrapolate}
+Xu, K., Zhang, M., Li, J., Du, S. S., Kawarabayashi, K., \& Jegelka, S. (2021). How neural networks extrapolate: From feedforward to graph neural networks. \emph{ICLR}.
+
+\bibitem[Yehudai et al.(2021)]{yehudai2021local}
+Yehudai, G., Fetaya, E., Meirom, E., Chechik, G., \& Maron, H. (2021). From local structures to size generalization in graph neural networks. \emph{ICML}.
+\end{thebibliography}
+
+\end{document}

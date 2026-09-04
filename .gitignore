@@ -1,0 +1,29 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# --- legacy code/data (superseded, not tracked) ---
+legacy/
+
+# --- checkpoints: only the designated best.pth is tracked ---
+runs/*
+!runs/best.pth
+
+# --- instances: only the small curated benchmark sets are tracked
+#     (large hard-instance train pools / full test sets / dns / dnsms stay out) ---
+instances/*
+!instances/bench30_10x25/
+!instances/bench30_20x50/
+!instances/bench30_40x100/
+!instances/bench30_60x150/
+!instances/HARD_INSTANCES_README.md
+
+# --- misc ---
+*.log
+texput.log
+.DS_Store

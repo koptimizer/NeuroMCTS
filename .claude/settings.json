@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python repair_instances.py --dirs test_instances_10x25_1000)",
+      "Bash(python check_uniqueness.py --dirs test_instances_10x25_1000)",
+      "Bash(python repair_instances.py --dirs train_instances_10x25_10000)",
+      "Bash(python check_uniqueness.py --dirs train_instances_10x25_10000)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('LPneuroBLS_v4.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(grep -E 'SKILL\\\\.md$' /home/kopt/.claude/projects/-home-kopt-neuroMCTS/6976267a-9d69-4109-8b3a-c8dad54859b3/tool-results/bm009m1jw.txt)",
+      "Bash(alpha --help)",
+      "Read(//home/kopt/.claude/**)",
+      "Bash(pdflatex -interaction=nonstopmode LPneuroBLS_v5_report.tex >/dev/null 2>&1; pdflatex -interaction=nonstopmode LPneuroBLS_v5_report.tex 2>&1 | grep -E \"^!|Output written\" | head -3; rm -f *.aux *.log *.out)",
+      "Bash(timeout 550 python3 generate_dns_marketsplit.py --out_root /tmp/claude-1000/-home-kopt-neuroMCTS/6976267a-9d69-4109-8b3a-c8dad54859b3/scratchpad/gen_probe --train_feas 20 --train_infeas 10 --test_feas 5 --test_infeas 3 --time_limit 30)",
+      "Bash(nohup python3 -u generate_dns_marketsplit.py --out_root /home/kopt/neuroMCTS/instances)",
+      "Bash(echo \"generation started, PID $!\")"
+    ],
+    "additionalDirectories": [
+      "/home/kopt/neuroMCTS/docs/tex"
+    ]
+  }
+}
