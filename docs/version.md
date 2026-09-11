@@ -851,6 +851,10 @@ CP-SAT가 해를 다 못 찾음). 크기가 커질수록 같은 비율에서도 
 - 모델: `runs/v22/model_n25/conditional.pt`, `runs/v22/model_n50/conditional.pt`
 - 결과: `runs/v22/{A_n25to25,B_n25to50,R_n50to50}_ahl{off,on}_{lp,model}/`, `summary_*.json`
 - 결과: `runs/v22/{A,B,R,C,D}_*_ahl{off,on}_{lp,model}/`, `runs/v22/cd.log`
+- 논문: `docs/tex/LPneuroBLS_v22_report.tex`/`.pdf` (영문 29쪽),
+  `docs/tex/LPneuroBLS_v22_report_KR.pdf` (한국어 15쪽, 생성기 `v22_transfer/make_v22_kr_pdf.py`)
+  — 한국어판은 학술용어를 영어 그대로 두어 영문판·문헌과 대조 가능하게 했다.
+  xelatex/lualatex 한글 지원이 이 환경에서 깨져 있어 reportlab + NotoSansKR을 쓴다(v9~v11 KR판과 동일 방식).
 
 ### 조건 C/D 테스트 크기 선정 (n=100 → n=70 → n=60)
 
