@@ -89,25 +89,31 @@ P('Binary linear system(BLS)은 <i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>에
 P('생성기가 해 <b>x</b>*를 심고 <b>b</b>=<i>A</i><b>x</b>*를 공개하므로, solution set '
   '<i>S</i>의 모든 원소가 동일한 <b>b</b>를 만든다. 따라서 posterior는 <i>S</i> 위에 uniform이고 '
   'per-variable marginal <i>p<sub>j</sub></i>를 전수열거로 정확히 계산할 수 있다. '
-  '이로부터 <i>x</i>* 복원에 대해 어떤 predictor도 넘을 수 없는 <b>Bayes ceiling</b>이 얻어진다 — 이는 식별(identification)의 상한이지 풀이(solving)의 상한이 아니며, 운용상의 의미는 그것이 search tree 내부에서 유도하는 FORCED/FREE 분해에서 나온다. 네 가지 결과가 따라온다. '
-  '<b>첫째</b>, hard 계열에서 ceiling은 per-variable 69.9%(가장 확신하는 변수 3개 기준 93.1%)이고, '
-  '작은 단일 head bipartite GNN이 그 1.9%p 이내에 도달한다 — signal은 실재하고, 유한하며, 사실상 소진됐다. '
-  '반면 기존의 multi-head network는 단순 LP rounding 수준에 머물렀다(60.7% vs 60.6%). '
-  '<b>둘째</b>, <i>n</i>을 고정하고 <i>m</i>을 바꾸면 ceiling 자체가 실험 변수가 되며, 세 구간이 갈린다: '
-  'ceiling이 낮은 곳에서는 모델이 이미 포화하고, 높은 곳에서는 도달이 NP-hard이며(18~20%p 잔차), '
-  '더 높은 곳에서는 LP relaxation만으로 충분하다. '
-  '<b>셋째</b>, partial assignment로 conditioning하는 것은 instance를 축소하는 것과 동일하므로 '
+  '이 marginal은 각 node의 자유 변수를 두 종류로 <b>분할</b>한다: 살아남은 모든 해가 일치해 반대로 분기하면 '
+  'subtree가 비는 <b>FORCED</b>, 그리고 해들이 갈려 어느 쪽으로 분기해도 해에 도달하는 <b>FREE</b>다. '
+  '<b>비용을 발생시키는 것은 FORCED 오류뿐이며</b>, 예측을 search와 연결하는 것은 이 분할이지 '
+  '보통 그것을 요약하는 데 쓰이는 총계 정확도가 아니다. 네 가지 결과가 따라온다.', abs_s)
+P('<b>첫째</b>, 이 분할이 11개 사이클의 null result를 설명한다. root에서는 변수의 <b>93.7%가 FREE</b>이므로, '
+  '<b>x</b>* 복원에 대한 Bayes ceiling 69.9%는 <b>그 94%가 backtrack을 유발할 수 없는 예측으로 이뤄져 있다.</b> '
+  '이전의 모든 사이클이 <b>x</b>*를 label로 학습했으니, 정작 중요하지 않은 부분을 최적화하고 있었던 것이다. '
+  '작은 단일 head GNN이 그 ceiling의 1.9%p 이내에 도달하는 반면 기존 multi-head network는 단순 LP rounding '
+  '수준(60.7% 대 60.6%)에 머물렀다 — null은 정보의 부재가 아니라 <b>잘못 겨눈 목적함수와 맞지 않는 모델</b>을 반영한다. '
+  '<b>둘째</b>, tree를 내려가면 비율이 뒤집힌다 — FORCED가 root의 6.3%에서 depth 8의 <b>89.0%</b>로 — '
+  '그리고 거기서부터 정확도가 탐색 비용으로 환산되기 시작한다. <i>n</i>을 고정하고 <i>m</i>을 바꾸면 '
+  '학습이 큰 격차로 이기는 지점이 없음도 확인된다: ceiling이 낮은 곳에서는 이미 포화했고, 높은 곳에서는 도달이 '
+  'NP-hard이며, 더 높은 곳에서는 LP relaxation으로 충분하다.', abs_s)
+P('<b>셋째</b>, partial assignment로 conditioning하는 것은 instance를 축소하는 것과 동일하므로 '
   '같은 architecture가 search tree <b>내부</b>에서 예측할 수 있다. conditional ceiling은 root의 70.5%에서 '
-  'depth 8의 93.4%로 상승하며, 잔차를 분해하면 전부 prefix가 논리적으로 결정하는 변수 위에 있는데 '
+  'depth 8의 93.4%로 상승하며, 잔차를 분해하면 전부 FORCED 변수 위에 있는데 '
   '그중 92~99%를 unit propagation이 탐지하지 못한다. LP-probing은 62~79%를 회수하지만 변수당 LP 한 번을 '
   '지불하고, network는 단일 forward pass 1.6ms에 전 변수를 답하며 적중률은 같거나 높다(약 20배 저렴). '
   '따라서 학습의 역할은 <b>비싼 deduction의 amortization</b>이지 접근 불가능한 정보의 발견이 아니다. '
   '<b>넷째</b>, branching guidance로 쓰면 21×60에서 LP guidance 대비 median 2.71배 가속(sign test p=0.019), '
   'node 수 6.2배 감소, 600초 예산 내 해결율 90.0%→100%를 얻는다. lattice reduction이 먼저 도는 실제 cascade에서는 '
   '그 단계의 coverage가 n=25의 30/30에서 n=60의 16/30으로 떨어지며, guidance가 end-to-end 해결율을 '
-  '93.3%→100%로 끌어올린다. 크기 간 |<i>S</i>|를 통제하면 — 이전에는 10배까지 어긋나 있었다 — '
-  'transfer failure로 오독됐던 artifact가 사라진다: 10×25에서만 학습한 모델이 21×60에서 '
-  '목표 크기로 학습한 모델과 통계적으로 구별되지 않는다(15/30에서 더 빠르고 총 시간 차 0.4%).', abs_s)
+  '93.3%→100%로 끌어올린다. 크기 간 |<i>S</i>|를 통제하면 transfer failure로 오독됐던 artifact가 사라진다: '
+  '10×25에서만 학습한 모델이 21×60에서 목표 크기로 학습한 모델과 통계적으로 구별되지 않는다'
+  '(15/30에서 더 빠르고 총 시간 차 0.4%).', abs_s)
 
 # ============================== 1. 서론 ==============================
 H1('1. 서론')
@@ -154,13 +160,19 @@ P('이 bound가 <b>실제로 정하는 것</b>은 더 좁고, 본 프로젝트�
   '측정할 수 있다는 사실에서 따라 나온다.', body_s)
 
 H2('1.3 기여')
-P('<b>(1) 측정된 information ceiling.</b> hard 계열의 Bayes-optimal per-variable 정확도는 69.9%다(§4.2). '
-  '작은 단일 head network가 68.6%로 1.9%p 이내에 도달하는 반면, 기존 multi-head network는 60.7%로 '
-  'LP rounding(60.6%)과 구별되지 않는다. signal은 실재하고, 작으며, 이제 사실상 소진됐다 — '
-  '과거의 null result들은 정보의 부재만큼이나 model과 task의 mismatch를 반영한 것이다.', body_s)
-P('<b>(2) 통제 변수로서의 ceiling.</b> <i>n</i>을 고정하고 <i>m</i>을 올리면 |<i>S</i>|가 줄고 ceiling이 '
-  '70.5%에서 100%로 오른다. 이를 sweep하면 세 구간이 드러나며, <b>학습이 큰 격차로 이기는 지점이 없음</b>을 보인다: '
-  'ceiling이 낮으면 이미 도달했고, 높으면 도달이 NP-hard이며, 더 높으면 LP relaxation으로 충분하다(§4.3).', body_s)
+P('<b>(1) 어떤 예측이 중요한지, 그리고 그것이 어디 있는지를 말해주는 분할.</b> exact marginal은 각 node의 '
+  '자유 변수를 <b>FORCED</b>(살아남은 모든 해가 일치; 거슬러 분기하면 subtree가 빔)와 <b>FREE</b>'
+  '(해들이 갈림; 어느 쪽으로 분기해도 해에 도달)로 나눈다. root에서는 <b>6.3%만이 FORCED</b>이므로 '
+  'root 수준 정확도는 그 94%가 backtrack을 유발할 수 없는 결정으로 이뤄져 있다 — 그런데 그것이 정확히 '
+  '11개 이전 사이클이 학습한 target이다(전부 <b>x</b>*를 변수별 label로 썼다). depth 8에서는 비율이 '
+  '<b>89.0% FORCED</b>로 뒤집힌다(§4.2, §4.4). 쓸모 있는 정보는 없는 것이 아니라, <b>아무도 보지 않던 '
+  '깊이에 있었다.</b>', body_s)
+P('<b>(2) 진단 도구이자 통제 변수로서의 ceiling.</b> 이전 사이클들이 실제로 겨눴던 target에서 Bayes-optimal '
+  '정확도는 69.9%이고, 작은 단일 head network가 68.6%에 도달하는 반면 기존 multi-head network는 60.7%로 '
+  'LP rounding(60.6%)과 구별되지 않는다 — null은 정보의 부재가 아니라 잘못 겨눈 목적함수와 맞지 않는 모델을 '
+  '반영한다. <i>n</i>을 고정하고 <i>m</i>을 올리면 ceiling이 70.5%에서 100%로 오르며 세 구간이 드러나는데, '
+  '<b>어느 구간에서도 학습이 큰 격차로 이기지 못한다</b>: 낮으면 이미 도달했고, 높으면 도달이 NP-hard이며, '
+  '더 높으면 LP relaxation으로 충분하다(§4.3).', body_s)
 P('<b>(3) amortized deduction으로서의 학습.</b> partial assignment로 conditioning하는 것은 instance 축소와 '
   '동일하므로 같은 architecture가 tree 내부에서 예측한다. conditional ceiling은 depth 8에서 93.4%에 이르고, '
   '잔차는 <b>전적으로</b> prefix가 논리적으로 강제하는 변수 위에 있는데 unit propagation은 그중 0.9~7.5%만 탐지한다. '
@@ -407,9 +419,22 @@ TBL([['Predictor', '전체 변수 정확도', 'top-3', 'top-5', 'marginal과의 
      ['LP relaxation', '60.6%', '64.5%', '64.1%', '0.3213']],
     [5.4*cm, 3.2*cm, 2.0*cm, 2.0*cm, 3.4*cm],
     '표 2. held-out 10×25, <i>S</i>가 전수열거된 400개 인스턴스.')
-P('세 가지로 읽힌다. <b>(i) signal은 실재하지만 작다</b>: 69.9%는 우연을 훨씬 상회해 "정보 없음"을 반박하지만, '
-  '단독으로 쓰기에는 한참 모자란다 — 0.85<sup>5</sup>≈44%이므로 top-5 정확도조차 5개 변수의 joint commitment를 '
-  '신뢰할 수 있게 만들지 못한다. <b>(ii) 작은 전용 모델이 그것을 거의 소진한다</b>: MarginalNet은 전체에서 1.9%p, '
+P('<b>그 수치의 대부분은 아무 비용도 발생시킬 수 없는 결정으로 이뤄져 있다.</b> 같은 root 변수 600개를 '
+  '§3.2의 기준으로 나누면 아래와 같고, 이것이 헤드라인 수치를 재구성한다.', body_s)
+TBL([['root 변수', '개수', '비중', '해당 부분집합의 ceiling'],
+     ['<b>FORCED</b> (거슬러 분기하면 subtree가 빔)', '38', '6.3%', '100.0%'],
+     ['<b>FREE</b> (어느 쪽으로 분기해도 해에 도달)', '562', '93.7%', '67.2%'],
+     ['전체 (69.9% 헤드라인)', '600', '100%', '69.3%']],
+    [8.0*cm, 2.0*cm, 2.0*cm, 4.0*cm],
+    '표 2b. root 수준 분해. 10×25 인스턴스 24개, <i>S</i> 전수열거. '
+    '총계 ceiling은 그 94%가 FREE 변수로 이뤄져 있으며, 그 변수들에서는 어떤 예측도 backtrack을 유발할 수 없다.')
+P('따라서 69.9%는 이 인스턴스들이 <b>얼마나 풀기 어려운가</b>에 대한 진술이 아니다. 심어진 해를 '
+  '<b>얼마나 식별하기 어려운가</b>에 대한 진술이며, 그 94%는 두 값 모두 해로 이어져 식별이 무의미한 변수가 '
+  '떠받치고 있다. 정작 중요할 수 있는 6.3%에서는 ceiling이 이미 <b>100%</b>다 — 그 변수들은 논리적으로 '
+  '결정되어 있으므로, 질문은 정보가 존재하는가가 아니라 <b>무엇이 그것을 탐지하는가</b>이며 이는 §4.5에서 다룬다.', body_s)
+P('세 가지로 읽힌다. <b>(i) null은 정보의 부재 때문이 아니었다</b>: 69.9%는 우연을 훨씬 상회하고, '
+  '정작 중요한 부분집합에서는 ceiling이 완전하다. 부재했던 것은 <b>root 수준 정확도가 도움이 될 이유</b>였다. '
+  '<b>(ii) 작은 전용 모델이 그것을 거의 소진한다</b>: MarginalNet은 전체에서 1.9%p, '
   'top-3에서 5.7%p 이내인 반면, 기존 multi-head network는 LP rounding과 통계적으로 구별되지 않는다(60.7% 대 60.6%) — '
   '입력 feature인 LP 값을 복사하는 것 이상을 거의 배우지 못했다. 이는 과거의 여러 null을 정보의 부재가 아니라 '
   'model/task mismatch로 재해석하게 한다. <b>(iii) label noise 가설은 부분적으로만 맞다</b>: soft label은 posterior 추정을 '
@@ -447,6 +472,10 @@ TBL([['depth', '살아남은 |<i>S</i>|', 'conditional ceiling', 'propagation이
     [2.0*cm, 3.0*cm, 4.0*cm, 3.8*cm, 3.2*cm],
     '표 4. depth에 따른 conditional 정보량. <i>n</i>=25, 150개 인스턴스, LP-confidence 변수 순서.')
 P('ceiling은 가파르게 오른다 — depth 8에서 70.5%→93.4% — 반면 propagation은 남은 변수의 8.2%만 강제한다. '
+  '더 중요한 변화는 수준이 아니라 <b>구성</b>에 있다: FORCED 비중이 root의 6.3%(표 2b)에서 '
+  'depth 8의 <b>89.0%</b>(표 5)로 오른다. root에서는 거의 모든 예측이 중요한 의미에서 반증 불가능하다 — '
+  '양쪽 분기 모두 해에 도달하기 때문이다. depth 8에서는 거의 모든 예측이 틀리면 subtree를 비우는 예측이다. '
+  '<b>ceiling이 오르는 것이 아니라 이 역전이</b>, tree 내부 예측이 정확도를 탐색 비용으로 환산하는 지점인 이유다. '
   'tree 내부 상태로 학습하면 root 전용 모델을 depth 6~10 구간에서 5.3~11.5%p 앞서므로, tree 내부 학습 자체가 '
   '가치 있음이 확인된다.', body_s)
 P('<b>우리 자신의 framing에 대한 정정.</b> 우리는 처음에 "학습 창"을 (ceiling−0.5)×(강제되지 않은 비율)로 점수화하며 '
@@ -595,7 +624,8 @@ P('그 framing이 예상하지 못한 결과가 하나 있어 따로 적어둔�
 
 H2('5.2 한계')
 P('<b>Ceiling이 낮고, 그것을 낮춘 것은 우리다.</b> vertex spread 최대화는 이 인스턴스를 CP-SAT에게 어렵게 만드는 요인이자 '
-  'root ceiling을 69.9%로 끌어내리는 요인이다. 더 쉬운 계열은 더 많은 signal을 제공하겠지만 목표 영역이 아니다.', body_s)
+  'root ceiling을 69.9%로, root FORCED 비중을 6.3%로 끌어내리는 요인이다. 더 쉬운 계열은 더 많은 signal을 '
+  '제공하고 그중 더 많은 부분이 중요하겠지만, 목표 영역이 아니다.', body_s)
 P('<b>유용한 크기 창이 좁다.</b> 그 아래(<i>n</i>≤25)에서는 lattice reduction이 전부를 닫아 guidance가 무의미하고, '
   '그 위(<i>n</i>=100)에서는 search가 아예 실패해 CP-SAT조차 20초 내에 해를 하나도 찾지 못한다. 우리의 시연은 '
   '<i>n</i>=60에 있으며, 창이 더 확장된다는 것은 보이지 못했다.', body_s)
@@ -623,14 +653,22 @@ P('측정에서 따라 나오는 세 방향이다. <b>(i) 열거를 넘어서는
 # ============================== 6. 결론 ==============================
 H1('6. 결론')
 P('binary linear system에 대한 11개 사이클의 null result는 입력이 학습 가능한 signal을 담지 않는다는 증거로 읽혀왔다. '
-  '이 인스턴스들은 planted solution을 갖기 때문에 그 해석은 검증 가능했고, 틀렸다. solution set을 열거하면 exact posterior와 '
-  '따라서 exact Bayes ceiling이 나온다: hard 계열에서 per-variable 69.9%, 가장 확신하는 변수 3개에서 93.1%다. '
-  '작은 단일 head network가 1.9%p 이내에 도달하는 반면 기존 multi-head network는 LP rounding 수준에 머물렀다 — '
-  '따라서 이전의 여러 null은 정보의 부재가 아니라 model과 task의 mismatch를 반영한 것이다.', body_s)
-P('ceiling을 통제 변수로 바꾸면 그럼에도 signal로 이득을 보기 어려운 이유가 드러난다: ceiling이 낮은 곳에서는 이미 도달했고, '
-  '높은 곳에서는 도달이 NP-hard이며, 더 높은 곳에서는 LP relaxation으로 충분하다. 따라서 생산적인 질문은 network가 '
-  '얼마나 아는가가 아니라 <b>얼마나 싸게 아는가</b>이다. search tree 내부에서 conditional ceiling은 depth 8까지 93.4%에 '
-  '이르고, 잔차는 전적으로 prefix가 논리적으로 강제하는 변수 위에 있으며, classical LP-probing이 변수당 LP 한 번으로 '
+  '이 인스턴스들은 planted solution을 갖기 때문에 그 해석은 검증 가능했고, 틀렸다 — 다만 우리가 처음 예상한 방식으로는 '
+  '아니었다. solution set을 열거하면 exact posterior가 나오고, 그 posterior는 각 node의 자유 변수를 '
+  '<b>현재 prefix가 논리적으로 결정하는 것</b>(틀리게 분기하면 subtree가 빔)과 <b>열어두는 것</b>'
+  '(어느 쪽으로 분기해도 해에 도달)으로 분할한다. <b>비용을 발생시킬 수 있는 것은 전자뿐이다.</b>', body_s)
+P('root에서는 후자가 변수의 <b>93.7%</b>를 차지한다. 거기서 Bayes ceiling은 69.9%지만 '
+  '<b>그 94%는 backtrack을 유발할 수 없는 예측이 떠받치고 있고</b>, 유발할 수 있는 6.3%에서는 ceiling이 이미 '
+  '<b>100%</b>다. 이전의 모든 사이클이 심어진 <b>x</b>*에 대해 학습했으므로 <b>중요하지 않은 부분을 최적화하고 '
+  '있었던 것이다.</b> 정보의 부재가 아니라 이것이 null들의 공통 원인이며, 작은 단일 head network가 ceiling의 '
+  '1.9%p 이내에 도달하는 반면 기존 multi-head network가 LP rounding 수준이었다는 점에서 '
+  '<b>맞지 않는 모델이 잘못 겨눈 목적함수를 가중시켰다.</b>', body_s)
+P('쓸모 있는 정보는 없는 것이 아니라 <b>아무도 보지 않던 깊이에 있었다.</b> tree를 내려가면 비율이 뒤집힌다 — '
+  '중요한 변수가 root에서 전체의 6.3%이던 것이 depth 8에서 <b>89.0%</b>가 된다 — 그리고 거기서부터 정확도가 '
+  '탐색 비용으로 환산되기 시작한다. ceiling을 통제 변수로 바꾸면 그럼에도 signal로 이득을 보기 어려운 이유가 드러난다: '
+  '낮은 곳에서는 이미 도달했고, 높은 곳에서는 도달이 NP-hard이며, 더 높은 곳에서는 LP relaxation으로 충분하다. '
+  '따라서 생산적인 질문은 network가 얼마나 아는가가 아니라 <b>얼마나 싸게 아는가</b>이다. depth 8에서 '
+  '잔차는 전적으로 FORCED 변수 위에 있으며, classical LP-probing이 변수당 LP 한 번으로 '
   '그 대부분을 회수하는 반면 network는 단일 1.6ms pass로 전 변수를 답한다 — 같거나 더 나은 정확도에서 19~23배의 비용 우위다. '
   'branching guidance로 쓰면 21×60에서 중앙값 2.71배 가속(p=0.019), node 6.2배 감소, 해결율 90.0% 대비 100%를 준다. '
   'lattice reduction이 흡수하는 비율이 <i>n</i>=25의 30/30에서 <i>n</i>=60의 16/30으로 떨어지는 실제 cascade에서는 '
