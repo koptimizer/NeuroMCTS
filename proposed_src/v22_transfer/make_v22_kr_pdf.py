@@ -85,7 +85,7 @@ P('Binary linear system(BLS)은 <i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>에
   'feasibility 판정은 NP-complete이며, 본 연구가 다루는 market-split 계열에서는 classical solver가 '
   '지금까지 시도한 모든 학습 기반 방법을 압도한다. 11개 사이클에 걸쳐 12개의 학습 컴포넌트를 시험했고 '
   '11개가 null result였는데, 이는 "입력에 학습 가능한 signal이 없다"는 해석으로 이어져 있었다. '
-  '본 보고서는 그 해석이 틀렸음을 보이고, 해석 대신 <b>측정</b>을 제시한다.', abs_s)
+  '그 해석은 한 번도 검증된 적이 없다; 본 보고서는 그것을 검증하고 틀렸음을 보인다.', abs_s)
 P('생성기가 해 <b>x</b>*를 심고 <b>b</b>=<i>A</i><b>x</b>*를 공개하므로, solution set '
   '<i>S</i>의 모든 원소가 동일한 <b>b</b>를 만든다. 따라서 posterior는 <i>S</i> 위에 uniform이고 '
   'per-variable marginal <i>p<sub>j</sub></i>를 전수열거로 정확히 계산할 수 있다. '
@@ -132,16 +132,26 @@ P('본 프로젝트는 11개 개발 사이클 동안 symbolic solving pipeline�
   'feasibility classifier 10종, permutation policy, variable-fixing policy. '
   '12개 중 11개가 null result였다. 통용되던 해석은 "(<i>A</i>,<b>b</b>)에 network가 쓸 수 있는 '
   'signal이 없다"는 것이었다.', body_s)
-P('그 해석은 한 번도 검증된 적이 없다. 이것은 입력의 <b>정보량</b>에 대한 주장이고, 정보량은 측정 가능하다. '
-  '본 보고서의 핵심 관찰은 이 인스턴스 계열에서 그것이 <b>정확히</b> 측정 가능하다는 것이다:', body_s)
+P('그 해석은 한 번도 검증된 적이 없다. 이것은 입력의 <b>정보량</b>에 대한 주장이고, 이 인스턴스 계열에서 '
+  '그 정보량은 <b>정확히</b> 측정 가능하다 — 추정하거나, 특정 모델이 우연히 달성한 값으로 하한을 잡는 것이 아니라:', body_s)
 P('생성기는 <b>x</b>*를 샘플링하고 <b>b</b>=<i>A</i><b>x</b>*를 공개한다. <i>S</i>의 모든 <b>x</b>가 '
   '동일한 <b>b</b>를 만들었을 것이므로, 입력의 그 무엇도 이들을 구분하지 못한다. 따라서 '
   '"어느 해가 심어졌는가"에 대한 posterior는 <i>S</i> 위에 uniform이고, Bayes-optimal한 per-variable 예측은 '
   '<i>p<sub>j</sub></i> = Pr[<i>x<sub>j</sub></i>=1 | <i>A</i>,<b>b</b>] = |{<b>x</b>∈<i>S</i> : <i>x<sub>j</sub></i>=1}| / |<i>S</i>| '
   '의 argmax이며, max(<i>p<sub>j</sub></i>, 1−<i>p<sub>j</sub></i>) 비율로 맞는다. '
   '즉 <i>S</i>를 열거하면 <b>어떤</b> predictor든 달성 가능한 상한이 정확히 나온다.', quote_s)
-P('열거는 constraint solver로 <i>n</i>≤60에서 실행 가능하므로, ceiling은 이론적 양이 아니라 '
-  '실험적 양이 된다. 본 보고서의 모든 내용이 이것을 측정할 수 있다는 사실에서 따라 나온다.', body_s)
+P('열거는 constraint solver로 <i>n</i>≤60에서 실행 가능하므로, ceiling은 이론적 양이 아니라 실험적 양이 된다.', body_s)
+P('<b>이 bound가 아닌 것 두 가지</b>를 여기서 밝혀둔다. 이 구분이 이후 모든 결과를 읽는 방식을 지배하기 때문이다. '
+  '첫째, <b>풀이(solving)의 bound가 아니다</b>: solver의 과제는 <i>S</i>의 어떤 원소든 반환하는 것이지 어느 것이 '
+  '심어졌는지 식별하는 것이 아니며, 둘은 갈라진다 — 제약이 없는 instance는 <i>S</i>={0,1}<sup><i>n</i></sup>이므로 '
+  '가능한 최악인 50% ceiling을 갖는데 푸는 것은 자명하다. 둘째, <b>instance 난이도의 proxy가 아니다</b>: '
+  '풀린 21×60 인스턴스들에서 |<i>S</i>|와 탐색 시간의 Spearman <i>ρ</i>=−0.04로, 두 축은 역상관이 아니라 무관하다.', body_s)
+P('이 bound가 <b>실제로 정하는 것</b>은 더 좁고, 본 프로젝트에는 결정적이다. 이전의 모든 사이클이 <i>x</i>*를 '
+  '변수별 label로 학습했으므로 위 식은 정확히 <b>그 사이클들이 겨눴던 target</b>이며, 이를 측정하면 '
+  '"정보가 없다"와 "정보는 있는데 모델이 추출하지 못했다"가 분리된다 — 11개의 null result가 열어둔 채로 남겨둔 귀속이다. '
+  '또한 이 bound는 각 search node에서 변수를 <b>현재 prefix가 논리적으로 결정하는 것</b>과 <b>그렇지 않은 것</b>으로 '
+  '분할하며, 그 분할이 운용상의 내용을 search로 옮기는 통로가 된다(§3.2). 본 보고서의 모든 내용이 이것을 '
+  '측정할 수 있다는 사실에서 따라 나온다.', body_s)
 
 H2('1.3 기여')
 P('<b>(1) 측정된 information ceiling.</b> hard 계열의 Bayes-optimal per-variable 정확도는 69.9%다(§4.2). '
