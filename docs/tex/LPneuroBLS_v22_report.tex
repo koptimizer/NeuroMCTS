@@ -9,9 +9,8 @@
 \doublespacing
 \graphicspath{{../../figures/}}
 
-\title{Learning as Amortized Deduction for Binary Linear Systems:\\
-Measuring the Information Ceiling, Locating Where Learning Pays,\\
-and Size Transfer under Controlled Solution Multiplicity}
+\title{Learning as Amortized Deduction:\\
+Ceilings, Efficiency, and Size Transfer in Binary Linear Systems}
 \author{neuroMCTS project}
 \date{September 2026}
 
@@ -19,7 +18,7 @@ and Size Transfer under Controlled Solution Multiplicity}
 \maketitle
 
 \begin{abstract}
-Binary linear systems (BLS) --- find $\mathbf{x}\in\{0,1\}^n$ with $A\mathbf{x}=\mathbf{b}$ for $A\in\{0,1\}^{m\times n}$ --- arise in laser-based non-destructive testing, where a binary image must be recovered from integer projections. Deciding feasibility is NP-complete, and on the market-split-style family studied here classical solvers dominate every learned method this project has tried. Across eleven cycles, twelve learned components were tested and eleven produced null results, which had been read as evidence that the input carries no learnable signal. This report shows that reading was wrong, and replaces it with a measurement. Because the generator plants one solution $\mathbf{x}^*$ and publishes $\mathbf{b}=A\mathbf{x}^*$, every member of the solution set $\mathcal{S}$ would have produced the same $\mathbf{b}$; the posterior is therefore uniform on $\mathcal{S}$ and the exact per-variable marginal $p_j=|\{\mathbf{x}\in\mathcal{S}:x_j=1\}|/|\mathcal{S}|$ can be computed by exhaustive enumeration. This yields a Bayes ceiling that no predictor can exceed. Four findings follow. First, the ceiling is $69.9\%$ per-variable ($93.1\%$ on the three most confident variables) on the hard family, and a small single-head bipartite GNN reaches within $1.9$ points of it --- the signal is real, bounded, and essentially exhausted, while the project's previous multi-head network sat at the level of plain LP rounding ($60.7\%$ vs.\ $60.6\%$). Second, holding $n$ fixed and varying $m$ turns the ceiling into an experimental knob, and doing so separates three regimes: where the ceiling is low the model already saturates it, where the ceiling is high attaining it is NP-hard (an $18$--$20$ point residual gap), and where it is higher still the LP relaxation alone suffices. Third, conditioning on a partial assignment is identical to reducing the instance, so the same architecture predicts \emph{inside} the search tree; the conditional ceiling rises from $70.5\%$ at the root to $93.4\%$ at depth $8$, and decomposing the residual shows it lies entirely on variables the prefix logically determines, $92$--$99\%$ of which unit propagation fails to detect. LP-probing recovers $62$--$79\%$ of them but costs one LP solve per variable; the network answers every variable in one forward pass at $1.6$\,ms, roughly $20\times$ cheaper, with equal or better hit rate. Learning's role is therefore \emph{amortization of expensive deduction}, not discovery of inaccessible information --- the same role branching imitation plays in mixed-integer programming \citep{gasse2019exact}. Fourth, used as branching guidance this yields a median $2.71\times$ speedup over LP-based guidance at $21\times60$ (sign test $p=0.019$), a $6.2\times$ reduction in nodes, and a solve-rate increase from $90.0\%$ to $100\%$ within a 600\,s budget; in the deployed cascade, where lattice reduction runs first, coverage of that stage falls from $30/30$ at $n=25$ to $16/30$ at $n=60$ and guidance lifts the end-to-end rate from $93.3\%$ to $100\%$. Controlling $|\mathcal{S}|$ across sizes --- previously confounded by a factor of ten --- removes an artifact that had been misread as transfer failure: a model trained only at $10\times25$ is statistically indistinguishable from one trained at the target size when both are evaluated at $21\times60$ ($15/30$ instances faster, total time differing by $0.4\%$). All instance generators, exact-marginal labels, checkpoints and per-instance results are released with the code.
+Binary linear systems (BLS) --- find $\mathbf{x}\in\{0,1\}^n$ with $A\mathbf{x}=\mathbf{b}$ for $A\in\{0,1\}^{m\times n}$ --- arise in laser-based non-destructive testing, where a binary image must be recovered from integer projections. Deciding feasibility is NP-complete, and on the market-split-style family studied here classical solvers dominate every learned method this project has tried. Across eleven cycles, twelve learned components were tested and eleven produced null results, which had been read as evidence that the input carries no learnable signal. This report shows that reading was wrong, and replaces it with a measurement. Because the generator plants one solution $\mathbf{x}^*$ and publishes $\mathbf{b}=A\mathbf{x}^*$, every member of the solution set $\mathcal{S}$ would have produced the same $\mathbf{b}$; the posterior is therefore uniform on $\mathcal{S}$ and the exact per-variable marginal $p_j=|\{\mathbf{x}\in\mathcal{S}:x_j=1\}|/|\mathcal{S}|$ can be computed by exhaustive enumeration. This yields a Bayes ceiling that no predictor can exceed. Four findings follow. First, the ceiling is $69.9\%$ per-variable ($93.1\%$ on the three most confident variables) on the hard family, and a small single-head bipartite GNN reaches within $1.9$ points of it --- the signal is real, bounded, and essentially exhausted, while the project's previous multi-head network sat at the level of plain LP rounding ($60.7\%$ vs.\ $60.6\%$). Second, holding $n$ fixed and varying $m$ turns the ceiling into an experimental knob, and doing so separates three regimes: where the ceiling is low the model already saturates it, where the ceiling is high attaining it is NP-hard (an $18$--$20$ point residual gap), and where it is higher still the LP relaxation alone suffices. Third, conditioning on a partial assignment is identical to reducing the instance, so the same architecture predicts \emph{inside} the search tree; the conditional ceiling rises from $70.5\%$ at the root to $93.4\%$ at depth $8$, and decomposing the residual shows it lies entirely on variables the prefix logically determines, $92$--$99\%$ of which unit propagation fails to detect. LP-probing recovers $62$--$79\%$ of them but costs one LP solve per variable; the network answers every variable in one forward pass at $1.6$\,ms, roughly $20\times$ cheaper, with equal or better hit rate. Learning's role is therefore \emph{amortization of expensive deduction}, not discovery of inaccessible information --- an instance of amortized optimization \citep{amos2023tutorial}, and the same role branching imitation plays in mixed-integer programming \citep{gasse2019exact}. Fourth, used as branching guidance this yields a median $2.71\times$ speedup over LP-based guidance at $21\times60$ (sign test $p=0.019$), a $6.2\times$ reduction in nodes, and a solve-rate increase from $90.0\%$ to $100\%$ within a 600\,s budget; in the deployed cascade, where lattice reduction runs first, coverage of that stage falls from $30/30$ at $n=25$ to $16/30$ at $n=60$ and guidance lifts the end-to-end rate from $93.3\%$ to $100\%$. Controlling $|\mathcal{S}|$ across sizes --- previously confounded by a factor of ten --- removes an artifact that had been misread as transfer failure: a model trained only at $10\times25$ is statistically indistinguishable from one trained at the target size when both are evaluated at $21\times60$ ($15/30$ instances faster, total time differing by $0.4\%$). All instance generators, exact-marginal labels, checkpoints and per-instance results are released with the code.
 \end{abstract}
 
 \section{Introduction}
@@ -109,11 +108,24 @@ To confirm that clause learning is the operative ingredient rather than constrai
 \subsection{Learning for combinatorial optimization}
 \label{sec:l4co}
 
+\citet{bengio2021machine} survey this area and frame it in terms this report inherits: state-of-the-art solvers ``rely on handcrafted heuristics for making decisions that are otherwise too expensive to compute or mathematically not well defined,'' and learning is a candidate for making those decisions better. The phrase \emph{too expensive to compute} is the operative one. It presumes the decision is computable in principle and asks only what it costs --- which is precisely the situation Section~\ref{sec:cost} measures, and a different situation from asking a network to supply information the input does not contain.
+
 \paragraph{Where learning has succeeded.} The clearest success is \emph{imitation of an expensive expert}. Strong branching --- tentatively solving both children's relaxations to score a branching candidate --- produces small search trees but is far too slow to run at every node. \citet{gasse2019exact} train a bipartite GNN to imitate it and recover most of the benefit at a small fraction of the cost. \citet{khalil2016learning} make the same move with learned ranking. The gain is \emph{not} new information: strong branching already knew the answer. The gain is that the knowledge becomes cheap enough to use everywhere. This report argues the same structure applies here, and measures it.
 
 \paragraph{Where learning has failed, and why.} Attempts to have a network decide satisfiability directly have a weaker record. NeuroSAT \citep{selsam2019neurosat} classifies satisfiability by message passing over a literal--clause graph and succeeds on small random instances, but G4SATBench \citep{li2023g4satbench} reports $15$--$25$ point accuracy collapse under size transfer. More fundamentally, \citet{chen2023representing} prove that standard message-passing GNNs cannot separate certain feasible/infeasible MIP pairs at all: the pairs are indistinguishable in the Weisfeiler--Lehman hierarchy that bounds such networks \citep{xu2019powerful}. Random node features are the literature's prescribed remedy; we tested them at dimensions $8$ and $32$ and obtained AUC $0.4997$--$0.5003$, i.e.\ chance.
 
 \paragraph{The gap this report addresses.} Both literatures report \emph{outcomes} --- this worked, that did not. Neither establishes how much signal the input contains, so a null result cannot be attributed between ``no information'' and ``information present but not extracted.'' For planted-solution instances that attribution is computable, and making it is this report's methodological contribution.
+
+\subsection{Amortization: the framing this report adopts}
+\label{sec:amort}
+
+The distinction that organizes our results predates its use in combinatorial optimization. \citet{gershman2014amortized} introduced \emph{amortized inference} for probabilistic reasoning: when an agent must answer many related queries, solving each from scratch is wasteful, and the useful question becomes how to reuse computation across queries. \citet{amos2023tutorial} develops the same idea as \emph{amortized optimization} --- ``use learning to predict the solutions to problems in these settings, exploiting the shared structure between similar problem instances'' --- and surveys its appearance in variational inference, meta-learning, control and convex optimization.
+
+\citet{millidge2022deconfusing} states the trade-off in the form most useful here. \emph{Direct} optimization spends computation on the instance at hand, so its power scales with the compute it is given but it pays that cost at every invocation. \emph{Amortized} optimization converts the problem into supervised learning: inference is a single cheap forward pass, but it requires an expensive dataset of solved instances up front and is bounded by the function approximator's generalization. The two are complementary rather than competing, and the productive arrangement is hybrid --- amortized predictions steering a direct optimizer, as in AlphaGo.
+
+Every element of that account has a measured counterpart below, which is why we adopt the framing rather than merely borrowing the word. The direct method here is LP-probing, sound and costly at one LP solve per variable (Table~\ref{tab:cost}). The amortized method is MarginalNet, a single forward pass roughly $20\times$ cheaper. The expensive dataset requirement appears as our hardest limitation: exact marginal labels need exhaustive enumeration of $\mathcal{S}$, which fails beyond $n\approx60$ (\S\ref{sec:instances}). The generalization bound appears as the $18$--$20$ point residual in the near-unique regime (\S\ref{sec:sweep}). And the hybrid arrangement is exactly our design rule: the network \emph{guides} branching, where an error costs backtracking, while variables are \emph{fixed} only by sound deduction, where an error would cost correctness (\S\ref{sec:m-search}).
+
+What this report adds to that literature is the missing denominator. Amortization is normally justified by showing the learned predictor is fast and accurate enough in practice; it is rarely possible to say how much of the attainable signal it captures, because the attainable signal is unknown. For planted-solution instances it is computable, and computing it changes the interpretation of failure: a null result can be attributed to an absent ceiling rather than to an inadequate model, or --- as happened repeatedly in this project --- the reverse.
 
 \subsection{This project's own prior cycles}
 \label{sec:priorcycles}
@@ -447,6 +459,10 @@ Each clause is measured. ``Does not supply new information'': the residual gap l
 
 The weaker claim --- that learning finds structure classical methods miss --- is contradicted by our own data and should not be made.
 
+\paragraph{Against the amortization literature's predictions.} Read through \citet{millidge2022deconfusing}'s account of the trade-off (\S\ref{sec:amort}), our results land where that account says they should, including in the costs. The predicted benefit --- inference reduced to one cheap forward pass --- is realized at $1.6$\,ms against $31$--$37$\,ms, and the predicted hybrid advantage is realized in the cascade, where guidance lifts the end-to-end rate from $93.3\%$ to $100\%$ without ever being trusted to fix a variable. The predicted costs are equally visible. The requirement for an expensive corpus of solved instances is our binding limitation, since exact marginals demand exhaustive enumeration and enumeration fails beyond $n\approx60$. The bound imposed by the approximator's generalization is the $18$--$20$ point residual at $m=14$--$16$, where the ceiling is high but attaining it is NP-hard.
+
+One result is not anticipated by that framing and is worth stating separately. Amortization is usually argued for on efficiency grounds while accuracy is assumed to degrade relative to the expert being imitated; here the amortized predictor is \emph{both} cheaper and more accurate than LP-probing on the \textsc{forced} set ($88$--$91\%$ against $61$--$80\%$ detection, Table~\ref{tab:cost}). The reason is that the two answer different questions: probing abstains wherever its test does not fire, whereas the network commits everywhere. For guidance, where abstention has no value because some variable must be branched on, committing everywhere at moderate accuracy dominates proving a subset exactly. The relevant comparison is therefore not accuracy against the expert but accuracy against \emph{what the consumer of the prediction can use}, and that consumer is the branching rule.
+
 \subsection{Limitations}
 
 \paragraph{The ceiling is low, and we lowered it.} Maximizing vertex spread is what makes these instances hard for CP-SAT, and it is also what drives the root ceiling to $69.9\%$. An easier family would offer more signal but would not be the target regime.
@@ -463,7 +479,7 @@ The weaker claim --- that learning finds structure classical methods miss --- is
 
 \subsection{Future work}
 
-Three directions follow from the measurements rather than from speculation. (i) \emph{Approximate marginals beyond enumeration}: if $p_j$ could be estimated by sampling (e.g.\ solution sampling or belief propagation) with usable fidelity, training data could be generated where enumeration fails. (ii) \emph{Learning to imitate LP-probing directly}: Table~\ref{tab:cost} shows the network already matches probing's hit rate at $1/20$ the cost without being trained to imitate it; explicit distillation from probing decisions is the natural next step, and is precisely the learn2branch recipe. (iii) \emph{Replacing the pipeline's propagator}: the measurement that unit propagation detects under $8\%$ of forced variables while LP-probing detects $62$--$79\%$ is an improvement available immediately and independent of learning.
+Three directions follow from the measurements rather than from speculation. (i) \emph{Approximate marginals beyond enumeration}: if $p_j$ could be estimated by sampling (e.g.\ solution sampling or belief propagation) with usable fidelity, training data could be generated where enumeration fails. This is the dataset-cost term that \citet{millidge2022deconfusing} identifies as amortization's characteristic price, and relaxing it is the single change that would most extend the method's reach. (ii) \emph{Learning to imitate LP-probing directly}: Table~\ref{tab:cost} shows the network already matches probing's hit rate at $1/20$ the cost without being trained to imitate it; explicit distillation from probing decisions is the natural next step, and is precisely the learn2branch recipe. (iii) \emph{Replacing the pipeline's propagator}: the measurement that unit propagation detects under $8\%$ of forced variables while LP-probing detects $62$--$79\%$ is an improvement available immediately and independent of learning.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -494,6 +510,16 @@ Aardal, K., Bixby, R.~E., Hurkens, C.~A.~J., Lenstra, A.~K., and Smeltink, J.~W.
 Market split and basis reduction: Towards a solution of the Cornu\'ejols--Dawande instances.
 \emph{INFORMS Journal on Computing}, 12(3):192--202.
 
+\bibitem[Amos(2023)]{amos2023tutorial}
+Amos, B. (2023).
+Tutorial on amortized optimization.
+\emph{Foundations and Trends in Machine Learning}, 16(5):592--732.
+
+\bibitem[Bengio et al.(2021)]{bengio2021machine}
+Bengio, Y., Lodi, A., and Prouvost, A. (2021).
+Machine learning for combinatorial optimization: A methodological tour d'horizon.
+\emph{European Journal of Operational Research}, 290(2):405--421.
+
 \bibitem[Chen et al.(2023)]{chen2023representing}
 Chen, Z., Liu, J., Wang, X., Lu, J., and Yin, W. (2023).
 On representing mixed-integer linear programs by graph neural networks.
@@ -508,6 +534,11 @@ In \emph{Integer Programming and Combinatorial Optimization (IPCO)}, pages 284--
 Gasse, M., Ch\'etelat, D., Ferroni, N., Charlin, L., and Lodi, A. (2019).
 Exact combinatorial optimization with graph convolutional neural networks.
 In \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
+
+\bibitem[Gershman and Goodman(2014)]{gershman2014amortized}
+Gershman, S.~J. and Goodman, N.~D. (2014).
+Amortized inference in probabilistic reasoning.
+In \emph{Proceedings of the 36th Annual Meeting of the Cognitive Science Society}, pages 517--522.
 
 \bibitem[Khalil et al.(2016)]{khalil2016learning}
 Khalil, E.~B., Le~Bodic, P., Song, L., Nemhauser, G., and Dilkina, B. (2016).
@@ -528,6 +559,11 @@ G4SATBench: Benchmarking and advancing SAT solving with graph neural networks.
 Marques-Silva, J.~P. and Sakallah, K.~A. (1999).
 GRASP: A search algorithm for propositional satisfiability.
 \emph{IEEE Transactions on Computers}, 48(5):506--521.
+
+\bibitem[Millidge(2022)]{millidge2022deconfusing}
+Millidge, B. (2022).
+Deconfusing direct vs amortized optimization.
+Unrefereed technical note, \url{https://www.beren.io/2022-09-25-Deconfusing-direct-vs-amortized-optimization/}.
 
 \bibitem[Moskewicz et al.(2001)]{moskewicz2001chaff}
 Moskewicz, M.~W., Madigan, C.~F., Zhao, Y., Zhang, L., and Malik, S. (2001).
