@@ -1,0 +1,47 @@
+================================================================================
+v12_benchmark/ — 크로스오버 탐색, 파라미터 정책, 5지표 벤치마크 (2026-08 ~ 09)
+================================================================================
+"제안 방법이 CP-SAT/MILP를 언제 추월하는가"를 정면으로 측정하고, 보고 지표를 표준화한
+사이클. 크로스오버는 발견되지 않았고, 그 결과가 v13 이후 "학습을 어디에 쓸 것인가"를
+재설계하는 출발점이 됐다. 상세는 docs/version.md의 v12 절 참조.
+
+[크로스오버 실험 — 정직한 3상태(feasible/infeasible/unresolved) 보고]
+crossover_cpsat_pure.py     CP-SAT 단독 baseline. 타임아웃을 feasible로 추측하지 않고
+                            unresolved로 보고한다(기존 관행은 편향을 만들었다).
+                            num_search_workers=1로 단일 스레드 고정.
+crossover_gurobi_pure.py    Gurobi MILP 동일 방식(Threads=1).
+crossover_scip_pure.py      SCIP MILP 동일 방식(limits/time).
+crossover_aggregate.py      크로스오버 결과 집계 및 표 생성.
+classic_cp_solve.py         CDCL 없는 고전 CP(OR-Tools pywrapcp) baseline.
+                            10x25는 12/12 풀지만 20x50은 0/12 — CP-SAT가 100%인 지점에서
+                            완전히 붕괴한다. CDCL이 핵심 요인임을 보인 대조 실험.
+
+[하이퍼파라미터 정책 — 같은 방법론, 정반대 결과]
+ahl_hparam_sweep.py         AHL block 스윕. 기본값(40) 교체만으로 20x50에서 +14.4%p.
+ahl_hparam_sweep_boost.py   스윕 표본 보강본.
+ahl_hparam_policy.py        인스턴스별 block 선택 MLP 정책. 신호는 있으나 학습 정책의
+                            추가 이득은 노이즈 수준.
+cpsat_hparam_sweep.py       CP-SAT config 6종 스윕(default, linearization0/2,
+                            portfolio_search, lp_search, no_symmetry).
+cpsat_hparam_policy.py      CP-SAT config 선택 정책. 오라클이 default와 사실상 동일해
+                            학습할 신호 자체가 없음을 확인. AHL block과 정반대 대조군.
+  ** 방법론 주의 **: 병렬 스윕 시 CPU 경합이 wall-clock 측정을 오염시킨다.
+     jobs=16에서 단독 14~15초에 풀리는 인스턴스가 20초 상한에 걸렸다. jobs=4로 재측정 필요.
+
+[벤치마크 하니스]
+bench_run_parallel.py       gurobi/scip/cpsat를 인스턴스 단위 병렬로 실행.
+bench_v9_run.py             순수 v9를 인스턴스당 하드 OS 레벨 타임아웃으로 실행
+                            (multiprocessing.Process + join(timeout) + terminate/kill).
+                            BKZ.reduction이 블로킹 C 호출이라 signal.alarm으로는
+                            중단되지 않기 때문에 이 방식이 필수다.
+build_reference_and_evaluate.py  기준 해 구축 및 평가.
+
+[인스턴스 생성/검증]
+generate_dns_marketsplit.py market-split 계열 생성기(legacy).
+extend_hard_instances.py    기존 hard 계열 인스턴스 추가 생성.
+validate_hard_instances.py  hard 인스턴스 검증(난이도 지표, feasibility 확인).
+
+[학습]
+train_hard_multisize.py     10x25~60x150 혼합 크기 전문가 모방 파인튜닝.
+                            109에포크 학습했으나 전 크기에서 해복원 변화 0 —
+                            GNN/MCTS 기여가 0%이므로 파인튜닝해도 결과가 바뀌지 않는다.

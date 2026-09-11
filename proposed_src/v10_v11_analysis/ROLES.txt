@@ -1,0 +1,36 @@
+================================================================================
+v10_v11_analysis/ — 기여도 귀속 + 학습 기반 feasibility 분류 (2026-07)
+================================================================================
+새 메커니즘을 제안하는 대신 "학습이 정확히 얼마나 기여하는가"와 "feasibility를 학습으로
+분류할 수 있는가"를 답한 사이클. 결과는 대부분 부정적이며, 그 부정 결과들이
+v15 이후 방향 전환의 근거가 됐다. 상세는 docs/version.md의 v10/v11 절 참조.
+
+[feasibility 분류기 — 10종 변형, 8종이 AUC 0.4997~0.5003(우연 수준)]
+bipartite_randfeat_classifier.py
+                            변수/제약 이분 GNN + 랜덤 노드 특징(차원 0/8/32).
+                            문헌이 GNN 표현력 한계의 처방으로 제시한 기법을 그대로 적용했으나
+                            무효(부정 결과 8~9호). pooling 3종(mean/max/mean+max)도 전부 무효.
+dual_node_classifier.py     NeuroSAT식 리터럴 극성 이중노드 GNN, 3가지 깊이.
+gs_profile_classifier.py    BKZ 축소 후 Gram-Schmidt 프로파일을 시퀀스 모델로 처리.
+                            near-miss 짝의 96.8%가 GS 프로파일이 비트 단위로 완전 동일해
+                            표현 자체에 정보가 없음을 규명한 실험.
+eval_feas_classifier.py     분류기 평가 공통 루틴.
+calibrate_feas_threshold.py feasibility 판정 임계값 보정.
+collect_feas_signal.py      단일 인스턴스 특징 수집.
+collect_paired_signal.py    같은 A를 공유하는 feasible/infeasible 짝 수집(NeuroSAT 방식).
+collect_gs_profile.py       BKZ Gram-Schmidt 프로파일 수집.
+
+[CP-SAT 분석]
+cpsat_hint_experiment.py    kernel pump의 최종 반올림 점을 CP-SAT에 AddHint로 주입.
+                            해결률은 안 올랐으나 infeasibility 증명을 5/6 -> 6/6으로 완성.
+                            v11 사이클의 유일한 긍정 결과.
+cpsat_param_sweep.py        CP-SAT 파라미터 재구성 3종(linearization_level=2,
+                            PORTFOLIO_SEARCH, LP_SEARCH) 비교. 전부 default와 동급 이하.
+cpsat_cheap_factors.py      싼 특징만으로 CP-SAT 난이도를 예측할 수 있는지.
+cpsat_difficulty_factors.py CP-SAT 난이도 요인 분석. vertex_spread가 지배 요인임을 확인.
+
+[기타]
+n_scale_sweep.py            AHL 격자 구성의 스케일 팩터 N 스윕. block과 달리 무관함을 확인.
+make_v11_figures.py         v11 보고서 그림 생성.
+make_v11_deck.py            v11 발표자료(pptx) 생성.
+make_v11_kr_pdf.py          v11 한국어 PDF 생성.

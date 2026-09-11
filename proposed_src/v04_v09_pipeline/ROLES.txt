@@ -1,0 +1,43 @@
+================================================================================
+v04_v09_pipeline/ — 초기 파이프라인 계보 (2026-06 ~ 2026-07)
+================================================================================
+LPneuroBLS v4에서 v9까지 파이프라인이 발전한 코드. 공유 코어 LPneuroBLS_v7.py는
+여러 사이클이 쓰므로 util/로 옮겼다. 여기 있는 vN_infer.py들은 각 버전의 추론 진입점이다.
+성능 계보는 docs/version.md의 v4~v9 절 참조.
+
+[학습 코드]
+LPneuroBLS_v4.py            v4 학습. MCTS + 정책/가치 학습 초기형.
+LPneuroBLS_v5.py            v5 학습. LP-guided MCTS + kernel pump + policy DFS 확립.
+                            10x25 DNS에서 99.50% feasibility / 99.62% 해복원.
+LPneuroBLS_v6.py            v6 학습. market-split hard 계열 도입, 크기 무관 학습
+                            (segment softmax), dense terminal reward + reverse curriculum.
+                            self-play가 오히려 성능을 떨어뜨린 부정 결과 1호가 여기서 나왔다.
+                            (v7 학습 코드는 util/LPneuroBLS_v7.py)
+
+[추론 진입점 — 각 버전의 파이프라인 실행기]
+LPneuroBLS_v4_infer.py      v4 추론.
+LPneuroBLS_v5_infer.py      v5 추론.
+LPneuroBLS_v6_infer.py      v6 추론.
+LPneuroBLS_v7_infer.py      v7 추론. 전문가 모방 학습 + 추론시 메시지패싱 반복수 조절.
+LPneuroBLS_v8_infer.py      v8 추론. AHL/BKZ 격자환원을 파이프라인 단계로 추가.
+                            20x50 해복원 9.6% -> 53.5%, 프로젝트 최대 단일 도약.
+LPneuroBLS_v9_infer.py      v9 추론. AHL block 크기를 인스턴스 크기별로 튜닝
+                            (--ahl_block / --ahl_tries). 20x50 78.25%, 40x100 66.67%.
+                            v10~v12의 분석 사이클이 전부 이 코드 위에서 수행됐다.
+LPneuroBLS_v9_infer_cpsat_fallback.py
+                            v9 + 예산 소진 시 CP-SAT로 폴백. 실사용 성능 측정용.
+LPneuroBLS_v9_infer_pure.py v9에서 CP-SAT 폴백을 제거하고 정직한 3상태
+                            (feasible / infeasible / unresolved) 보고를 유지한 버전.
+                            "제안 방법에 CP-SAT를 넣지 않는다"는 조건의 실험에 쓰인다.
+
+[v8/v9 사이클의 탐색 기술 실험]
+cbj_dfs.py                  충돌 유발 백점프(CBJ) + 이유 추적 + 활동도 기반 동적 순서.
+                            소형 300개에서 전수검증했으나, 밀도 0.5 조밀 행렬에서는
+                            충돌 이유가 결정 전체를 포함해 백점프가 퇴화 — 기여 0으로 기각.
+ahl_scheduler.py            AHL 시도 횟수를 인스턴스별로 배분하는 학습 스케줄러.
+                            특징의 rank-AUC가 0.54~0.58로 신호가 약해 기각(부정 결과 5호).
+block_sweep.py              BKZ block 크기 스윕. block 최적값이 인스턴스 크기에 의존함을
+                            발견한 실험(20x50->10, 40x100->20; v8의 기본값 40은 40x100에서
+                            시도당 207초로 치명적).
+collect_ahl_labels.py       AHL 성공/실패 라벨과 특징을 수집. 스케줄러 학습 데이터 생성용.
+train_hard_finetune.py      단일 크기 hard 계열 파인튜닝.

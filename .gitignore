@@ -10,20 +10,25 @@ venv/
 # --- legacy code/data (superseded, not tracked) ---
 legacy/
 
-# --- checkpoints: only the designated best.pth is tracked ---
-runs/*
-!runs/best.pth
+# --- checkpoints: no weights are tracked ---
+#     regenerate with the training scripts; paths listed in docs/version.md Appendix A
+runs/
 
-# --- instances: only the small curated benchmark sets are tracked
-#     (large hard-instance train pools / full test sets / dns / dnsms stay out) ---
-instances/*
-!instances/bench30_10x25/
-!instances/bench30_20x50/
-!instances/bench30_40x100/
-!instances/bench30_60x150/
+# --- instances: no datasets are tracked ---
+#     regenerate with proposed_src/util/generate_hard_instances.py and
+#     proposed_src/v22_transfer/v22_make_testset.py; paths in docs/version.md Appendix A
+instances/
 !instances/HARD_INSTANCES_README.md
 
 # --- misc ---
 *.log
 texput.log
 .DS_Store
+
+# --- LaTeX build artifacts (PDFs are tracked, intermediates are not) ---
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
