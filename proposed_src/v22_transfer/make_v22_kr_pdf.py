@@ -89,7 +89,7 @@ P('Binary linear system(BLS)은 <i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>에
 P('생성기가 해 <b>x</b>*를 심고 <b>b</b>=<i>A</i><b>x</b>*를 공개하므로, solution set '
   '<i>S</i>의 모든 원소가 동일한 <b>b</b>를 만든다. 따라서 posterior는 <i>S</i> 위에 uniform이고 '
   'per-variable marginal <i>p<sub>j</sub></i>를 전수열거로 정확히 계산할 수 있다. '
-  '이로부터 어떤 predictor도 넘을 수 없는 <b>Bayes ceiling</b>이 얻어진다. 네 가지 결과가 따라온다. '
+  '이로부터 <i>x</i>* 복원에 대해 어떤 predictor도 넘을 수 없는 <b>Bayes ceiling</b>이 얻어진다 — 이는 식별(identification)의 상한이지 풀이(solving)의 상한이 아니며, 운용상의 의미는 그것이 search tree 내부에서 유도하는 FORCED/FREE 분해에서 나온다. 네 가지 결과가 따라온다. '
   '<b>첫째</b>, hard 계열에서 ceiling은 per-variable 69.9%(가장 확신하는 변수 3개 기준 93.1%)이고, '
   '작은 단일 head bipartite GNN이 그 1.9%p 이내에 도달한다 — signal은 실재하고, 유한하며, 사실상 소진됐다. '
   '반면 기존의 multi-head network는 단순 LP rounding 수준에 머물렀다(60.7% vs 60.6%). '
@@ -280,6 +280,29 @@ P('(<i>A</i>,<b>b</b>)가 주어지면 CP-SAT의 all-solutions 모드로 <i>S</i
   'max(<i>p<sub>j</sub></i>, 1−<i>p<sub>j</sub></i>) 이다. 어떤 결정론적 predictor <i>f</i>(<i>A</i>,<b>b</b>)도 '
   '이를 넘을 수 없다: (<i>A</i>,<b>b</b>)를 공유하는 인스턴스는 <i>f</i>에게 구분 불가능하므로, 변수별로 가능한 최선은 '
   '살아남은 해들 중 다수값이다.', body_s)
+P('<b>이 ceiling이 무엇을 제한하고 무엇을 제한하지 않는가.</b> 이 양은 과잉 해석하기 쉬우므로 정확히 '
+  '말해둘 필요가 있다. 위 식은 <b>심어진 <i>x</i>*를 변수별로 식별하는 것</b>의 상한이다. solver가 실제로 '
+  '수행하는 과제 — <i>S</i>의 <b>아무 원소나</b> 반환하는 것 — 의 상한이 아니다. 둘은 갈라지며, 방향도 분명하다: '
+  '제약이 하나도 없는 instance는 <i>S</i>={0,1}<sup><i>n</i></sup>이므로 모든 <i>p<sub>j</sub></i>=1/2이고 '
+  'ceiling이 정확히 <b>50%</b>(가능한 최악)인데 푸는 것은 자명하다. 따라서 낮은 ceiling은 어려운 instance를 '
+  '뜻하지 않는다. 그것은 심어진 해를 복원할 수 없다는 뜻이며, 이는 다른 진술이다.', body_s)
+P('우리 데이터는 두 축이 <b>역상관이 아니라 무관</b>함을 보인다. 21×60에서 풀린 27개 인스턴스에 대해 '
+  '|<i>S</i>|(범위 2~40)와 탐색 시간의 Spearman <i>ρ</i>=−0.04(<i>t</i>=−0.18, 유의하지 않음)이다. '
+  '즉 측정 가능한 범위 안에서 solution multiplicity는 탐색 난이도를 어느 방향으로도 예측하지 않는다.', body_s)
+P('그렇다면 왜 측정하는가? 두 가지 이유이며 둘 다 난이도가 아니라 <b>진단</b>에 관한 것이다. 첫째, 본 프로젝트의 '
+  '모든 이전 사이클이 <i>x</i>*를 변수별 label로 학습했으므로, 이 식은 정확히 <b>그 학습 설정들이 마주했던 상한</b>이다 — '
+  'ceiling 69.9%와 LP baseline 60.6% 사이에서 기존 network가 60.7%였다는 사실은 문제가 아니라 설정을 진단한다. '
+  '둘째, ceiling이 유도하는 분해는 아래의 대응을 통해 tree 내부에서 운용상의 의미를 갖는다.', body_s)
+P('<b>Marginal에서 search로 가는 다리.</b> 한 node에서 자유 변수는 <b>FORCED</b>'
+  '(<i>p<sub>j</sub></i>∈{0,1}: 살아남은 모든 해가 일치)이거나 <b>FREE</b>(0&lt;<i>p<sub>j</sub></i>&lt;1: 불일치)다. '
+  'FREE 변수에서의 branching은 중요한 의미에서 <b>틀릴 수가 없다</b> — 양쪽 자식 모두 해를 포함하므로 어느 쪽을 '
+  '골라도 해가 도달 가능한 채로 남는다. 반면 FORCED 변수를 <b>거슬러</b> 분기하면 subtree가 비어 backtrack이 '
+  '확정된다. 따라서 marginal은 "<i>x</i>*와 일치할 확률"이 아니라 "<b>이 배정으로 <i>S</i>의 몇 %가 살아남는가</b>"로 '
+  '읽어야 하며, 비용을 발생시키는 것은 오직 FORCED 변수에서의 오류다.', body_s)
+P('§4.5가 잔차를 총계가 아니라 FORCED/FREE로 분해하는 이유가 이것이다: 총계는 backtrack을 유발할 수 있는 결정과 '
+  '그럴 수 없는 결정을 섞어버린다. 표 5에서 모델이 FREE 변수에서 50% 근처를 기록하는 것이 실패가 아니라 올바른 '
+  '거동인 이유도, 운용상 의미 있는 양이 root에서 <i>x</i>*에 대한 정확도가 아니라 <b>tree 내부의 FORCED 정확도</b>인 '
+  '이유도 마찬가지다.', body_s)
 P('<b>틀리기 쉬운 정합성 조건.</b> 열거는 <b>완료됐을 때만</b> 유효하다. CP-SAT는 탐색이 소진되면 '
   'OPTIMAL을, 열거할 것이 없으면 INFEASIBLE을, 이미 해를 모은 탐색이 시간제한으로 중단되면 FEASIBLE을 반환한다. '
   'FEASIBLE을 완료로 취급하면 잘린 <i>S</i>가 조용히 대입되어 그로부터 계산된 모든 marginal이 편향된다. '
