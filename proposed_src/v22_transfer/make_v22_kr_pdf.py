@@ -6,6 +6,14 @@ NotoSansKR is this project's established route for Korean PDFs (same approach as
 make_v11_kr_pdf.py). Technical terms are deliberately left in English -- translating
 "amortization", "marginal" or "propagation" would make the text harder to match against
 the English edition and against the literature.
+
+Notation is constrained by the font, not by preference. NotoSansKR has no glyph for
+U+1D4AE (script capital S), U+2124 (double-struck Z), or the combining circumflex and
+tilde, and reportlab drops missing glyphs silently -- they render as blank space rather
+than as a visible error box, so a broken formula looks like a typo. The solution set is
+therefore written <i>S</i>, its relaxation <i>S</i><sub>LP</sub>, the estimate
+<i>p</i><super>^</super>, and the integers <b>Z</b>. Anything added later must stay
+inside the font's coverage; check with fontTools before introducing a new symbol.
 """
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
@@ -79,7 +87,7 @@ P('Binary linear system(BLS)은 <i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>에
   '11개가 null result였는데, 이는 "입력에 학습 가능한 signal이 없다"는 해석으로 이어져 있었다. '
   '본 보고서는 그 해석이 틀렸음을 보이고, 해석 대신 <b>측정</b>을 제시한다.', abs_s)
 P('생성기가 해 <b>x</b>*를 심고 <b>b</b>=<i>A</i><b>x</b>*를 공개하므로, solution set '
-  '𝒮의 모든 원소가 동일한 <b>b</b>를 만든다. 따라서 posterior는 𝒮 위에 uniform이고 '
+  '<i>S</i>의 모든 원소가 동일한 <b>b</b>를 만든다. 따라서 posterior는 <i>S</i> 위에 uniform이고 '
   'per-variable marginal <i>p<sub>j</sub></i>를 전수열거로 정확히 계산할 수 있다. '
   '이로부터 어떤 predictor도 넘을 수 없는 <b>Bayes ceiling</b>이 얻어진다. 네 가지 결과가 따라온다. '
   '<b>첫째</b>, hard 계열에서 ceiling은 per-variable 69.9%(가장 확신하는 변수 3개 기준 93.1%)이고, '
@@ -97,25 +105,25 @@ P('생성기가 해 <b>x</b>*를 심고 <b>b</b>=<i>A</i><b>x</b>*를 공개하�
   '<b>넷째</b>, branching guidance로 쓰면 21×60에서 LP guidance 대비 median 2.71배 가속(sign test p=0.019), '
   'node 수 6.2배 감소, 600초 예산 내 해결율 90.0%→100%를 얻는다. lattice reduction이 먼저 도는 실제 cascade에서는 '
   '그 단계의 coverage가 n=25의 30/30에서 n=60의 16/30으로 떨어지며, guidance가 end-to-end 해결율을 '
-  '93.3%→100%로 끌어올린다. 크기 간 |𝒮|를 통제하면 — 이전에는 10배까지 어긋나 있었다 — '
+  '93.3%→100%로 끌어올린다. 크기 간 |<i>S</i>|를 통제하면 — 이전에는 10배까지 어긋나 있었다 — '
   'transfer failure로 오독됐던 artifact가 사라진다: 10×25에서만 학습한 모델이 21×60에서 '
   '목표 크기로 학습한 모델과 통계적으로 구별되지 않는다(15/30에서 더 빠르고 총 시간 차 0.4%).', abs_s)
 
 # ============================== 1. 서론 ==============================
 H1('1. 서론')
 H2('1.1 문제와 배경')
-P('<i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>, <b>b</b>∈ℤ<sup><i>m</i></sup>이 주어질 때 '
+P('<i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>, <b>b</b>∈<b>Z</b><sup><i>m</i></sup>이 주어질 때 '
   '<b>binary linear system</b>(BLS)은 <i>A</i><b>x</b>*=<b>b</b>를 만족하는 '
   '<b>x</b>*∈{0,1}<sup><i>n</i></sup>를 찾는 문제이며, feasible set은 '
-  '𝒮={<b>x</b>∈{0,1}<sup><i>n</i></sup> : <i>A</i><b>x</b>=<b>b</b>}이다. '
+  '<i>S</i>={<b>x</b>∈{0,1}<sup><i>n</i></sup> : <i>A</i><b>x</b>=<b>b</b>}이다. '
   '각 row는 cardinality constraint로, 지정된 셀 부분집합 중 몇 개가 채워져 있는지를 말한다.', body_s)
 P('응용 배경은 레이저 기반 비파괴검사다. 시편을 <i>m</i>개 방향으로 스캔하면 각 스캔은 경로상 흡수 셀의 '
   '정수 개수를 반환하고, 과제는 이진 점유 영상 <b>x</b>를 복원하는 것이다. 이 설정의 두 성질이 이후 모든 것을 '
-  '규정한다. 첫째, 𝒮가 동일한 측정치와 부합하는 여러 영상을 담을 수 있으므로 '
-  '<b>x</b>*의 <b>uniqueness를 가정하지 않는다</b>; 𝒮의 원소 아무거나 찾으면 물리적 문제는 해결된다. '
-  '둘째, 측정 노이즈(먼지, 캘리브레이션 편차)가 <b>b</b>를 교란해 𝒮=∅이 될 수 있으며, '
+  '규정한다. 첫째, <i>S</i>가 동일한 측정치와 부합하는 여러 영상을 담을 수 있으므로 '
+  '<b>x</b>*의 <b>uniqueness를 가정하지 않는다</b>; <i>S</i>의 원소 아무거나 찾으면 물리적 문제는 해결된다. '
+  '둘째, 측정 노이즈(먼지, 캘리브레이션 편차)가 <b>b</b>를 교란해 <i>S</i>=∅이 될 수 있으며, '
   'infeasibility를 보고하는 것은 해를 반환하는 것만큼 운용상 중요하다.', body_s)
-P('𝒮=∅ 판정은 NP-complete이고, 본 연구의 인스턴스는 market-split 문제에서 영감을 얻은 '
+P('<i>S</i>=∅ 판정은 NP-complete이고, 본 연구의 인스턴스는 market-split 문제에서 영감을 얻은 '
   '고난도 영역에서 의도적으로 추출된다(§4.1).', body_s)
 
 H2('1.2 본 보고서가 답하는 질문')
@@ -126,12 +134,12 @@ P('본 프로젝트는 11개 개발 사이클 동안 symbolic solving pipeline�
   'signal이 없다"는 것이었다.', body_s)
 P('그 해석은 한 번도 검증된 적이 없다. 이것은 입력의 <b>정보량</b>에 대한 주장이고, 정보량은 측정 가능하다. '
   '본 보고서의 핵심 관찰은 이 인스턴스 계열에서 그것이 <b>정확히</b> 측정 가능하다는 것이다:', body_s)
-P('생성기는 <b>x</b>*를 샘플링하고 <b>b</b>=<i>A</i><b>x</b>*를 공개한다. 𝒮의 모든 <b>x</b>가 '
+P('생성기는 <b>x</b>*를 샘플링하고 <b>b</b>=<i>A</i><b>x</b>*를 공개한다. <i>S</i>의 모든 <b>x</b>가 '
   '동일한 <b>b</b>를 만들었을 것이므로, 입력의 그 무엇도 이들을 구분하지 못한다. 따라서 '
-  '"어느 해가 심어졌는가"에 대한 posterior는 𝒮 위에 uniform이고, Bayes-optimal한 per-variable 예측은 '
-  '<i>p<sub>j</sub></i> = Pr[<i>x<sub>j</sub></i>=1 | <i>A</i>,<b>b</b>] = |{<b>x</b>∈𝒮 : <i>x<sub>j</sub></i>=1}| / |𝒮| '
+  '"어느 해가 심어졌는가"에 대한 posterior는 <i>S</i> 위에 uniform이고, Bayes-optimal한 per-variable 예측은 '
+  '<i>p<sub>j</sub></i> = Pr[<i>x<sub>j</sub></i>=1 | <i>A</i>,<b>b</b>] = |{<b>x</b>∈<i>S</i> : <i>x<sub>j</sub></i>=1}| / |<i>S</i>| '
   '의 argmax이며, max(<i>p<sub>j</sub></i>, 1−<i>p<sub>j</sub></i>) 비율로 맞는다. '
-  '즉 𝒮를 열거하면 <b>어떤</b> predictor든 달성 가능한 상한이 정확히 나온다.', quote_s)
+  '즉 <i>S</i>를 열거하면 <b>어떤</b> predictor든 달성 가능한 상한이 정확히 나온다.', quote_s)
 P('열거는 constraint solver로 <i>n</i>≤60에서 실행 가능하므로, ceiling은 이론적 양이 아니라 '
   '실험적 양이 된다. 본 보고서의 모든 내용이 이것을 측정할 수 있다는 사실에서 따라 나온다.', body_s)
 
@@ -140,7 +148,7 @@ P('<b>(1) 측정된 information ceiling.</b> hard 계열의 Bayes-optimal per-va
   '작은 단일 head network가 68.6%로 1.9%p 이내에 도달하는 반면, 기존 multi-head network는 60.7%로 '
   'LP rounding(60.6%)과 구별되지 않는다. signal은 실재하고, 작으며, 이제 사실상 소진됐다 — '
   '과거의 null result들은 정보의 부재만큼이나 model과 task의 mismatch를 반영한 것이다.', body_s)
-P('<b>(2) 통제 변수로서의 ceiling.</b> <i>n</i>을 고정하고 <i>m</i>을 올리면 |𝒮|가 줄고 ceiling이 '
+P('<b>(2) 통제 변수로서의 ceiling.</b> <i>n</i>을 고정하고 <i>m</i>을 올리면 |<i>S</i>|가 줄고 ceiling이 '
   '70.5%에서 100%로 오른다. 이를 sweep하면 세 구간이 드러나며, <b>학습이 큰 격차로 이기는 지점이 없음</b>을 보인다: '
   'ceiling이 낮으면 이미 도달했고, 높으면 도달이 NP-hard이며, 더 높으면 LP relaxation으로 충분하다(§4.3).', body_s)
 P('<b>(3) amortized deduction으로서의 학습.</b> partial assignment로 conditioning하는 것은 instance 축소와 '
@@ -148,9 +156,9 @@ P('<b>(3) amortized deduction으로서의 학습.</b> partial assignment로 cond
   '잔차는 <b>전적으로</b> prefix가 논리적으로 강제하는 변수 위에 있는데 unit propagation은 그중 0.9~7.5%만 탐지한다. '
   'LP-probing은 변수당 LP 한 번(노드당 약 33ms)으로 62~79%를 회수하지만, network는 1.6ms에 전 변수를 답하며 '
   '적중률은 같거나 높다 — 19~23배의 비용 우위다(§4.4~4.5).', body_s)
-P('<b>(4) 종단 성능과 |𝒮| 통제 하의 transfer.</b> branching guidance로서 21×60에서 LP guidance 대비 '
+P('<b>(4) 종단 성능과 |<i>S</i>| 통제 하의 transfer.</b> branching guidance로서 21×60에서 LP guidance 대비 '
   '2.71배 빠르고(p=0.019), node를 6.2배 적게 쓰며, 해결율을 90.0%에서 100%로 올린다. 실제 cascade에서는 '
-  '93.3%를 100%로 올린다. |𝒮|를 크기 간에 맞추면 10×25에서만 학습한 모델이 목표 크기로 학습한 모델과 '
+  '93.3%를 100%로 올린다. |<i>S</i>|를 크기 간에 맞추면 10×25에서만 학습한 모델이 목표 크기로 학습한 모델과 '
   '통계적으로 구별되지 않는다(§4.6~4.7).', body_s)
 P('<b>(5) 원인이 규명된 negative result 지도.</b> 12개 학습 컴포넌트를 각각의 결과 메커니즘과 함께 정리했으며, '
   '측정으로 바로잡은 <b>우리 자신의 오독 2건</b>도 포함한다(§4.8).', body_s)
@@ -162,16 +170,16 @@ H1('2. 배경 및 선행연구')
 P('이 절은 자기완결적으로 썼다. 인용 문헌을 보지 않은 독자도 이후 내용을 따라올 수 있도록 하기 위함이다.', body_s)
 
 H2('2.1 이 인스턴스가 어려운 이유')
-P('일반 0/1 행렬 <i>A</i>에 대해 𝒮≠∅ 판정은 NP-complete이므로 worst-case hardness는 논점이 아니다. '
+P('일반 0/1 행렬 <i>A</i>에 대해 <i>S</i>≠∅ 판정은 NP-complete이므로 worst-case hardness는 논점이 아니다. '
   '실질적으로 중요한 것은 <b>전형적인</b> 인스턴스가 어려운가이고, 그것은 생성 방식에 달려 있다.', body_s)
 P('본 연구의 계열은 Cornuéjols와 Dawande의 market-split 구성을 따른다. 원본에서는 <i>m</i>명의 agent가 '
   '예산을 갖고 <i>n</i>개 품목을 정확히 예산에 맞게 나눠야 하며, <i>n</i>≈10(<i>m</i>−1)일 때 크기가 작은데도 '
   'branch-and-bound에 악명 높게 어렵다. 이유는 <b>integrality gap</b>이다: linear relaxation '
-  '𝒮̃={<b>x</b>∈[0,1]<sup><i>n</i></sup> : <i>A</i><b>x</b>=<b>b</b>}가 크고 조밀한 polytope이며 그 vertex가 '
+  '<i>S</i><sub>LP</sub>={<b>x</b>∈[0,1]<sup><i>n</i></sup> : <i>A</i><b>x</b>=<b>b</b>}가 크고 조밀한 polytope이며 그 vertex가 '
   '대부분 fractional이다. branch-and-bound는 relaxation이 어떤 변수를 고정해야 하는지 거의 알려주지 않기 때문에 '
   '지수적으로 많은 node를 탐색해야 한다. 본 연구는 같은 메커니즘을 의도적으로 이용한다 — 생성기가 '
   '<b>vertex spread</b>(무작위 objective 방향에서 얻은 LP vertex들의 평균 쌍거리)를 최대화해 '
-  '𝒮̃를 키우고 LP signal을 설계 단계에서 약화시킨다(§4.1).', body_s)
+  '<i>S</i><sub>LP</sub>를 키우고 LP signal을 설계 단계에서 약화시킨다(§4.1).', body_s)
 
 H2('2.2 Classical solver, 그리고 CP-SAT가 강한 이유')
 P('<b>Mixed-integer programming (MIP).</b> Gurobi와 SCIP는 LP relaxation 위의 branch-and-bound로 풀며 '
@@ -237,7 +245,7 @@ P('Millidge(2022)는 그 trade-off를 여기서 가장 유용한 형태로 진�
 P('그 서술의 모든 요소가 아래에 측정된 대응물을 갖는다. 이것이 우리가 단어만 빌리지 않고 framing 자체를 채택하는 이유다. '
   '여기서 direct 방법은 LP-probing이며 건전하되 변수당 LP 한 번으로 비싸다(표 5). amortized 방법은 MarginalNet으로, '
   '단일 forward pass에 약 20배 저렴하다. 비싼 dataset 요구는 우리의 가장 강한 제약으로 나타난다: exact marginal label은 '
-  '𝒮의 전수열거를 필요로 하는데 이는 <i>n</i>≈60을 넘으면 실패한다(§4.1). generalization 한계는 near-unique 영역에서 '
+  '<i>S</i>의 전수열거를 필요로 하는데 이는 <i>n</i>≈60을 넘으면 실패한다(§4.1). generalization 한계는 near-unique 영역에서 '
   '18~20%p 잔차로 나타난다(§4.3). 그리고 hybrid 배치가 바로 우리의 설계 원칙이다: network는 branching을 '
   '<b>안내</b>하되(오류의 대가는 backtracking), 변수 <b>확정</b>은 건전한 deduction만이 한다(오류의 대가가 정확성일 곳).', body_s)
 P('본 보고서가 그 문헌에 더하는 것은 <b>빠져 있던 분모</b>다. amortization은 보통 학습된 predictor가 실무적으로 충분히 '
@@ -267,25 +275,25 @@ P('방법은 세 부분으로 이뤄진다: 달성 가능한 것을 규명하는
   '투입하는 통합(§3.6~3.7).', body_s)
 
 H2('3.2 Ceiling 측정')
-P('(<i>A</i>,<b>b</b>)가 주어지면 CP-SAT의 all-solutions 모드로 𝒮를 전수열거하고 exact marginal을 계산한다. '
+P('(<i>A</i>,<b>b</b>)가 주어지면 CP-SAT의 all-solutions 모드로 <i>S</i>를 전수열거하고 exact marginal을 계산한다. '
   'per-variable 정확도의 Bayes ceiling은 ceil(<i>A</i>,<b>b</b>) = (1/<i>n</i>)·Σ<sub><i>j</i></sub> '
   'max(<i>p<sub>j</sub></i>, 1−<i>p<sub>j</sub></i>) 이다. 어떤 결정론적 predictor <i>f</i>(<i>A</i>,<b>b</b>)도 '
   '이를 넘을 수 없다: (<i>A</i>,<b>b</b>)를 공유하는 인스턴스는 <i>f</i>에게 구분 불가능하므로, 변수별로 가능한 최선은 '
   '살아남은 해들 중 다수값이다.', body_s)
 P('<b>틀리기 쉬운 정합성 조건.</b> 열거는 <b>완료됐을 때만</b> 유효하다. CP-SAT는 탐색이 소진되면 '
   'OPTIMAL을, 열거할 것이 없으면 INFEASIBLE을, 이미 해를 모은 탐색이 시간제한으로 중단되면 FEASIBLE을 반환한다. '
-  'FEASIBLE을 완료로 취급하면 잘린 𝒮가 조용히 대입되어 그로부터 계산된 모든 marginal이 편향된다. '
-  '우리는 이 버그를 겪었다: <i>n</i>=100에서 |𝒮|가 측정 가능한 것처럼(중앙값 688과 2) 보이게 만들었는데, '
+  'FEASIBLE을 완료로 취급하면 잘린 <i>S</i>가 조용히 대입되어 그로부터 계산된 모든 marginal이 편향된다. '
+  '우리는 이 버그를 겪었다: <i>n</i>=100에서 |<i>S</i>|가 측정 가능한 것처럼(중앙값 688과 2) 보이게 만들었는데, '
   '실제로는 <i>n</i>=100에서 어떤 열거도 2분 내에 끝나지 않는다. 증상은 평균 소요시간이 시간제한과 정확히 같다는 것이었다. '
   'OPTIMAL과 INFEASIBLE만 인정하며, 시간 초과한 인스턴스는 평균에 섞지 않고 폐기한다.', body_s)
 
 H2('3.3 학습 target: planted sample이 아니라 exact posterior')
 P('이전의 모든 사이클은 planted solution에 대해, 즉 <i>x</i>*<sub><i>j</i></sub>∈{0,1}을 label로 학습했다. '
-  '|𝒮|>1이면 이는 posterior<b>로부터의 sample</b>이지 posterior가 아니다: 10×25에서 |𝒮|의 중앙값은 23이고, '
+  '|<i>S</i>|>1이면 이는 posterior<b>로부터의 sample</b>이지 posterior가 아니다: 10×25에서 |<i>S</i>|의 중앙값은 23이고, '
   'Bayes-optimal 예측조차 <b>x</b>*와 66%만 일치한다. 따라서 <b>x</b>*로 학습하는 것은 약 34%의 label noise로 '
   '학습하는 것이며, 각 인스턴스를 사실상 한 번만 보므로 그 noise는 평균화될 기회가 없다. '
   '우리는 대신 <i>p<sub>j</sub></i>에 직접 학습한다. Bernoulli(<i>p<sub>j</sub></i>) target에 대한 cross-entropy이며, '
-  '정확히 <i>p̂<sub>j</sub></i>=<i>p<sub>j</sub></i>에서 최소화된다.', body_s)
+  '정확히 <i>p</i><super>^</super><sub><i>j</i></sub>=<i>p<sub>j</sub></i>에서 최소화된다.', body_s)
 
 H2('3.4 Conditioning은 reduction과 같다')
 P('tree 내부 예측을 값싸게 구현할 수 있게 만드는 단계는 하나의 항등식이다. 변수 집합 <i>F</i>를 값 <b>v</b>로 '
@@ -303,7 +311,7 @@ P('instance는 <i>n</i>개 variable node와 <i>m</i>개 constraint node를 갖�
   'bipartite graph다. variable feature는 LP relaxation 값, column degree, fractionality 3개이고, '
   'constraint feature는 tightness, scaled row size, LP residual 3개다. 둘 다 64차원으로 embedding되고 '
   'graph attention을 쓰는 message passing 4라운드(variable→constraint, constraint→variable, 각각 LayerNorm+residual)로 '
-  '정련된다. 2층 head가 변수당 logit 하나를 내어 <i>p̂<sub>j</sub></i>=σ(<i>z<sub>j</sub></i>)를 준다. '
+  '정련된다. 2층 head가 변수당 logit 하나를 내어 <i>p</i><super>^</super><sub><i>j</i></sub>=σ(<i>z<sub>j</sub></i>)를 준다. '
   '이 network를 <b>MarginalNet</b>이라 부른다.', body_s)
 P('parameter가 <i>m</i>이나 <i>n</i>이 아니라 feature 차원에만 의존하므로 하나의 weight가 임의의 instance 크기에 '
   '적용된다 — §4.7 transfer 실험의 구조적 전제다.', body_s)
@@ -314,7 +322,7 @@ P('<b>이전 network와의 의도적 대비.</b> 본 프로젝트의 기존 모�
 
 H2('3.6 Predictor의 사용: commitment가 아니라 guidance')
 P('MarginalNet은 증명이 아니라 확률을 낸다. 따라서 틀린 답의 대가가 정확성이 아니라 시간인 곳에만 쓴다. '
-  '구체적으로 branching은 |<i>p̂<sub>j</sub></i>−1/2|가 최대인 변수를 고르고 [<i>p̂</i>≥1/2] 값을 먼저 시도한다; '
+  '구체적으로 branching은 |<i>p</i><super>^</super><sub><i>j</i></sub>−1/2|가 최대인 변수를 고르고 [<i>p</i><super>^</super>≥1/2] 값을 먼저 시도한다; '
   'search는 complete하게 유지되고 실수의 대가는 backtracking이다. 변수의 <b>확정</b>은 건전한 deduction만이 한다 — '
   'propagation, 또는 반대값 배정이 relaxation조차 infeasible하게 만들 때 <i>x<sub>j</sub></i>를 고정하는 LP-probing이다. '
   '이 분업은 §4.5의 비용-건전성 측정에서 직접 따라 나온다.', body_s)
@@ -335,19 +343,19 @@ H2('4.1 인스턴스, 그리고 solution multiplicity 통제')
 P('인스턴스는 gen_hard_feasible(<i>m</i>,<i>n</i>,rng,<i>K</i>)로 생성한다. 밀도 1/2의 무작위 0/1 행렬 <i>A</i>에 대해 '
   '<i>K</i>=20개의 후보 해를 심고 각각 <b>b</b>=<i>A</i><b>x</b>를 계산한 뒤, <b>vertex spread</b>가 최대인 것을 채택한다. '
   '이는 relaxation polytope을 직접 키우며, market-split 인스턴스를 어렵게 만드는 메커니즘이다(§2.1). uniqueness는 강제하지 않는다.', body_s)
-P('<b>통제 변수로서의 |𝒮|.</b> solution multiplicity는 과제의 난이도만이 아니라 <b>성격</b>을 바꾼다: |𝒮|=1이면 '
-  '모든 변수가 논리적으로 결정되어 잘 예측한다는 것이 곧 instance를 푸는 것이지만, |𝒮|=23이면 많은 변수가 진정으로 '
-  '미결정이고 과제는 부드러운 posterior를 추정하는 것이 된다. 따라서 |𝒮|를 통제하지 않고 크기를 비교하면 크기와 과제 정체성이 '
-  '교락된다. 고정된 <i>n</i>에서 <i>m</i>이 오르면 |𝒮|가 줄어들므로, 크기마다 <i>m</i>을 골라 |𝒮|를 맞춘다.', body_s)
-TBL([['크기', '<i>m</i>', '<i>m/n</i>', '|𝒮| 중앙값', 'root ceiling', 'conditional ceiling'],
+P('<b>통제 변수로서의 |<i>S</i>|.</b> solution multiplicity는 과제의 난이도만이 아니라 <b>성격</b>을 바꾼다: |<i>S</i>|=1이면 '
+  '모든 변수가 논리적으로 결정되어 잘 예측한다는 것이 곧 instance를 푸는 것이지만, |<i>S</i>|=23이면 많은 변수가 진정으로 '
+  '미결정이고 과제는 부드러운 posterior를 추정하는 것이 된다. 따라서 |<i>S</i>|를 통제하지 않고 크기를 비교하면 크기와 과제 정체성이 '
+  '교락된다. 고정된 <i>n</i>에서 <i>m</i>이 오르면 |<i>S</i>|가 줄어들므로, 크기마다 <i>m</i>을 골라 |<i>S</i>|를 맞춘다.', body_s)
+TBL([['크기', '<i>m</i>', '<i>m/n</i>', '|<i>S</i>| 중앙값', 'root ceiling', 'conditional ceiling'],
      ['10×25', '10', '0.40', '23', '70.4%', '87.0%'],
      ['18×50', '18', '0.36', '19', '71.3%', '87.2%'],
      ['21×60', '21', '0.35', '10', '—', '—']],
     [2.6*cm, 1.5*cm, 1.6*cm, 2.4*cm, 2.8*cm, 3.6*cm],
     '표 1. solution multiplicity를 맞춘 크기들. ceiling이 1%p 이내로 일치하므로 크기만이 변하는 유일한 변수다. '
     '이전에는 같은 비교가 conditional ceiling 87.4% 대 98.6%에서 수행됐다.')
-P('<b>그 대가, 그리고 한계.</b> |𝒮|를 맞추면 <i>m/n</i>이 변한다(0.40→0.35); 고정된 <i>n</i>에서 둘을 동시에 유지할 수는 '
-  '없고, 과제 정체성을 결정하는 |𝒮|를 우선했다. 통제에는 명확한 한계도 있다. <i>n</i>=60에서 |𝒮| 중앙값은 <i>m</i>에 따라 '
+P('<b>그 대가, 그리고 한계.</b> |<i>S</i>|를 맞추면 <i>m/n</i>이 변한다(0.40→0.35); 고정된 <i>n</i>에서 둘을 동시에 유지할 수는 '
+  '없고, 과제 정체성을 결정하는 |<i>S</i>|를 우선했다. 통제에는 명확한 한계도 있다. <i>n</i>=60에서 |<i>S</i>| 중앙값은 <i>m</i>에 따라 '
   '급격히 계단을 이룬다 — <i>m</i>=20에서 42, <i>m</i>=21에서 12, <i>m</i>=22에서 2 — 따라서 <i>m</i>=21이 사용 가능한 '
   '최선의 정수이며, 실제 생성된 test set은 중앙값 10에 27/30이 검증됐다. <i>n</i>=70에서는 적절한 multiplicity를 주는 '
   '<i>m</i>에서 열거가 하나도 완료되지 않았다(<i>m</i>=23에서 0/10). <i>n</i>=100에서는 실패가 더 근본적이다: '
@@ -356,7 +364,7 @@ P('<b>그 대가, 그리고 한계.</b> |𝒮|를 맞추면 <i>m/n</i>이 변한
   '8~12%로 붕괴한 이유를 사후적으로 설명한다.', body_s)
 
 H2('4.2 Bayes ceiling과 모델이 얼마나 근접하는가')
-P('10×25 인스턴스에 대해 𝒮를 전수열거하고(중앙값 |𝒮|=24, 각 1초 미만), 분리된 pool의 1,500개 인스턴스로 MarginalNet을 '
+P('10×25 인스턴스에 대해 <i>S</i>를 전수열거하고(중앙값 |<i>S</i>|=24, 각 1초 미만), 분리된 pool의 1,500개 인스턴스로 MarginalNet을 '
   '학습한 뒤, 열거가 완료된 held-out 400개에서 평가했다.', body_s)
 TBL([['Predictor', '전체 변수 정확도', 'top-3', 'top-5', 'marginal과의 <i>L</i><sub>1</sub>'],
      ['<b>Bayes ceiling</b>', '<b>69.9%</b>', '<b>93.1%</b>', '<b>90.5%</b>', '0.0000'],
@@ -365,7 +373,7 @@ TBL([['Predictor', '전체 변수 정확도', 'top-3', 'top-5', 'marginal과의 
      ['기존 multi-head GNN', '60.7%', '72.0%', '69.5%', '0.1813'],
      ['LP relaxation', '60.6%', '64.5%', '64.1%', '0.3213']],
     [5.4*cm, 3.2*cm, 2.0*cm, 2.0*cm, 3.4*cm],
-    '표 2. held-out 10×25, 𝒮가 전수열거된 400개 인스턴스.')
+    '표 2. held-out 10×25, <i>S</i>가 전수열거된 400개 인스턴스.')
 P('세 가지로 읽힌다. <b>(i) signal은 실재하지만 작다</b>: 69.9%는 우연을 훨씬 상회해 "정보 없음"을 반박하지만, '
   '단독으로 쓰기에는 한참 모자란다 — 0.85<sup>5</sup>≈44%이므로 top-5 정확도조차 5개 변수의 joint commitment를 '
   '신뢰할 수 있게 만들지 못한다. <b>(ii) 작은 전용 모델이 그것을 거의 소진한다</b>: MarginalNet은 전체에서 1.9%p, '
@@ -376,9 +384,9 @@ P('세 가지로 읽힌다. <b>(i) signal은 실재하지만 작다</b>: 69.9%�
   '주원인은 아니었다.', body_s)
 
 H2('4.3 Ceiling sweep: 세 구간, 그리고 크게 이기는 구간의 부재')
-P('<i>n</i>=25를 고정하고 <i>m</i>을 올리면 |𝒮|가 줄고 ceiling이 오른다. 각 <i>m</i>에서 동일한 모델을 학습해 '
+P('<i>n</i>=25를 고정하고 <i>m</i>을 올리면 |<i>S</i>|가 줄고 ceiling이 오른다. 각 <i>m</i>에서 동일한 모델을 학습해 '
   '정확도가 따라 오르는지 묻는다.', body_s)
-TBL([['<i>m</i>', '|𝒮| 중앙값', 'unique 비율', 'ceiling', 'MarginalNet', '격차', 'LP'],
+TBL([['<i>m</i>', '|<i>S</i>| 중앙값', 'unique 비율', 'ceiling', 'MarginalNet', '격차', 'LP'],
      ['10', '24', '0%', '70.5%', '68.5%', '<b>1.9</b>', '61.2%'],
      ['14', '1', '76%', '96.0%', '76.5%', '<b>19.6</b>', '71.9%'],
      ['16', '1', '97%', '99.2%', '81.2%', '<b>17.9</b>', '78.4%'],
@@ -396,7 +404,7 @@ P('<i>m</i>=10 — 우리 hard 계열 — 에서는 모델이 ceiling을 포화�
 H2('4.4 Tree 내부: 정보가 실제로 있는 곳')
 P('root ceiling 70.5%는 one-shot 예측을 제한하지 search를 제한하지 않는다. §3.4의 항등식을 써서, 실제 해에서 취한 '
   'prefix를 따라 각 depth <i>d</i>마다 conditional ceiling과 unit propagation이 이미 강제하는 비율을 함께 측정했다.', body_s)
-TBL([['depth', '살아남은 |𝒮|', 'conditional ceiling', 'propagation이 강제', 'MarginalNet'],
+TBL([['depth', '살아남은 |<i>S</i>|', 'conditional ceiling', 'propagation이 강제', 'MarginalNet'],
      ['0', '25.2', '70.5%', '0.0%', '67.9%'],
      ['4', '4.1', '82.2%', '0.4%', '73.2%'],
      ['7', '1.9', '92.6%', '4.1%', '80.4%'],
@@ -465,7 +473,7 @@ P('trade-off가 명시적이다. lp-probe는 압도적으로 작은 tree를 만�
   '<b>node 수와 wall-clock이 이 방법들을 정반대 순서로 세운다</b>. 따라서 branching heuristic을 tree 크기만으로 평가하는 '
   '통상적 관행은 여기서 결론을 뒤집는다.', body_s)
 
-H2('4.7 |𝒮| 통제 하의 크기 transfer')
+H2('4.7 |<i>S</i>| 통제 하의 크기 transfer')
 P('전체 요인설계는 네 transfer 조건과 AHL 스위치를 교차한다. 조건 A~C는 10×25에서만 학습한 모델을 쓰고, 조건 D와 '
   '<i>n</i>=50 참조는 목표 크기에서 학습한 모델을 써서 transfer 손실을 분리한다.', body_s)
 TBL([['조건', 'AHL', 'arm', '해결율', 'AHL이 해결', '탐색 중앙값', 'node 중앙값'],
@@ -495,7 +503,7 @@ P('<b>Transfer 손실은 측정되지 않는다.</b> 동일한 <i>n</i>=60 test 
   'root 수준 예측 정확도도 같은 이야기를 한다: 10×25 모델이 10×25, 20×50, 40×100에서 각각 67.8%, 69.5%, 69.4%를 기록하며 '
   'LP 대비 우위(+11.0, +7.2, +4.7)를 모든 크기에서 유지한다.', body_s)
 P('<b>이전 사이클이 이를 실패로 읽은 이유.</b> 이전 사이클은 40×100에서 transfer가 실패했다고 결론지었다. 두 교락이 '
-  '그 해석을 만들었다: 여기서 바로잡은 |𝒮| 불일치, 그리고 ablation artifact다 — AHL을 제거하면 <b>어떤</b> arm도 '
+  '그 해석을 만들었다: 여기서 바로잡은 |<i>S</i>| 불일치, 그리고 ablation artifact다 — AHL을 제거하면 <b>어떤</b> arm도 '
   '40×100을 풀지 못하는데(모두 8~12%), 이는 순수 DFS가 <i>n</i>=100을 감당하지 못하기 때문이다; 실제 pipeline은 '
   'AHL을 써서 거기서 54~62%를 푼다. 모든 arm에 공통된 붕괴가 학습 arm의 것으로 귀속됐던 것이다. 표 8처럼 '
   '모든 크기에서 두 AHL 설정을 함께 돌리는 것이 비교를 해석 가능하게 만든다.', body_s)
@@ -558,14 +566,14 @@ P('<b>Ceiling이 낮고, 그것을 낮춘 것은 우리다.</b> vertex spread �
 P('<b>유용한 크기 창이 좁다.</b> 그 아래(<i>n</i>≤25)에서는 lattice reduction이 전부를 닫아 guidance가 무의미하고, '
   '그 위(<i>n</i>=100)에서는 search가 아예 실패해 CP-SAT조차 20초 내에 해를 하나도 찾지 못한다. 우리의 시연은 '
   '<i>n</i>=60에 있으며, 창이 더 확장된다는 것은 보이지 못했다.', body_s)
-P('<b>열거는 평가만이 아니라 방법 자체를 제한한다.</b> exact marginal label은 𝒮의 열거를 요구하는데 이 계열에서는 '
+P('<b>열거는 평가만이 아니라 방법 자체를 제한한다.</b> exact marginal label은 <i>S</i>의 열거를 요구하는데 이 계열에서는 '
   '<i>n</i>≈60을 넘으면 실패한다. transfer는 열거 가능한 크기에서 학습한 모델을 더 큰 크기에 <b>적용</b>할 수 있다는 뜻이지, '
   '거기서 학습 데이터를 만들 수 있다는 뜻이 아니다.', body_s)
 P('<b>통계적 검정력.</b> <i>n</i>=60에서의 해결율 우위는 방향상 3–0이지만 p=0.250이며, 속도 우위(p=0.019)만이 유의하다. '
   '전자를 확정하려면 더 큰 test set이 필요하다.', body_s)
-P('<b>|𝒮| 통제는 근사적이다.</b> 중앙값이 23, 19, 10이며, <i>n</i>=60에서는 연속한 정수 <i>m</i>에 대해 multiplicity가 '
-  '42→12→2로 계단을 이루므로 더 정밀한 matching이 불가능하다. test 인스턴스 30개 중 3개는 |𝒮|가 미검증이다. '
-  '|𝒮|를 맞추는 것은 <i>m/n</i>을 0.40에서 0.35로 이동시키기도 한다.', body_s)
+P('<b>|<i>S</i>| 통제는 근사적이다.</b> 중앙값이 23, 19, 10이며, <i>n</i>=60에서는 연속한 정수 <i>m</i>에 대해 multiplicity가 '
+  '42→12→2로 계단을 이루므로 더 정밀한 matching이 불가능하다. test 인스턴스 30개 중 3개는 |<i>S</i>|가 미검증이다. '
+  '|<i>S</i>|를 맞추는 것은 <i>m/n</i>을 0.40에서 0.35로 이동시키기도 한다.', body_s)
 P('<b>단일 응용 영역.</b> 모든 결과가 하나의 응용에서 나온 하나의 인스턴스 계열에 관한 것이다. amortization framing이 '
   '다른 constraint 계열로 전이되는지는 검증되지 않았다.', body_s)
 
@@ -605,7 +613,7 @@ H1('재현성')
 P('코드는 proposed_src/ 아래에 사이클별로 정리되어 있으며, 각 폴더의 ROLES.txt가 모든 파일과 그 사이클의 결과를 기술한다; '
   'util/은 사이클 간 공용 모듈을 담는다. 스크립트는 각자의 폴더에서 실행한다. 전체 사이클은 '
   '<font face="Courier">cd proposed_src/v22_transfer &amp;&amp; bash run_v22_cd.sh</font> 로 재현되며, '
-  '이는 |𝒮|를 맞춘 test set을 만들고 조건 C와 D를 두 AHL 설정 모두에서 실행한 뒤 교차 비교 리포트를 출력한다. '
+  '이는 |<i>S</i>|를 맞춘 test set을 만들고 조건 C와 D를 두 AHL 설정 모두에서 실행한 뒤 교차 비교 리포트를 출력한다. '
   '저장소는 코드와 문서만 추적한다: 가중치와 인스턴스 데이터는 저장소를 가볍게 유지하기 위해 제외했으며, '
   '모든 산출물은 docs/version.md 부록 A에 명시된 스크립트로 재생성된다. 생성기는 모두 seed가 고정되어 있으므로 '
   '재생성된 데이터는 본 보고서의 수치를 만든 것과 일치한다. guidance 모델은 runs/v22/model_n25/conditional.pt(96KB)와 '
@@ -630,7 +638,7 @@ for r in [
  'Ohrimenko, O., Stuckey, P. J., and Codish, M. (2009). Propagation via lazy clause generation. <i>Constraints</i>, 14(3):357–391.',
  'Schnorr, C. P. and Euchner, M. (1994). Lattice basis reduction: Improved practical algorithms and solving subset sum problems. <i>Mathematical Programming</i>, 66(1–3):181–199.',
  'Selsam, D., Lamm, M., Bünz, B., Liang, P., de Moura, L., and Dill, D. L. (2019). Learning a SAT solver from single-bit supervision. In <i>ICLR</i>.',
- 'Veličković, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., and Bengio, Y. (2018). Graph attention networks. In <i>ICLR</i>.',
+ 'Velickovic, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., and Bengio, Y. (2018). Graph attention networks. In <i>ICLR</i>.',
  'Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2019). How powerful are graph neural networks? In <i>ICLR</i>.']:
 	P(r, ref_s)
 
