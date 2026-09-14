@@ -75,16 +75,18 @@ def main():
 			if forced.sum() == 0:
 				continue
 			forced_val = (p_true > 0.5).astype(np.int64)
+			# Feature extraction solves the node's LP relaxation, and the network cannot
+			# run without it, so it belongs inside the timer. Excluding it (as an earlier
+			# version did) compares the network's forward pass against probing's full
+			# cost and overstates the ratio roughly threefold.
+			t0 = time.perf_counter()
 			f = featurize(r, device)
 			if f is None:
 				continue
-			nfree.append(A.shape[1])
-
-			# the network answers every variable in one pass
-			t0 = time.perf_counter()
 			with torch.no_grad():
 				p = torch.sigmoid(model(f['xv'], f['xc'], f['ev2c'], f['ec2v'])).numpy()
 			t_model.append(time.perf_counter() - t0)
+			nfree.append(A.shape[1])
 			a_model.append(((p >= 0.5).astype(np.int64)[forced] == x_gt[forced]).mean())
 
 			# probing pays one LP solve per variable to reach the same coverage

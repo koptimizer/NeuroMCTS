@@ -26,6 +26,7 @@ import argparse
 import json
 import math
 import time
+import zlib
 from pathlib import Path
 from multiprocessing import Process
 import numpy as np
@@ -51,7 +52,7 @@ def ahl_stage(A, b, block, tries, seed):
 	return None, time.time() - t0
 
 
-def _worker(arm, ahl_on, inst_path, out_path, ckpt, time_limit, ahl_share, block, tries):
+def _worker(arm, ahl_on, inst_path, out_path, ckpt, time_limit, ahl_share, block, tries, seed_off=0):
 	from v15_train_marginal import MarginalNet
 	device = torch.device('cpu')
 	model = None
@@ -65,7 +66,10 @@ def _worker(arm, ahl_on, inst_path, out_path, ckpt, time_limit, ahl_share, block
 	A = np.array(d['A'], dtype=np.int64)
 	b = np.array(d['b'], dtype=np.int64)
 	gt = bool(d.get('feasible', True))
-	seed = abs(hash(Path(inst_path).name)) % (2 ** 31)
+	# zlib.crc32 rather than hash(): Python randomizes string hashing per process
+	# (PYTHONHASHSEED), so hash() would silently reseed every run and make results
+	# irreproducible. seed_off selects an independent repetition of the same experiment.
+	seed = (zlib.crc32(Path(inst_path).name.encode()) + seed_off * 1_000_003) % (2 ** 31)
 
 	solved_by, ahl_sec = None, 0.0
 	if ahl_on:
@@ -87,7 +91,7 @@ def _worker(arm, ahl_on, inst_path, out_path, ckpt, time_limit, ahl_share, block
 	           open(out_path, 'w'))
 
 
-def run_arm(arm, ahl_on, data_dir, out_dir, ckpt, time_limit, ahl_share, block, tries, jobs):
+def run_arm(arm, ahl_on, data_dir, out_dir, ckpt, time_limit, ahl_share, block, tries, jobs, seed_off=0):
 	files = sorted(Path(data_dir).glob('*.json'))
 	out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
 	pending, running, done = list(files), [], 0
@@ -97,7 +101,7 @@ def run_arm(arm, ahl_on, data_dir, out_dir, ckpt, time_limit, ahl_share, block, 
 			fp = pending.pop(0)
 			op = out_dir / (fp.stem + '_r.json')
 			p = Process(target=_worker, args=(arm, ahl_on, str(fp), str(op), ckpt,
-			                                   time_limit, ahl_share, block, tries))
+			                                   time_limit, ahl_share, block, tries, seed_off))
 			p.start(); running.append(dict(p=p, fp=fp, op=op, s=time.time()))
 		time.sleep(1)
 		still = []
@@ -152,6 +156,7 @@ def main():
 	ap.add_argument('--ahl', nargs='+', default=['off', 'on'])
 	ap.add_argument('--jobs', type=int, default=6)
 	ap.add_argument('--out_root', default='../../runs/v22')
+	ap.add_argument('--seed_offset', type=int, default=0)
 	a = ap.parse_args()
 
 	res = {}
@@ -160,7 +165,7 @@ def main():
 		for arm in a.arms:
 			od = f"{a.out_root}/{a.tag}_ahl{mode}_{arm}"
 			print(f"  === {a.tag} ahl={mode} {arm} ===", flush=True)
-			run_arm(arm, on, a.data_dir, od, a.ckpt, a.time_limit, 0.5, a.block, a.tries, a.jobs)
+			run_arm(arm, on, a.data_dir, od, a.ckpt, a.time_limit, 0.5, a.block, a.tries, a.jobs, a.seed_offset)
 			res[(mode, arm)] = summarize(od)
 
 	print("\n" + "=" * 92)
