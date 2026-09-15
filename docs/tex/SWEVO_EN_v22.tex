@@ -149,7 +149,10 @@ p_j(F,\mathbf{v}) \;=\; \frac{|\{\mathbf{x}\in\SOL(F,\mathbf{v}) : x_j=1\}|}{|\S
 
 The deployed solver is a cascade of a lattice stage and a guided complete search:
 \begin{equation}
-\text{propagation} \;\to\; \text{LP infeasibility rule} \;\to\; \text{kernel pump} \;\to\; \text{AHL/BKZ} \;\to\; \text{guided backtracking search}.
+\begin{split}
+\text{propagation} \;\to\; \text{LP infeasibility rule} \;\to\; \text{kernel pump}\\
+\;\to\; \text{AHL/BKZ} \;\to\; \text{guided backtracking search}.
+\end{split}
 \end{equation}
 The first three stages are cheap and sound. AHL/BKZ attempts a certificate-producing lattice reduction with a size-dependent block parameter; when it succeeds it returns a verified solution outright. The learned component appears only in the final stage, and only in its branching decisions. This placement matters for the evaluation: because the lattice stage is independent of the branching heuristic, every heuristic under comparison receives exactly the same residual set of instances, so conditioning on that residual describes the algorithm rather than selecting favourable cases.
 
