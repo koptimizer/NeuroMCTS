@@ -1213,3 +1213,29 @@ Gurobi incremental LP(bound만 변경, 부모 basis에서 재최적화)로 양�
 **§4.9(MLP ablation)** 신설. 영문 16→19쪽, 국문 14→16쪽.
 이전 측정 오류(19~23배)를 숨기지 않고 §4.5와 결론에 명시 — "오류가 두 방법의 계산 내용이 아니라
 전적으로 계측 방식에서 비롯됐다"는 진단과 함께.
+
+### v23 2차 검토 (2026-09-15): 신규 지적 6건과 조치
+
+1차(비용 측정·CP-SAT 부재·시드·MLP) 이후 논문을 다시 전수 검토. 신규 발견:
+
+| # | 지적 | 확인 방법 | 조치 |
+|---|---|---|---|
+| 8 | 표 2·4·5가 탐색 실험과 **다른 체크포인트**(v17) 수치 | 파일 출처 대조 | `model_n25`로 전부 재생성. 결론 유지(ALL 87.2/80.0/76.5) |
+| 9 | "in-tree > root 5.3~11.5%p"가 **3중 교락**(풀·라벨·상태분포) | 코드 확인 | 동일 풀·soft 라벨·1,760 상태로 통제 비교 → **79.8 vs 75.4, root는 LP(76.4)보다 낮음** |
+| 1/11 | 추론의 **80.2%가 학습 n_c 범위 밖** ([13,25] vs [5,60]) | 탐색 계측 72,844회 | 한계 명시 + §3.5에 범위 기재 |
+| 1b/10 | "depth 6~8이 중요" 서사가 배포 크기에서 **불성립**: 이득은 트리 상단(n_c 50~60, +4.4~5.3%p), 학습 범위 안(n_c 20~25)은 LP와 **동일**(상관 1.000) | 21×60 in-tree 상태 열거 대조 | 신설 절 "Where the transferred network helps": 결정 요인은 depth가 아니라 **제약 밀도 m/n_c** |
+| 7/12 | "구현의 산물" 단정 미검증 (C++ 구현 **없음**) | 저장소 검색, 비용 분해 | LP 4.34→0.08ms(warm)이지만 forward 1.88ms가 잔여 92% → "회복 가능함을 보이지 않았다"로 약화 |
+| 2 | validation split 없음 | 코드 확인 | 튜닝 안 했음(오염 없음) 명시 + 한계 |
+| 5/13 | 표 6 Gurobi 의존 미기재; zero-objective LP는 임의 vertex | — | 프로토콜에 명기 |
+| 6 | cascade에 random arm 없음 | — | 체인에 `Crand` 추가 (실행 중) |
+
+**warm-start 탐색 구현** (`v23_ablation/v23_warm_search.py`, `v23_cascade_warm.py`): 원본 변수 전체에
+대한 relaxation 하나를 유지하고 노드를 bound 변경으로 표현. 구현 중 **gurobipy 지연 update 버그**를
+잡음 — probe 후 bound 복원이 다음 `update()`까지 미적용되어 같은 변수를 연속 probe하면 고정이
+누적(20개 주장 중 17개 오류). `update()` 삽입 후 ground truth 대조 0 오류. 표 6의 warm-start 수치는
+변수당 probe 1회라 영향 없음을 확인.
+스모크(18×50): lp 15.64→1.84s(8.5×), model 2.84→1.37s(2.1×) — **LP baseline이 재구성 오버헤드로
+더 큰 불이익을 받고 있었음**. 공정한 backend에서 model 우위는 축소될 것(3-seed 재실행 진행 중).
+
+**Elsevier 양식 전환**: `elsarticle` 클래스(CTAN에서 생성), `preprint` 옵션, `elsarticle-num`.
+→ `docs/tex/LPneuroBLS_paper_els.tex`

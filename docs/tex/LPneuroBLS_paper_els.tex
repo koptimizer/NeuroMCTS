@@ -1,0 +1,798 @@
+\documentclass[preprint,12pt]{elsarticle}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{lineno}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\floatstyle{ruled}
+\newfloat{algorithm}{htbp}{loa}
+\floatname{algorithm}{Algorithm}
+\graphicspath{{../../figures/}}
+\newtheorem{proposition}{Proposition}
+\newcommand{\SOL}{\mathcal{S}}
+\newcommand{\FORCED}{\textsc{det}}
+\newcommand{\FREE}{\textsc{open}}
+\journal{European Journal of Operational Research}
+
+\begin{document}
+\begin{frontmatter}
+
+\title{Amortized Deduction for Binary Linear Systems:\\
+Learning Branching Guidance from Exact Conditional Marginals}
+
+\author[1]{neuroMCTS project}
+\affiliation[1]{organization={Korea University},
+                city={Seoul},
+                country={Republic of Korea}}
+
+\begin{abstract}
+A binary linear system (BLS) asks for $\mathbf{x}\in\{0,1\}^n$ satisfying $A\mathbf{x}=\mathbf{b}$ with $A\in\{0,1\}^{m\times n}$, a formulation that arises in laser-based non-destructive testing, where a binary occupancy image is reconstructed from integer projections. On market-split-style instances the linear relaxation is deliberately uninformative, so backtracking search spends most of its effort on branching decisions that a cheap heuristic cannot make well. We present a learned branching heuristic for this setting and an exact procedure for training it.
+
+The method rests on two observations. First, conditioning a BLS on a partial assignment is \emph{identical} to substituting the assignment out and obtaining a smaller BLS; a single network therefore predicts at the root and at every interior node without architectural change, and training states are ordinary instances of reduced size. Second, on instances small enough to enumerate, the exact conditional marginal $p_j=\Pr[x_j=1\mid A,\mathbf{b}]$ is computable, and it partitions the free variables of a node into those every surviving solution agrees on --- where branching the other way empties the subtree and forces a backtrack --- and those solutions disagree on, where either branch still reaches a solution. Only the first kind carries cost. This partition supplies both an exact training target and a criterion for which predictions matter: at the root only $6.3\%$ of variables are of the first kind, but by depth $8$ the share is $89.0\%$, which is where prediction accuracy begins converting into search cost.
+
+We train a $21.8$K-parameter bipartite graph network on these targets and use it for branching only, never for fixing variables, since it produces a probability rather than a proof. Against LP-probing --- the sound procedure that detects the same variables, at one linear program each --- the network needs a single relaxation and one forward pass, so their cost ratio grows linearly in instance size: $1.7\times$ at $n=25$, $7.2\times$ at $n=60$, $17.8\times$ at $n=150$, measured with a warm-started backend on both sides. Under a matched wall-clock budget, replicated over three seeds, the resulting search is $3.29\times$ faster in median than LP-guided branching at $21\times60$ (sign test $p=0.019$ per seed), expands $6.2\times$ fewer nodes, and solves $30/30$ against $25/30$ in every replicate; within the full pipeline, where lattice reduction runs first, guidance closes every residual instance in all three seeds ($50/50$) against $45/50$, lifting the end-to-end rate from $94.4\pm5.1\%$ to $100\pm0.0\%$. Controlling the number of solutions across sizes, we find no measurable transfer penalty: a network trained only at $10\times25$ is statistically indistinguishable from one trained at the evaluation size.
+
+We also report what the method does not achieve. CP-SAT solves the same instances $41$--$62\times$ faster at every size tested, and our system does not compete with it; decomposing that gap shows our branching produces $1.6\times$ \emph{fewer} nodes but processes them $78\times$ more slowly, which places the deficit in per-node cost rather than in branching quality, though we do not show that it is recoverable. And the cost advantage over probing, while asymptotically real, is only $1.3$--$1.7\times$ at the depths where prediction matters most on our instances, where probing additionally offers proofs rather than predictions. The contribution we claim is therefore methodological: exact conditional posteriors are an obtainable and well-posed supervision signal for branching, in-tree states are a better training distribution than root states --- a root-trained network is worse than relaxation rounding when deployed in the tree, an in-tree-trained one is better by $3.4$ points --- and the resulting heuristic transfers across instance size. Code, generators, exact-marginal labels and per-instance results are released.
+\end{abstract}
+
+\begin{keyword}
+Binary linear systems \sep Learning to branch \sep Amortized optimization \sep Exact conditional marginals \sep Market split \sep Graph neural networks
+\end{keyword}
+
+\end{frontmatter}
+
+\linenumbers
+
+\section{Introduction}
+\label{sec:intro}
+
+\subsection{Problem}
+
+Let $A\in\{0,1\}^{m\times n}$ and $\mathbf{b}\in\mathbb{Z}^m$. A \emph{binary linear system} (BLS) is the feasibility problem
+\begin{equation}
+\text{find } \mathbf{x}\in\{0,1\}^n \quad\text{such that}\quad A\mathbf{x}=\mathbf{b},
+\label{eq:bls}
+\end{equation}
+whose solution set we write $\SOL=\{\mathbf{x}\in\{0,1\}^n : A\mathbf{x}=\mathbf{b}\}$. Each row is a cardinality constraint $\sum_{j}a_{ij}x_j=b_i$ stating how many cells of a designated subset are occupied.
+
+The motivating application is laser-based non-destructive testing. A specimen is scanned along $m$ directions; each scan returns the integer count of absorbing cells along its path, and the task is to reconstruct the binary occupancy image. Two properties of that setting shape the problem formulation. Solutions need not be unique --- several images can be consistent with the same measurements, and recovering \emph{any} member of $\SOL$ solves the physical problem. And measurement noise can perturb $\mathbf{b}$ so that $\SOL=\emptyset$, making a reliable infeasibility verdict as valuable as a solution.
+
+Deciding $\SOL\ne\emptyset$ is NP-complete in general. The instances studied here are drawn from a deliberately hard regime modelled on market-split problems \citep{cornuejols1999market, aardal2000market}, in which the linear relaxation
+\begin{equation}
+\tilde{\SOL} = \{\mathbf{x}\in[0,1]^n : A\mathbf{x}=\mathbf{b}\}
+\end{equation}
+is a large polytope with predominantly fractional vertices. Relaxation-based bounding is therefore weak, and a complete solver must decide where to branch with little guidance from the relaxation --- exactly the decision this paper learns.
+
+\subsection{Where a learned component attaches, and what to train it on}
+
+A complete solver for~\eqref{eq:bls} alternates deduction (constraint propagation, relaxation-based pruning) with a \emph{branching decision}: which free variable to split on, and which value to try first. Deduction is sound and must remain so; branching is a heuristic choice, where an error costs search time but never correctness. This asymmetry makes branching the natural place to attach a learned component, and it is where learning has been most successful in mixed-integer programming \citep{khalil2016learning, gasse2019exact}.
+
+The difficulty is supervision. Two standard answers are available and both are unsatisfactory here. Training against a planted solution $\mathbf{x}^\ast$ treats one member of $\SOL$ as ground truth, which is ill-posed when $|\SOL|>1$: nothing in $(A,\mathbf{b})$ distinguishes the planted solution from any other, so the label is a sample from the posterior rather than the posterior. Imitating an expensive expert, as in strong-branching imitation, requires an expert whose decisions are both informative and affordable to collect; the natural candidate here, LP-probing, costs one linear program per variable per node.
+
+We take a third route, available because these instances have planted solutions and because feasibility can be enumerated at moderate size: compute the \emph{exact conditional posterior} by exhaustive enumeration on small instances, and train against it. Section~\ref{sec:method} shows that this is both tractable and, in a precise sense, the right target --- and that the posterior additionally identifies \emph{which} predictions can affect search at all.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+\item \textbf{A reduction identity that makes in-tree supervision trivial to implement.} Conditioning~\eqref{eq:bls} on a partial assignment yields a smaller BLS with the same structure (Proposition~\ref{prop:reduce}). One architecture, one label generator and one training loop therefore serve the root and every interior node, and a depth-$d$ training state is stored as an ordinary instance on $n-d$ variables.
+
+\item \textbf{A partition of branching decisions by whether they can cost anything.} The exact marginals split a node's free variables into $\FORCED$ (all surviving solutions agree; branching the other way empties the subtree) and $\FREE$ (solutions disagree; either branch reaches a solution). Only $\FORCED$ errors cost a backtrack. We measure the composition: $6.3\%$ $\FORCED$ at the root, rising to $89.0\%$ at depth $8$ (Sections~\ref{sec:exp-ceiling}, \ref{sec:exp-residual}). This locates useful prediction inside the tree rather than at the root and explains why root-level accuracy is a poor objective.
+
+\item \textbf{A cost characterization of the learned heuristic against the sound procedure it approximates.} The network needs one relaxation and one forward pass; LP-probing needs one relaxation per variable. Measured with a warm-started backend on both sides, the ratio scales from $1.7\times$ at $n=25$ to $17.8\times$ at $n=150$ (Section~\ref{sec:exp-cost}). We report this as a scaling law rather than a single figure, and note that at the sizes where our search operates the advantage is modest and probing has the additional merit of soundness.
+
+\item \textbf{End-to-end evaluation under matched wall-clock budgets.} At $21\times60$, replicated over three seeds, the learned guidance is $3.29\times$ faster in median than LP-based branching (sign test $p=0.019$ per seed), expands $6.2\times$ fewer nodes, and solves $30/30$ against $25/30$ within $600$\,s in every replicate (Section~\ref{sec:exp-search}). In the deployed cascade it closes every residual instance in all three seeds, $100\pm0.0\%$ against $94.4\pm5.1\%$ (Section~\ref{sec:exp-cascade}).
+
+\item \textbf{Size transfer with solution multiplicity controlled.} Holding $|\SOL|$ comparable across sizes, a network trained only at $10\times25$ matches one trained at the evaluation size $21\times60$ (faster on $15/30$ instances; total time differing by $0.4\%$), showing the learned quantity is not size-specific (Section~\ref{sec:exp-transfer}).
+\end{enumerate}
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Binary linear systems and market-split hardness}
+
+Problem~\eqref{eq:bls} is a $0/1$ integer feasibility problem and is NP-complete for general $A$. Practical hardness, however, depends on the instance distribution. \citet{cornuejols1999market} introduced the market-split family, in which $m$ agents must divide $n$ items so that every agent's budget is met exactly; with $n\approx 10(m-1)$ these instances defeat branch-and-bound at remarkably small sizes. The mechanism is the integrality gap: the relaxation polytope is large and its vertices are fractional, so bounding prunes little and the search must branch nearly blindly. \citet{aardal2000market} showed that lattice basis reduction attacks the same family far more effectively than branch-and-bound, a result we rely on in Section~\ref{sec:method-cascade}.
+
+Our generator (Section~\ref{sec:exp-instances}) makes this mechanism explicit by maximizing the spread of relaxation vertices, which enlarges $\tilde{\SOL}$ and weakens the relaxation signal by construction.
+
+\subsection{Complete solvers}
+
+\paragraph{Mixed-integer programming.} Branch-and-bound over the linear relaxation, strengthened by presolve and cutting planes, is the standard approach. Its leverage comes from pruning nodes whose relaxation is infeasible or bounded away from the target, which is precisely what the market-split construction removes.
+
+\paragraph{Constraint programming with clause learning.} CP-SAT-style solvers combine constraint propagation with conflict-driven clause learning \citep{marquessilva1999grasp, moskewicz2001chaff} and lazy clause generation \citep{ohrimenko2009propagation}. Their strength on this family comes from a property central to our argument: a search \emph{manufactures} information as it descends. A marginal $\Pr[x_j=1\mid A,\mathbf{b}]$ may be uninformative at the root while $\Pr[x_j=1\mid A,\mathbf{b},x_1{=}1,x_5{=}0]$ is $0$ or $1$. Structure invisible at the root becomes deducible after commitments are made, which is why Section~\ref{sec:method-partition} studies the interior of the tree rather than the root.
+
+\paragraph{Lattice reduction.} An alternative attack embeds~\eqref{eq:bls} in a lattice and searches for short vectors. LLL \citep{lenstra1982factoring} reduces a basis in polynomial time and BKZ \citep{schnorr1994lattice} generalizes it with a block size trading time against basis quality. The Aardal--Hurkens--Lenstra embedding \citep{aardal2000diophantine, aardal2000market} is constructed so that a $0/1$ solution appears directly as a short vector, making reduction a certificate-producing procedure rather than a heuristic. We use it as the first stage of the deployed pipeline.
+
+\subsection{Learning for combinatorial optimization}
+
+\citet{bengio2021machine} survey this field and frame it in terms we adopt: solvers rely on hand-crafted heuristics for decisions that are ``otherwise too expensive to compute or mathematically not well defined,'' and learning is a candidate for making those decisions better. The phrase \emph{too expensive to compute} presumes the decision is computable in principle and asks only about cost, which is the situation we measure in Section~\ref{sec:exp-cost}.
+
+\paragraph{Branching imitation.} The clearest success in this area is imitation of an expensive expert. Strong branching scores candidates by tentatively solving both children's relaxations; it yields small trees and is too slow to run at every node. \citet{gasse2019exact} train a bipartite graph network to imitate it and recover most of the benefit at a fraction of the cost, following \citet{khalil2016learning}. The gain is not new information --- the expert already knew the answer --- but cheap access to it. Our method occupies the same structural position, with two differences: the target is an exact posterior rather than an expert's scores, and the analysis identifies which of the expert's decisions matter.
+
+\paragraph{Direct satisfiability prediction.} Attempts to have a network decide satisfiability end-to-end have a weaker record. NeuroSAT \citep{selsam2019neurosat} classifies satisfiability by message passing over a literal--clause graph and succeeds on small random instances, but \citet{li2023g4satbench} report substantial accuracy collapse under size transfer. \citet{chen2023representing} prove that standard message-passing networks cannot separate certain feasible/infeasible MILP pairs at all, since the pairs are indistinguishable in the Weisfeiler--Lehman hierarchy that bounds such architectures \citep{xu2019powerful}. We therefore do not ask the network for a feasibility verdict; it supplies branching guidance inside a complete search that remains responsible for soundness.
+
+\paragraph{Graph representations.} We use graph attention \citep{velickovic2018graph} over the bipartite variable--constraint graph, the standard encoding for MILP in this literature \citep{gasse2019exact}.
+
+\subsection{Amortized optimization}
+
+The distinction organizing our results predates its use in combinatorial optimization. \citet{gershman2014amortized} introduced \emph{amortized inference}: when many related queries must be answered, solving each from scratch is wasteful and the question becomes how to reuse computation across queries. \citet{amos2023tutorial} develops the same idea as \emph{amortized optimization} --- using learning to predict solutions by exploiting shared structure across similar instances --- and surveys its appearance in variational inference, meta-learning and control. \citet{millidge2022deconfusing} states the trade-off in the form most relevant here: \emph{direct} optimization spends computation on the instance at hand and pays that cost at every invocation, whereas \emph{amortized} optimization converts the problem into supervised learning with cheap inference but requires a corpus of solved instances up front and is bounded by the approximator's generalization; the productive arrangement is hybrid, with amortized predictions steering a direct optimizer.
+
+Our system instantiates that hybrid precisely. The direct method is LP-probing, sound and costly. The amortized method is the network, cheap and unsound. The hybrid rule is that the network steers branching while probing and propagation retain exclusive authority over variable fixing (Section~\ref{sec:method-inference}).
+
+\section{Proposed Method}
+\label{sec:method}
+
+\subsection{Setting and notation}
+
+For a partial assignment fixing variables $F\subseteq\{1,\dots,n\}$ to values $\mathbf{v}\in\{0,1\}^{|F|}$, write
+\begin{equation}
+\SOL(F,\mathbf{v}) = \{\mathbf{x}\in\SOL : \mathbf{x}_F=\mathbf{v}\}
+\end{equation}
+for the solutions consistent with it, and let $K=\{1,\dots,n\}\setminus F$ index the free variables. The \emph{conditional marginal} of a free variable $j\in K$ is
+\begin{equation}
+p_j(F,\mathbf{v}) \;=\; \frac{|\{\mathbf{x}\in\SOL(F,\mathbf{v}) : x_j=1\}|}{|\SOL(F,\mathbf{v})|}.
+\label{eq:condmarg}
+\end{equation}
+
+\subsection{System overview}
+\label{sec:method-cascade}
+
+The deployed solver is a cascade of a lattice stage and a guided complete search:
+\begin{equation}
+\text{propagation} \;\to\; \text{LP infeasibility rule} \;\to\; \text{kernel pump} \;\to\; \text{AHL/BKZ} \;\to\; \text{guided backtracking search}.
+\end{equation}
+The first three stages are cheap and sound. AHL/BKZ attempts a certificate-producing lattice reduction with a size-dependent block parameter; when it succeeds it returns a verified solution outright. The learned component appears only in the final stage, and only in its branching decisions. This placement matters for the evaluation: because the lattice stage is independent of the branching heuristic, every heuristic under comparison receives exactly the same residual set of instances, so conditioning on that residual describes the algorithm rather than selecting favourable cases.
+
+\subsection{Conditioning is reduction}
+\label{sec:method-reduce}
+
+\begin{proposition}
+\label{prop:reduce}
+Let $A_F$ and $A_K$ denote the column submatrices of $A$ indexed by $F$ and $K$. Then
+\begin{equation}
+\SOL(F,\mathbf{v}) \;\cong\; \{\mathbf{y}\in\{0,1\}^{|K|} : A_K\mathbf{y} = \mathbf{b} - A_F\mathbf{v}\},
+\label{eq:reduce}
+\end{equation}
+the bijection being $\mathbf{x}\mapsto\mathbf{x}_K$. Consequently the conditional marginals~\eqref{eq:condmarg} of the original instance are the ordinary marginals of the reduced instance $(A_K,\ \mathbf{b}-A_F\mathbf{v})$.
+\end{proposition}
+
+\begin{proof}
+$A\mathbf{x} = A_F\mathbf{x}_F + A_K\mathbf{x}_K$. Fixing $\mathbf{x}_F=\mathbf{v}$ gives $A\mathbf{x}=\mathbf{b} \iff A_K\mathbf{x}_K = \mathbf{b}-A_F\mathbf{v}$, and $\mathbf{x}\mapsto\mathbf{x}_K$ is a bijection between the two sets since $\mathbf{x}_F$ is determined. The marginal statement follows by counting.
+\end{proof}
+
+The identity is elementary but it is what makes in-tree supervision practical. A depth-$d$ search node is not a special object requiring its own encoding; it is an instance of the same problem on $n-d$ variables. One network, one feature extractor and one label generator therefore cover the whole tree, and training data at depth $d$ is produced by substitution rather than by instrumenting a solver.
+
+Two implementation details preserve correctness. Rows that become all-zero after substitution carry no constraint and are removed; retaining them causes linear-programming backends to reject the model. And the free bound condition $0\le \mathbf{b}-A_F\mathbf{v}\le A_K\mathbf{1}$ is checked before any relaxation is solved, since it detects a large fraction of dead nodes at negligible cost.
+
+\subsection{Which predictions can cost anything}
+\label{sec:method-partition}
+
+At a node with surviving solution set $\SOL(F,\mathbf{v})\ne\emptyset$, partition the free variables by their conditional marginal:
+\begin{equation}
+\FORCED = \{j\in K : p_j\in\{0,1\}\},
+\qquad
+\FREE = \{j\in K : 0<p_j<1\}.
+\end{equation}
+The distinction is operational rather than statistical:
+
+\begin{itemize}
+\item For $j\in\FREE$, both children of a branch on $x_j$ contain solutions. Either choice keeps a solution reachable, so \emph{no branching decision on a $\FREE$ variable can cost anything.}
+\item For $j\in\FORCED$, one child is empty. Branching against the forced value guarantees that the subtree is exhausted without a solution, costing a full backtrack.
+\end{itemize}
+
+This gives the conditional marginal its operational reading. It is not a ``probability of being correct'' about some designated solution, but the \emph{fraction of the surviving solution set retained} by an assignment; and the only errors that matter are those on variables where that fraction is $0$ or $1$.
+
+Two consequences follow, both of which the experiments confirm. First, an aggregate accuracy over all free variables is a poor objective, because it mixes decisions that can cost a backtrack with decisions that cannot; the relevant quantity is accuracy on $\FORCED$. Second, since $|\SOL(F,\mathbf{v})|$ shrinks as the search descends, the $\FORCED$ share grows with depth. This alone does not say \emph{where} a learned predictor is useful, because a $\FORCED$ variable that the relaxation already rounds correctly needs no predictor. The useful region is where $\FORCED$ variables are plentiful \emph{and} the relaxation is weak, and Section~\ref{sec:exp-where} shows that this is governed by constraint density $m/|K|$ rather than by depth as such: on small instances the two coincide, on larger ones they do not.
+
+\subsection{Exact conditional marginals as training targets}
+\label{sec:method-labels}
+
+For instances small enough to enumerate, $\SOL$ is obtained exactly with a constraint solver in all-solutions mode, and~\eqref{eq:condmarg} is computed by counting. Training minimizes the cross-entropy to the resulting Bernoulli targets,
+\begin{equation}
+\mathcal{L} = -\frac{1}{|K|}\sum_{j\in K}\Big[p_j\log\hat{p}_j + (1-p_j)\log(1-\hat{p}_j)\Big],
+\label{eq:loss}
+\end{equation}
+which is minimized exactly at $\hat{p}_j = p_j$. Note that the same loss with a planted solution in place of $p_j$ --- the conventional choice --- is a noisy surrogate whenever $|\SOL|>1$, since the planted solution is one draw from the posterior; on our instances a Bayes-optimal predictor agrees with it only about two thirds of the time.
+
+\paragraph{Enumeration correctness.} A subtlety here is easy to get wrong and silently corrupts every label derived from it. Constraint solvers report distinct statuses for ``search exhausted'' and ``time limit reached with solutions already collected.'' Only the former certifies that $\SOL$ is complete; accepting the latter substitutes a truncated solution set, which biases every marginal computed from it. In our implementation only \texttt{OPTIMAL} and \texttt{INFEASIBLE} are accepted and timed-out instances are discarded rather than averaged in. A useful diagnostic is that mean enumeration time equal to the time limit indicates truncated instances being counted as complete.
+
+\paragraph{Sampling reachable states.} A depth-$d$ training state is built by drawing $d$ uniformly from $\{0,\dots,12\}$, taking a prefix of an LP-confidence variable ordering, and fixing those variables to the values of a randomly chosen \emph{actual solution}. Fixing arbitrary values would produce states with $\SOL(F,\mathbf{v})=\emptyset$; such states are dead nodes that propagation prunes immediately and on which the conditional marginal is undefined, so they are not states a branching heuristic is ever asked about. The depth range is a design choice we did not tune; on $10\times25$ instances it yields training states with $13$--$25$ free variables, and Section~\ref{sec:exp-where} examines what happens when the deployed search queries states outside that range, which at $21\times60$ is most of them.
+
+\subsection{Network}
+\label{sec:method-net}
+
+An instance is encoded as a bipartite graph with $n$ variable nodes, $m$ constraint nodes, and an edge $(j,i)$ whenever $a_{ij}=1$. Let $\tilde{\mathbf{x}}$ be the relaxation solution of the current (reduced) instance and $r_i = \sum_j a_{ij}$ the row sums. Node features are
+\begin{align}
+\text{variable } j:&\quad \big(\tilde{x}_j,\ \deg(j)/m,\ |\tilde{x}_j - \mathrm{round}(\tilde{x}_j)|\big),\\
+\text{constraint } i:&\quad \big(b_i/r_i,\ r_i/n,\ (b_i - A_i\tilde{\mathbf{x}})/r_i\big),
+\end{align}
+i.e.\ relaxation value, column degree and fractionality for variables; tightness, scaled row size and relaxation residual for constraints. All are size-normalized, which is what permits a single parameter set to apply at any $(m,n)$.
+
+Both node types are embedded to $h=64$ dimensions by a linear map and refined by $L=4$ rounds of bidirectional message passing with graph attention \citep{velickovic2018graph}:
+\begin{align}
+\mathbf{h}^{\mathrm{con}} &\leftarrow \mathrm{LN}\big(\mathrm{ELU}(\mathrm{GAT}(\mathbf{h}^{\mathrm{var}}\!\to\!\mathbf{h}^{\mathrm{con}})) + \mathbf{h}^{\mathrm{con}}\big),\\
+\mathbf{h}^{\mathrm{var}} &\leftarrow \mathrm{LN}\big(\mathrm{ELU}(\mathrm{GAT}(\mathbf{h}^{\mathrm{con}}\!\to\!\mathbf{h}^{\mathrm{var}})) + \mathbf{h}^{\mathrm{var}}\big),
+\end{align}
+followed by a two-layer head emitting one logit per variable, $\hat{p}_j = \sigma(z_j)$. The model has $21{,}761$ parameters.
+
+The architecture is deliberately small and single-headed. Its only output is the quantity the objective~\eqref{eq:loss} defines; there are no auxiliary value or feasibility heads, because the search draws soundness from its symbolic components and asks the network for nothing else.
+
+\subsection{Inference: guidance, not commitment}
+\label{sec:method-inference}
+
+The network is consulted once per node. Branching selects
+\begin{equation}
+j^\star = \arg\max_{j\in K} \big|\hat{p}_j - \tfrac12\big|,
+\qquad
+\text{first value } = \mathbb{1}\big[\hat{p}_{j^\star}\ge\tfrac12\big],
+\end{equation}
+that is, the variable the network is most confident about, tried at its predicted value. The search remains complete and a wrong prediction costs backtracking only.
+
+Variables are \emph{fixed} only by sound deduction. Two mechanisms are available: constraint propagation, and LP-probing, which fixes $x_j$ when assigning the opposite value makes even the relaxation infeasible. The division of labour follows directly from the measurements in Section~\ref{sec:exp-cost}: where a wrong answer costs time, the cheap unsound predictor is preferable; where a wrong answer costs correctness, the expensive sound procedure is required and cannot be replaced.
+
+Algorithm~\ref{alg:search} states the resulting search.
+
+\begin{algorithm}[h]
+\caption{Guided backtracking search for a BLS}
+\label{alg:search}
+\small
+\begin{tabbing}
+\hspace{6mm}\=\hspace{6mm}\=\hspace{6mm}\=\kill
+\textbf{Input:} instance $(A,\mathbf{b})$, guidance model $f_\theta$, time budget $T$ \\
+$\mathrm{stack} \gets [(A,\mathbf{b})]$ \\
+\textbf{while} $\mathrm{stack}\ne\emptyset$ \textbf{and} elapsed $<T$: \\
+\> $(A',\mathbf{b}') \gets \mathrm{pop}(\mathrm{stack})$ \\
+\> \textbf{if} $\mathbf{b}' < \mathbf{0}$ \textbf{or} $\mathbf{b}' > A'\mathbf{1}$: \textbf{continue} \hfill \textit{// free bound check} \\
+\> drop all-zero rows of $A'$; \textbf{if} none remain: \textbf{return} any completion \\
+\> propagate; \textbf{if} contradiction: \textbf{continue} \\
+\> \textbf{if} propagation determined a set $D$ of variables: \\
+\> \> push $\mathrm{reduce}(A',\mathbf{b}',D)$; \textbf{continue} \hfill \textit{// Proposition~\ref{prop:reduce}} \\
+\> \textbf{if} all variables assigned: \textbf{return} solution if verified, else \textbf{continue} \\
+\> $\hat{\mathbf{p}} \gets f_\theta(A',\mathbf{b}')$ \hfill \textit{// one forward pass, all variables} \\
+\> $j^\star \gets \arg\max_j |\hat{p}_j - 1/2|$; \quad $v \gets \mathbb{1}[\hat{p}_{j^\star}\ge 1/2]$ \\
+\> push $\mathrm{reduce}(A',\mathbf{b}',\{j^\star{=}1{-}v\})$, then $\mathrm{reduce}(A',\mathbf{b}',\{j^\star{=}v\})$ \\
+\textbf{return} unresolved
+\end{tabbing}
+\end{algorithm}
+
+\subsection{Cost model}
+\label{sec:method-cost}
+
+The comparison that motivates the design is per-node cost for a whole-instance verdict, and its structure is asymptotic rather than a constant factor. Let $n_c$ be the number of free variables at a node. The network solves \emph{one} relaxation to build its features and performs \emph{one} forward pass, so its LP count is $O(1)$ in $n_c$. LP-probing solves one relaxation per candidate variable, $O(n_c)$. The ratio between them therefore grows linearly in instance size, and any single number quoted for it is meaningful only together with the $n_c$ at which it was measured.
+
+This also means the comparison is sensitive to how the LP backend is implemented, in a way that cuts against the learned method. A backend that rebuilds the model for every call inflates probing's cost by its full $O(n_c)$ factor while charging the network only once, exaggerating the advantage. A correctly engineered branch-and-bound keeps one relaxation and re-optimizes from the parent basis after a bound change, which is an order of magnitude cheaper per probe. Section~\ref{sec:exp-cost} measures both methods against a warm-started backend for this reason, and reports the ratio as a function of $n_c$ rather than as a single figure.
+
+\section{Experiments}
+\label{sec:exp}
+
+\subsection{Instances and control of solution multiplicity}
+\label{sec:exp-instances}
+
+Instances are generated by the procedure \textsc{GenHard}$(m,n,K)$: draw a random $0/1$ matrix $A$ of density $1/2$; plant $K=20$ candidate solutions $\mathbf{x}^{(1)},\dots,\mathbf{x}^{(K)}$ with $\mathbf{b}^{(k)}=A\mathbf{x}^{(k)}$; retain the one maximizing \emph{vertex spread}, the mean pairwise $L_2$ distance among relaxation vertices obtained from random objective directions. Maximizing vertex spread enlarges $\tilde{\SOL}$ directly and is the mechanism that makes market-split instances hard for relaxation-based methods (Section~\ref{sec:related}). Uniqueness of the planted solution is not enforced.
+
+\paragraph{Why $|\SOL|$ must be controlled across sizes.} Solution multiplicity changes the \emph{character} of the prediction task, not only its difficulty. When $|\SOL|=1$ every free variable is $\FORCED$ and predicting well is tantamount to solving; when $|\SOL|$ is large most variables are $\FREE$ and the task is to estimate a diffuse posterior. Comparing sizes without controlling $|\SOL|$ therefore confounds size with task identity. Since $|\SOL|$ falls as $m$ rises at fixed $n$, we select $m$ per size to match it.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Size & $m$ & $m/n$ & median $|\SOL|$ & root ceiling & conditional ceiling \\
+\midrule
+$10\times25$ & 10 & 0.40 & 23 & 70.4\% & 87.0\% \\
+$18\times50$ & 18 & 0.36 & 19 & 71.3\% & 87.2\% \\
+$21\times60$ & 21 & 0.35 & 10 & --- & --- \\
+\bottomrule
+\end{tabular}
+\caption{Sizes used, with solution multiplicity matched. Ceilings (the Bayes-optimal per-variable accuracies of Section~\ref{sec:exp-ceiling}) agree to within one point between the two training sizes, so size is the variable that changes.}
+\label{tab:sizes}
+\end{table}
+
+\paragraph{Limits of the control.} Matching $|\SOL|$ forces $m/n$ to vary ($0.40\to0.35$); at fixed $n$ the two cannot be held simultaneously and we prioritize $|\SOL|$ because it determines task identity. The control is also granular: at $n=60$ the median $|\SOL|$ steps $42\to12\to2$ across $m=20,21,22$, so $m=21$ is the best available integer and the realized evaluation set has median $|\SOL|=10$ with $27/30$ verified.
+
+\paragraph{Where enumeration stops.} At $n=70$ no enumeration completed within $120$\,s at the $m$ giving the target multiplicity ($0/10$). At $n=100$ the obstruction is more basic: a constraint solver finds \emph{zero} solutions within $20$\,s at $m\in\{28,32,36,40\}$ despite a planted one. At that size the bottleneck is finding any solution rather than choosing branches well, so a branching comparison there would not be informative. We therefore evaluate at $n\le 60$ and report this boundary as a limitation.
+
+\subsection{Implementation and protocol}
+\label{sec:exp-protocol}
+
+\paragraph{Software.} Relaxations used for training features and for the original search loop are solved with SCIP via PySCIPOpt; the warm-started relaxations of Sections~\ref{sec:exp-cost} and~\ref{sec:exp-search} use Gurobi~13 (dual simplex, bounds changed in place), which requires a licence --- HiGHS exposes an equivalent incremental interface and should serve as a free substitute, though we have not verified the timings with it. Enumeration and the CP-SAT baseline use OR-Tools; lattice reduction uses fpylll (LLL and BKZ). The network is implemented in PyTorch with PyTorch Geometric (\texttt{GATConv}). One property of the relaxation deserves note: it carries no objective, so its solution is an arbitrary vertex of the relaxation polytope and different LP codes return different vertices. Both branching arms consume the same vertex within an experiment, so comparisons are fair, but absolute node counts differ between the SCIP- and Gurobi-backed runs.
+
+\paragraph{Training.} Adam, learning rate $10^{-3}$, $20$ epochs over $10{,}000$ in-tree states, batch size $1$ (instances vary in size), gradient-norm clipping at $1.0$, loss~\eqref{eq:loss} with exact marginal targets. Training states are drawn at depths $0$--$12$ uniformly, $6$ states per source instance, from a pool of $1{,}760$ instances; evaluation uses $440$ instances from a disjoint pool. Training takes approximately $20$ minutes on one CPU core. \emph{No hyperparameter was tuned}: width, depth, learning rate, epoch count and the training depth range are the values first tried, and there is no validation split. Reported figures are therefore not contaminated by selection on the test set, but neither is any of these settings claimed to be optimal.
+
+\paragraph{Threading.} All timing-sensitive components run single-threaded (\texttt{torch.set\_num\_threads(1)}). On graphs of this size multi-threaded BLAS is counterproductive: we measure $11.3$\,ms per forward pass at $8$ threads against $0.9$\,ms at one.
+
+\paragraph{Search evaluation.} Each arm is run on identical instances with a hard per-instance wall-clock budget enforced by subprocess termination, since lattice reduction executes inside a blocking native call that in-process timers cannot interrupt. Instances run at concurrency $6$ on a $20$-core machine. This low concurrency is deliberate: wall-clock-budgeted comparisons are sensitive to CPU contention, and at higher concurrency we have observed instances solvable in $14$--$15$\,s standalone exceeding a $20$\,s cap.
+
+\paragraph{Statistics.} Solve-rate differences between arms on the same instances are tested with McNemar's exact test; per-instance speed differences with a two-sided sign test. We report both rather than a single aggregate because they can have different power. The main comparison at $21\times60$ is replicated over three independent seeds and we report the spread; smaller-size and transfer results are single-run and marked as such. Seeds are set explicitly: an earlier version derived them from \texttt{hash()} of the instance filename, which Python randomizes per process, so those runs had no recorded provenance.
+
+\subsection{Prediction quality against the Bayes ceiling}
+\label{sec:exp-ceiling}
+
+Because $\SOL$ is enumerated exactly, the Bayes-optimal per-variable accuracy is computable:
+\begin{equation}
+\mathrm{ceil} = \frac{1}{|K|}\sum_{j\in K}\max(p_j, 1-p_j),
+\label{eq:ceiling}
+\end{equation}
+attained by answering the majority value of the surviving solutions. No deterministic predictor of $\mathbf{x}^\ast$ from $(A,\mathbf{b})$ can exceed it. Table~\ref{tab:ceiling} evaluates predictors against it on $400$ held-out $10\times25$ instances with $\SOL$ fully enumerated.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Predictor & all variables & top-3 & $L_1$ to true marginal \\
+\midrule
+Bayes ceiling & \textbf{70.8\%} & \textbf{93.2\%} & 0.0000 \\
+Proposed network & 66.7\% & 86.6\% & 0.1216 \\
+LP relaxation rounding & 60.9\% & 65.8\% & --- \\
+\bottomrule
+\end{tabular}
+\caption{Root-level prediction against the exact posterior on the $182$ root states of the held-out $10\times25$ evaluation pool. The network is the same checkpoint used in every search experiment below. ``top-3'' restricts to the three variables the predictor is most confident about.}
+\label{tab:ceiling}
+\end{table}
+
+The network comes within $4.1$ points of the ceiling overall and $6.6$ on the top-3 subset, and it recovers most of the gap between relaxation rounding and the ceiling ($60.9\to66.7$ against a ceiling of $70.8$). Two preliminary experiments on an earlier pool of $10\times25$ instances, reported for completeness but not from the checkpoint evaluated here, bear on design choices: a $2.11$M-parameter network with four output heads (selection, assignment, value and feasibility) scored $60.7\%$ on root states, statistically indistinguishable from relaxation rounding at $60.6\%$, so capacity is not the binding constraint and a single-purpose head is preferable; and training the single-head architecture on exact marginals rather than the planted solution improved $L_1$ to the posterior from $0.1261$ to $0.0977$ while leaving argmax accuracy unchanged, which matters because the analysis of Section~\ref{sec:method-partition} consumes the marginal rather than its argmax.
+
+\paragraph{What the aggregate conceals.} Table~\ref{tab:rootsplit} decomposes the same root variables by the partition of Section~\ref{sec:method-partition}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Root variables & count & share & ceiling on subset \\
+\midrule
+$\FORCED$ (branching against it empties the subtree) & 38 & 6.3\% & 100.0\% \\
+$\FREE$ (either branch reaches a solution) & 562 & 93.7\% & 67.2\% \\
+\midrule
+all variables & 600 & 100\% & 69.3\% \\
+\bottomrule
+\end{tabular}
+\caption{Root-level decomposition, $24$ instances of $10\times25$ with $\SOL$ enumerated. The aggregate is $94\%$ composed of variables on which no branching decision can cost a backtrack.}
+\label{tab:rootsplit}
+\end{table}
+
+At the root, $93.7\%$ of variables are $\FREE$. The aggregate ceiling of $69.9\%$ is therefore dominated by predictions that cannot affect the search, and on the $6.3\%$ that can, the information is already complete ($100\%$). Root-level accuracy is consequently a weak objective for a branching heuristic, and the operative question is not whether the information exists but what detects it --- taken up next.
+
+\subsection{Depth, and where the residual lies}
+\label{sec:exp-residual}
+
+Using Proposition~\ref{prop:reduce} we measure, at each depth along a prefix drawn from an actual solution, the conditional ceiling and the fraction of remaining variables that propagation forces (Table~\ref{tab:depth}).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrr}
+\toprule
+depth & surviving $|\SOL|$ & conditional ceiling & proposed network & LP rounding \\
+\midrule
+0 & 25.3 & 70.8\% & 66.7\% & 60.9\% \\
+4 & 4.2 & 82.3\% & 72.8\% & 68.5\% \\
+7 & 1.8 & 91.5\% & 81.2\% & 77.8\% \\
+8 & 1.4 & 94.4\% & 84.3\% & 80.9\% \\
+12 & 1.1 & 98.8\% & 96.8\% & 95.5\% \\
+\midrule
+all depths & --- & 87.2\% & 80.0\% & 76.5\% \\
+\bottomrule
+\end{tabular}
+\caption{Conditional information against depth on the held-out in-tree states of the $10\times25$ evaluation pool ($n=25$), LP-confidence variable ordering. Same checkpoint as Table~\ref{tab:ceiling}.}
+\label{tab:depth}
+\end{table}
+
+The consequential movement is in composition rather than level: the $\FORCED$ share rises from $6.3\%$ at the root to $87.9\%$ at depth $8$ (Table~\ref{tab:gap}). At the root almost every branching decision is inconsequential because both children contain solutions; by depth $8$ almost every decision empties a subtree when wrong. The network's margin over relaxation rounding is $3$--$6$ points throughout and does not vanish at depth, which is the first indication that what it captures is not simply depth-dependent; Section~\ref{sec:exp-where} makes this precise.
+
+\paragraph{Does in-tree supervision matter, controlling for everything else?} A comparison between a root-trained and an in-tree-trained network is only informative if nothing else differs. Table~\ref{tab:ctrl} holds the instance pool, the label type (exact marginals), the architecture, the optimizer and the number of training states ($1{,}760$ each) fixed, and varies only whether the states are root states or in-tree states drawn at depths $0$--$12$. Both are evaluated on the same held-out in-tree states.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrr}
+\toprule
+depth & conditional ceiling & root-trained & in-tree-trained & LP rounding \\
+\midrule
+0 & 70.7\% & 67.8\% & 66.5\% & 60.9\% \\
+4 & 82.1\% & 71.4\% & 72.4\% & 68.3\% \\
+6 & 89.7\% & 74.6\% & 78.2\% & 74.0\% \\
+8 & 94.4\% & 77.4\% & 84.2\% & 81.3\% \\
+10 & 97.1\% & 81.7\% & 91.4\% & 89.4\% \\
+12 & 98.8\% & 85.8\% & 96.5\% & 95.3\% \\
+\midrule
+all depths & 87.2\% & 75.4\% & \textbf{79.8\%} & 76.4\% \\
+\bottomrule
+\end{tabular}
+\caption{Controlled comparison of training-state distribution. Same pool, labels, architecture, optimizer and state count; only the depth at which states are sampled differs. Evaluated on held-out in-tree states of the $10\times25$ pool.}
+\label{tab:ctrl}
+\end{table}
+
+In-tree supervision is worth $4.4$ points overall. The more telling row is the root-trained network itself: at $75.4\%$ it is \emph{below} relaxation rounding on in-tree states, so a network trained on root states does not merely underperform in the tree, it is worse than the classical heuristic it is meant to replace. The shift from root to interior states is not a distribution the root-trained network generalizes across, and in-tree training is what makes the learned guidance better than the baseline at all.
+
+Table~\ref{tab:gap} decomposes the residual gap at these depths and asks what each method detects.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrrrr}
+\toprule
+depth & \% $\FORCED$ & network on $\FORCED$ & propagation & LP integrality & LP-probing & network on $\FREE$ \\
+\midrule
+5 & 61.9\% & 89.7\% & 1.2\% & 67.9\% & 51.6\% & 54.4\% \\
+6 & 74.2\% & 88.2\% & 1.6\% & 70.4\% & 68.0\% & 52.5\% \\
+7 & 79.9\% & 88.8\% & 3.7\% & 73.3\% & 72.8\% & 51.2\% \\
+8 & 87.9\% & 89.4\% & 5.3\% & 76.9\% & 79.8\% & 53.8\% \\
+\bottomrule
+\end{tabular}
+\caption{Residual decomposition on the same states as Table~\ref{tab:depth}. Columns 4--6 are recall on the ground-truth $\FORCED$ set (LP-probing measured with the warm-started backend of Section~\ref{sec:exp-cost}); columns 3 and 7 are the network's argmax accuracy on each subset.}
+\label{tab:gap}
+\end{table}
+
+The gap lies entirely on $\FORCED$ variables: at depth $7$, $0.80\times11.2\approx 9$ points, matching the measured $10.3$-point shortfall against the conditional ceiling. Performance near $50\%$ on $\FREE$ variables is correct behaviour rather than a defect, since those variables are genuinely undetermined. The striking figure is that unit propagation detects only $1.2$--$5.3\%$ of logically determined variables: the information is present and derivable but not reachable by the cheapest sound rule. LP-probing recovers $52$--$80\%$ and LP integrality $68$--$77\%$.
+
+\subsection{Cost per node}
+\label{sec:exp-cost}
+
+Both methods are charged everything they must pay to reach a whole-instance verdict: the network one relaxation for its features plus one forward pass, probing one relaxation per free variable. Both use the same warm-started backend, a single model whose variable bounds are changed in place and re-optimized from the parent basis (Gurobi dual simplex), which is how a branch-and-bound implementation reuses its relaxation. Timings are single-threaded.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Instances & $n$ & network & LP-probing & ratio & probing recall \\
+\midrule
+$10\times25$ & 25 & 3.22\,ms & 5.60\,ms & $1.7\times$ & --- \\
+$18\times50$ & 50 & 2.33\,ms & 11.84\,ms & $5.1\times$ & --- \\
+$21\times60$ & 60 & 2.57\,ms & 18.39\,ms & $7.2\times$ & --- \\
+$40\times100$ & 100 & 4.02\,ms & 62.46\,ms & $15.5\times$ & --- \\
+$60\times150$ & 150 & 4.45\,ms & 79.06\,ms & $\mathbf{17.8\times}$ & --- \\
+\midrule
+\multicolumn{6}{l}{\emph{in-tree states of $10\times25$ instances, by depth:}} \\
+depth 5 & 20 & 2.44\,ms & 4.02\,ms & $1.6\times$ & 51.6\% \\
+depth 6 & 19 & 2.39\,ms & 3.98\,ms & $1.7\times$ & 68.0\% \\
+depth 7 & 18 & 2.35\,ms & 3.43\,ms & $1.5\times$ & 72.8\% \\
+depth 8 & 17 & 2.34\,ms & 3.13\,ms & $1.3\times$ & 79.8\% \\
+\bottomrule
+\end{tabular}
+\caption{Per-node cost for a whole-instance verdict, warm-started LP backend for both methods, single-threaded. The network's accuracy on $\FORCED$ variables at depths 5--8 is $85.9$--$92.7\%$ against probing's recall in the last column.}
+\label{tab:cost}
+\end{table}
+
+The ratio behaves as the cost model predicts: it is negligible at $n=25$ and reaches $17.8\times$ at $n=150$, tracking the $O(n_c)$ versus $O(1)$ difference in relaxation count. Two consequences follow, and they point in opposite directions.
+
+\paragraph{The advantage is real but asymptotic, and small where we can search.} At the sizes where our search actually operates ($n=25$--$60$) the ratio is $1.3$--$7.2\times$. At the depths where prediction matters most (5--8 of a $10\times25$ instance, $n_c=17$--$20$) it is $1.3$--$1.7\times$. A practitioner choosing between the two at that scale should prefer probing, which is \emph{sound}: where its test fires the conclusion is a proof, whereas the network never offers a guarantee. The learned alternative becomes compelling only at $n\gtrsim 100$, and Section~\ref{sec:exp-instances} shows that search itself fails there for every strategy we tried.
+
+\paragraph{The measurement is sensitive to baseline engineering.} An earlier version of this comparison used a backend that rebuilt the LP model on every call and, additionally, excluded the network's own feature relaxation from its timer. That combination reported $19$--$23\times$ at depths 5--8, where the correctly measured value is $1.3$--$1.7\times$ --- an overstatement of more than an order of magnitude, arising entirely from how the two sides were instrumented rather than from what they compute. We report the corrected figures and note the general hazard: in any cost comparison against a classical procedure, the classical side must be implemented as a practitioner would implement it, and the learned side must be charged for its own preprocessing.
+
+\subsection{Search performance}
+\label{sec:exp-search}
+
+We compare four branching strategies under matched wall-clock budgets with the lattice stage disabled, isolating branching quality. \textsc{random} selects an arbitrary variable and value; \textsc{lp} selects the most integral relaxation value and tries that value first; \textsc{lp-probe} probes every free variable, soundly fixes those it proves forced, then branches as \textsc{lp}; \textsc{model} uses the proposed network.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+Size (budget) & strategy & solve rate & median nodes & median time & nodes/s \\
+\midrule
+$10\times25$ (60\,s) & \textsc{random} & 100\% & 1{,}514 & 0.07\,s & --- \\
+ & \textsc{lp} & 100\% & 66 & 0.12\,s & --- \\
+ & \textsc{lp-probe} & 100\% & \textbf{12} & 0.79\,s & --- \\
+ & \textsc{model} & 100\% & 22 & \textbf{0.08\,s} & --- \\
+\midrule
+$20\times50$ (300\,s) & \textsc{random} & \textbf{0\%} & --- & --- & --- \\
+ & \textsc{lp} & 100\% & 8{,}876 & 24.93\,s & 376 \\
+ & \textsc{lp-probe} & 100\% & \textbf{173} & 28.14\,s & 6 \\
+ & \textsc{model} & 100\% & 1{,}676 & \textbf{6.37\,s} & 273 \\
+\midrule
+$21\times60$ (600\,s) & \textsc{lp} & $83.3\pm0.0\%$ & 69{,}015 & $207.4\pm5.9$\,s & 172 \\
+ & \textsc{model} & $\mathbf{100\pm0.0\%}$ & \textbf{12{,}010} & $\mathbf{51.7\pm2.1}$\,\textbf{s} & 135 \\
+\bottomrule
+\end{tabular}
+\caption{Branching strategy comparison, lattice stage disabled, $30$ instances per cell. The $21\times60$ row is mean $\pm$ standard deviation over three seeds; the smaller sizes are single-run.}
+\label{tab:search}
+\end{table}
+
+Three points. First, node count and wall-clock rank these methods in \emph{opposite} orders: \textsc{lp-probe} produces by far the smallest trees ($51\times$ fewer nodes than \textsc{lp} at $20\times50$) yet is the slowest, processing $6$ nodes/s against $376$. Evaluating branching heuristics by tree size alone --- a common convention --- would select the worst method here. Second, \textsc{model} occupies the productive point, cutting nodes $5.3\times$ relative to \textsc{lp} at a per-node cost below \textsc{lp}'s, for $3.9\times$ lower median time. Third, at $21\times60$ the advantage becomes qualitative, and it replicates. Across three seeds the learned guidance solves $30/30$ every time while relaxation-based branching solves $25/30$ every time; on the instances both close, the former is faster on $18/25$ with a median ratio of $3.29\times$ (seed-wise $3.35$, $3.30$, $3.24$; sign test $p=0.019$ within each seed). Seed-to-seed variance is negligible --- the solve-rate standard deviation is exactly zero and the speedup varies by $\pm0.06$ --- which tells us the tie-breaking randomness is not what the result rests on.
+
+The five instances that separate the arms are the same five in every seed, and no instance is ever closed by \textsc{lp} and missed by \textsc{model}. That consistency is the strongest form this evidence takes, but it does not make the difference significant by the usual test: a $5$--$0$ split on $30$ instances gives McNemar $p=0.0625$, and no amount of replication improves it, since the limiting quantity is the number of instances rather than the number of runs. Establishing the solve-rate advantage at conventional levels would require a larger evaluation set, not more seeds. The speed advantage, tested per instance, is significant within each seed.
+
+\subsection{Comparison against complete solvers}
+\label{sec:exp-classical}
+
+Table~\ref{tab:search} compares branching strategies inside our own search loop, which measures branching quality but says nothing about how the system stands against an off-the-shelf solver. That comparison is reported here, on the same instances, single-threaded, under the same budget.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Size & CP-SAT & SCIP & proposed (\textsc{model}) & CP-SAT advantage \\
+\midrule
+$10\times25$ & \textbf{0.002\,s} & 0.009\,s & 0.08\,s & $40\times$ \\
+$18\times50$ & \textbf{0.046\,s} & 0.385\,s & 2.84\,s & $62\times$ \\
+$21\times60$ & \textbf{1.159\,s} & 3.687\,s & 47.28\,s & $41\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Median solve time; all methods solve $30/30$ at every size. The proposed system does not beat a complete solver at any size tested, and is outperformed even by SCIP, which it already uses internally for relaxations.}
+\label{tab:classical}
+\end{table}
+
+The gap is large and we state it plainly: \emph{the contribution of this paper is not a solver that competes with CP-SAT.} It is worth asking where the gap comes from, because the answer bears on what the branching heuristic is actually doing. Table~\ref{tab:decomp} decomposes it at $21\times60$ into tree size and per-node throughput, using CP-SAT's own branch counter.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+ & CP-SAT & proposed & ratio \\
+\midrule
+nodes (median) & 18{,}827 branches & \textbf{12{,}010} & ours $1.6\times$ fewer \\
+throughput & \textbf{19{,}782 nodes/s} & 254 nodes/s & CP-SAT $78\times$ faster \\
+total time (median) & 1.065\,s & 47.28\,s & $41\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Decomposition of the $21\times60$ gap. CP-SAT additionally learns a median of $5{,}514$ conflict clauses per instance.}
+\label{tab:decomp}
+\end{table}
+
+The learned guidance produces a \emph{smaller} search tree than CP-SAT --- $1.6\times$ fewer nodes despite CP-SAT's clause learning --- and loses entirely on per-node cost. Where that cost goes can be measured. At a $21\times60$ root our loop spends $4.34$\,ms rebuilding and solving the node relaxation, $1.88$\,ms on the network's forward pass, and under $0.1$\,ms on propagation and bookkeeping. The relaxation cost is removable without leaving Python --- a warm-started re-optimization of the same LP takes $0.08$\,ms, and Section~\ref{sec:exp-search} reports the search with that change --- but the forward pass then accounts for over $90\%$ of what remains, and we have not reduced it. We therefore do not claim that the gap is an implementation artifact. What the node counts establish is narrower: the deficit is not in branching quality. Closing it would require at minimum a compiled inference path and, as the next paragraph notes, algorithmic components our search lacks.
+
+Two honest caveats attach to this reading. Tree sizes are not perfectly commensurable --- CP-SAT's ``branches'' include restarts and conflict-driven jumps, and each of its nodes performs more propagation work than ours --- so the $1.6\times$ should be read as an order-of-magnitude statement. And a competitive implementation would need more than a language port: incremental relaxations, clause learning, and restarts are all absent from our search, and the last two are what let CP-SAT scale past the sizes where we stop.
+
+\subsection{Size transfer}
+\label{sec:exp-transfer}
+
+Because the features are size-normalized and the parameters do not depend on $(m,n)$, one network applies at any size. We test whether that transfers in practice, with $|\SOL|$ matched as in Table~\ref{tab:sizes}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrr}
+\toprule
+Training size & Evaluation size & solve rate & median time & median nodes \\
+\midrule
+$10\times25$ & $10\times25$ & 100\% & 0.08\,s & 23 \\
+$10\times25$ & $18\times50$ & 100\% & 2.84\,s & 833 \\
+$18\times50$ & $18\times50$ & 100\% & 3.42\,s & 1{,}001 \\
+$10\times25$ & $21\times60$ & 100\% & 47.28\,s & 12{,}010 \\
+$18\times50$ & $21\times60$ & 100\% & 54.75\,s & 14{,}108 \\
+\bottomrule
+\end{tabular}
+\caption{Transfer, lattice stage disabled, $30$ instances per row. Rows 2--3 and 4--5 each hold the evaluation size fixed and vary only the training size.}
+\label{tab:transfer}
+\end{table}
+
+At the $21\times60$ evaluation size the network trained only at $10\times25$ --- a $2.4\times$ smaller problem --- and the one trained at $18\times50$ are statistically indistinguishable: the former is faster on exactly $15/30$ instances, median ratio $0.92\times$, and total times differ by $0.4\%$ ($2{,}924.9$\,s vs.\ $2{,}914.5$\,s), with both solving $30/30$. Root-level prediction agrees: the $10\times25$ network scores $67.8\%$, $69.5\%$ and $69.4\%$ at $10\times25$, $20\times50$ and $40\times100$, holding its margin over relaxation rounding ($+11.0$, $+7.2$, $+4.7$ points) at every size.
+
+This matters practically because label generation is the binding constraint. Exact marginals require enumeration, which fails beyond $n\approx60$; transfer means a network trained where labels are obtainable can be deployed where they are not.
+
+\subsection{Where the transferred network helps}
+\label{sec:exp-where}
+
+Section~\ref{sec:exp-residual} located the useful prediction regime at depths $6$--$8$ of a $10\times25$ instance. Whether that localization survives transfer is a separate question, and it does not: at $21\times60$ the search queries the network on states with $5$--$60$ free variables, only $19.7\%$ of which fall inside the training range of $13$--$25$, and $80.2\%$ of which are larger than any training state. Table~\ref{tab:where} evaluates the network and relaxation rounding against exact conditional marginals on $21\times60$ in-tree states, grouped by the number of free variables, on the subset of states that could be enumerated within $15$\,s.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrrrr}
+\toprule
+free vars & in training range & $m/|K|$ & network on $\FORCED$ & LP on $\FORCED$ & gain & corr(network, LP) \\
+\midrule
+20 & yes & 1.05 & 100.0\% & 100.0\% & $+0.0$ & 1.000 \\
+25 & yes & 0.84 & 100.0\% & 100.0\% & $+0.0$ & 0.998 \\
+30 & no & 0.70 & 95.7\% & 95.0\% & $+0.7$ & 0.954 \\
+40 & no & 0.53 & 75.5\% & 75.2\% & $+0.4$ & 0.747 \\
+50 & no & 0.42 & 70.2\% & 65.0\% & $\mathbf{+5.3}$ & 0.664 \\
+60 & no & 0.35 & 93.3\% & 88.9\% & $\mathbf{+4.4}$ & 0.658 \\
+\bottomrule
+\end{tabular}
+\caption{$21\times60$ in-tree states by number of free variables, $9$--$14$ enumerable states per row. Gain is the network's margin over relaxation rounding on $\FORCED$ variables; the last column is the Pearson correlation between the two predictors' outputs.}
+\label{tab:where}
+\end{table}
+
+The pattern is the reverse of what a depth-based account predicts. Inside the training range the network is indistinguishable from relaxation rounding --- both are perfect and their outputs correlate at $1.000$ --- because at $m/|K|\ge0.8$ the reduced instance is over-constrained and the relaxation is already integral on every $\FORCED$ variable. The network's entire margin arises on states it never saw during training, at $50$--$60$ free variables, where the relaxation is weakest ($m/|K|\approx0.35$--$0.42$) and its outputs have decorrelated from the relaxation's. In terms of Section~\ref{sec:method-partition}, this is the region where $\FORCED$ variables are present but the relaxation does not find them.
+
+Two conclusions follow. The first corrects Section~\ref{sec:exp-residual}: depth was a proxy for constraint density that happened to hold on $10\times25$, where descending from the root moves $m/|K|$ only from $0.40$ to $0.59$, and does not hold on $21\times60$, where the same descent moves it from $0.35$ past $1.0$. The useful regime is defined by $m/|K|$, and at deployment size it sits near the \emph{top} of the tree. The second is that the transfer result of Section~\ref{sec:exp-transfer} is stronger than a matched-multiplicity comparison alone shows: the network extrapolates to states outside its training range in both size and constraint density, and that extrapolation is where its contribution lives. It is also a limitation, since the training range was not chosen with this in mind (Section~\ref{sec:exp-limits}).
+
+\subsection{Deployment in the full pipeline}
+\label{sec:exp-cascade}
+
+Table~\ref{tab:search} isolates branching by disabling lattice reduction. In deployment the lattice stage runs first and the search sees only its residual. Because that stage is independent of the branching heuristic, every arm receives the identical residual set.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrr}
+\toprule
+Size & strategy & closed by lattice & residual solved by search & end-to-end \\
+\midrule
+$10\times25$ & both & 30/30 & --- & 100\% \\
+$18\times50$ & \textsc{lp} / \textsc{model} & 24/30 & 6/6 \ / \ 6/6 & 100\% / 100\% \\
+$21\times60$ & \textsc{lp} & 10--16/30 & 45/50 & $94.4\pm5.1\%$ \\
+$21\times60$ & \textsc{model} & 10--16/30 & \textbf{50/50} & $\mathbf{100\pm0.0\%}$ \\
+\bottomrule
+\end{tabular}
+\caption{Cascade results, $600$\,s budget at $21\times60$, which is reported over three seeds; smaller sizes are single-run. Lattice coverage varies across seeds ($16$, $14$, $10$ of $30$) because the lattice stage draws random column permutations, so the residual handed to the search varies with it.}
+\label{tab:cascade}
+\end{table}
+
+Lattice coverage falls with size --- $30/30$, $24/30$, $16/30$ --- and that decline is what creates room for branching quality to matter. At $10\times25$ and $18\times50$ the residual is empty or trivially closed by either strategy. At $21\times60$ between ten and twenty instances reach the search depending on the seed, and the learned guidance closes every one of them in all three replicates ($50/50$ across seeds) while relaxation-based branching closes $45/50$. End to end this is $100\pm0.0\%$ against $94.4\pm5.1\%$. The variance in the \textsc{lp} arm comes from the lattice stage rather than from the branching: when lattice coverage happens to be low, more instances fall through to a search that sometimes fails to close them.
+
+\subsection{Does the graph structure contribute?}
+\label{sec:exp-ablation}
+
+MarginalNet consumes six scalars per node and propagates them over the bipartite graph. With a feature set that small, a per-variable model ignoring the graph is a serious baseline: if it matches, the message passing is decoration. Table~\ref{tab:ablation} compares models trained on identical targets, loss and splits, differing only in whether structure is used. The aggregated variant appends mean and max of the constraint-side features over each variable's incident rows, which is the information one message-passing round would deliver.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Model & accuracy & $L_1$ to marginal & parameters \\
+\midrule
+Linear, variable features only & 78.1\% & 0.2530 & \textbf{4} \\
+MLP, variable features only & 77.8\% & 0.2522 & 8{,}641 \\
+MLP + constraint aggregates & 79.4\% & 0.2361 & 9{,}025 \\
+MarginalNet (bipartite graph) & \textbf{84.1\%} & \textbf{0.1514} & 21{,}761 \\
+\midrule
+Bayes ceiling & 87.3\% & 0.0000 & --- \\
+\bottomrule
+\end{tabular}
+\caption{Ablation on in-tree states of $10\times25$ instances, $2{,}000$ training and $800$ test states.}
+\label{tab:ablation}
+\end{table}
+
+Message passing contributes: $+4.7$ points over the best structure-free model and a $36\%$ reduction in $L_1$, closing roughly $60\%$ of the residual gap to the ceiling that the MLP leaves open. The improvement in $L_1$ is the more relevant of the two, since the analysis of Section~\ref{sec:method-partition} consumes the marginal rather than its argmax.
+
+The same table bounds the claim, though. A four-parameter linear model on the relaxation value alone reaches $78.1\%$, within $9.2$ points of the ceiling; most of the available signal is in that single feature, and the graph adds a useful but not dominant increment on top of it.
+
+\subsection{Limitations}
+\label{sec:exp-limits}
+
+\paragraph{Label generation bounds the method, not only its evaluation.} Exact marginals require enumerating $\SOL$, which does not complete beyond $n\approx60$ on this family. Transfer permits deployment at larger sizes but not training there; approximating $p_j$ by solution sampling is the natural extension and is untested.
+
+\paragraph{The useful size window is bounded on both sides.} Below it, lattice reduction closes everything and branching quality is irrelevant. Above it ($n=100$), search fails outright for every strategy, since a constraint solver finds no solution within $20$\,s. Our demonstration lives at $n=60$ and we do not show the window extends further.
+
+\paragraph{Statistical power is limited by instance count, not run count.} The solve-rate advantage at $21\times60$ is $5$--$0$ and identical in all three seeds, but a $5$--$0$ split on $30$ instances gives McNemar $p=0.0625$ at best. Replication cannot improve this; only a larger evaluation set can. The per-instance speed advantage is significant ($p=0.019$ within each seed).
+
+\paragraph{Multiplicity control is approximate.} Median $|\SOL|$ is $23$, $19$ and $10$ across the three sizes; at $n=60$ multiplicity steps $42\to12\to2$ across consecutive integer $m$, so finer matching is unavailable. Three of thirty evaluation instances have unverified $|\SOL|$ and are marked as such. Matching $|\SOL|$ also moves $m/n$ from $0.40$ to $0.35$.
+
+\paragraph{Cost advantage depends on scale and on baseline engineering.} The amortization argument holds asymptotically but is worth little at the sizes where our search operates: $1.3$--$1.7\times$ at the depths where prediction matters, against a warm-started probing baseline that is additionally sound. It reaches $15$--$18\times$ only at $n\ge 100$, where search fails for every strategy we tested. We therefore cannot demonstrate the regime in which the argument is strongest.
+
+\paragraph{The search implementation is not competitive.} At $21\times60$ CP-SAT is $41\times$ faster end to end. Our branching produces fewer nodes, so the deficit is per-node throughput ($78\times$), but we have not shown that a competitive implementation is achievable: incremental relaxations, clause learning and restarts are all absent, and the latter two are load-bearing for CP-SAT at larger sizes.
+
+\paragraph{Training and deployment distributions barely overlap.} The training range $\{0,\dots,12\}$ was not chosen with deployment in mind; it produces states with $13$--$25$ free variables, whereas the $21\times60$ search queries states with $5$--$60$ and spends $80\%$ of its queries above $25$. The method works in spite of this rather than because of it (Section~\ref{sec:exp-where}), and aligning the training range with the deployment regime is an obvious untested improvement.
+
+\paragraph{Hyperparameters are untuned and there is no validation split.} See Section~\ref{sec:exp-protocol}. The configuration is defensible as a first attempt and is not contaminated by the test set, but a reviewer is right to ask whether a tuned baseline MLP or a tuned depth range would change the margins.
+
+\paragraph{Single instance family.} All results concern one generator from one application. Whether the amortization argument transfers to other constraint families is untested.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented a learned branching heuristic for binary linear systems together with an exact procedure for supervising it. Two elements carry the method. Conditioning a BLS on a partial assignment is identical to reducing it, so a single network trained on ordinary instances predicts at every node of the search tree without architectural change. And on instances small enough to enumerate, the exact conditional posterior both supplies the training target and identifies which predictions can affect the search at all: only variables that every surviving solution agrees on can cost a backtrack, and their share rises from $6.3\%$ at the root to $89.0\%$ at depth $8$.
+
+Measured inside our search loop the heuristic does what it is designed to do. It is $3.29\times$ faster in median than relaxation-based branching at $21\times60$, expands $6.2\times$ fewer nodes, and solves $30/30$ against $25/30$ in each of three seeds; with solution multiplicity controlled, a network trained at $2.4\times$ smaller scale performs indistinguishably from one trained at the evaluation size, which matters because exact supervision is available only at small sizes.
+
+We are equally explicit about what the results do not establish. The system does not compete with a complete solver: CP-SAT is $41$--$62\times$ faster at every size we tested. Decomposing that gap is informative rather than exculpatory --- our branching yields $1.6\times$ fewer nodes and loses on throughput by $78\times$, which places the deficit in a Python research implementation lacking incremental relaxations, clause learning and restarts --- but we have not shown that closing it is achievable. Nor does the cost argument carry the weight we initially assigned it. Against a properly warm-started probing baseline the advantage is $1.3$--$1.7\times$ at the depths where prediction matters on our instances, and probing is sound where the network is not; the ratio reaches $15$--$18\times$ only at $n\ge100$, a regime in which search fails for every strategy we tried. An earlier version of this comparison, using a backend that rebuilt the LP for each probe and excluded the network's own feature solve from its timer, reported $19$--$23\times$ at a scale where the true figure is near unity, and we record the correction because the error came entirely from instrumentation rather than from what the two methods compute.
+
+What remains, and what we claim, is methodological. For planted-solution instance families the exact conditional posterior is computable and is a well-posed supervision signal for branching, where the conventional target --- a single planted solution --- is not. States drawn from inside the search tree are a better training distribution than root states, and the reduction identity makes generating them a matter of substitution rather than solver instrumentation. The resulting heuristic transfers across instance size when solution multiplicity is held comparable. Whether this becomes practically useful depends on two things we have not done: extending exact supervision past $n\approx60$, most plausibly by approximating the marginals without exhaustive enumeration, and implementing the search well enough that a branching improvement is visible at the system level.
+
+\section*{Reproducibility}
+
+Code is organized by component under \texttt{proposed\_src/}, with shared modules in \texttt{util/} and a \texttt{ROLES.txt} in each directory describing every file. Scripts are run from their own directory.
+
+\begin{verbatim}
+# generate instances with matched |S| and exact marginals
+cd proposed_src/v15_bayes
+python3 v15_gen_by_m.py --m 10 --n 25 --count 2200 --K 20 \
+        --out ../../runs/data/sols_10x25.json
+
+# build in-tree training states (depths 0-12, 6 per instance)
+cd ../v17_conditional
+python3 v17_make_conditional_data.py --sols ../../runs/data/full_10x25_train.json \
+        --max_depth 12 --per_instance 6 --out ../../runs/data/cond_10x25_train.json
+
+# train (about 20 minutes, single CPU core)
+python3 v17_train_conditional.py \
+        --train ../../runs/data/cond_10x25_train.json \
+        --test  ../../runs/data/cond_10x25_test.json \
+        --n_train 10000 --n_test 2000 --epochs 20 --target soft \
+        --out ../../runs/model_n25
+
+# evaluate: branching arms x {lattice off, lattice on}
+cd ../v22_transfer
+python3 v22_cascade_search.py --data_dir ../../instances/v22test_21x60 \
+        --tag EVAL --time_limit 600 --block 12 --tries 10 \
+        --arms lp model --ckpt ../../runs/model_n25/conditional.pt \
+        --ahl off on --jobs 6 --out_root ../../runs/eval
+\end{verbatim}
+
+All generators are seeded. The released checkpoints are $96$\,KB each. Instance data and weights are regenerated from the above rather than distributed, and the full evaluation cycle is scripted in \texttt{v22\_transfer/run\_v22\_cd.sh}.
+
+\begin{thebibliography}{99}
+
+\bibitem[Aardal et al.(2000a)]{aardal2000diophantine}
+Aardal, K., Hurkens, C.~A.~J., and Lenstra, A.~K. (2000).
+Solving a system of linear Diophantine equations with lower and upper bounds on the variables.
+\emph{Mathematics of Operations Research}, 25(3):427--442.
+
+\bibitem[Aardal et al.(2000b)]{aardal2000market}
+Aardal, K., Bixby, R.~E., Hurkens, C.~A.~J., Lenstra, A.~K., and Smeltink, J.~W. (2000).
+Market split and basis reduction: Towards a solution of the Cornu\'ejols--Dawande instances.
+\emph{INFORMS Journal on Computing}, 12(3):192--202.
+
+\bibitem[Amos(2023)]{amos2023tutorial}
+Amos, B. (2023).
+Tutorial on amortized optimization.
+\emph{Foundations and Trends in Machine Learning}, 16(5):592--732.
+
+\bibitem[Bengio et al.(2021)]{bengio2021machine}
+Bengio, Y., Lodi, A., and Prouvost, A. (2021).
+Machine learning for combinatorial optimization: A methodological tour d'horizon.
+\emph{European Journal of Operational Research}, 290(2):405--421.
+
+\bibitem[Chen et al.(2023)]{chen2023representing}
+Chen, Z., Liu, J., Wang, X., Lu, J., and Yin, W. (2023).
+On representing mixed-integer linear programs by graph neural networks.
+In \emph{International Conference on Learning Representations}.
+
+\bibitem[Cornu\'ejols and Dawande(1999)]{cornuejols1999market}
+Cornu\'ejols, G. and Dawande, M. (1999).
+A class of hard small 0-1 programs.
+In \emph{Integer Programming and Combinatorial Optimization}, pages 284--293.
+
+\bibitem[Gasse et al.(2019)]{gasse2019exact}
+Gasse, M., Ch\'etelat, D., Ferroni, N., Charlin, L., and Lodi, A. (2019).
+Exact combinatorial optimization with graph convolutional neural networks.
+In \emph{Advances in Neural Information Processing Systems}.
+
+\bibitem[Gershman and Goodman(2014)]{gershman2014amortized}
+Gershman, S.~J. and Goodman, N.~D. (2014).
+Amortized inference in probabilistic reasoning.
+In \emph{Proceedings of the 36th Annual Meeting of the Cognitive Science Society}, pages 517--522.
+
+\bibitem[Khalil et al.(2016)]{khalil2016learning}
+Khalil, E.~B., Le~Bodic, P., Song, L., Nemhauser, G., and Dilkina, B. (2016).
+Learning to branch in mixed integer programming.
+In \emph{AAAI Conference on Artificial Intelligence}, pages 724--731.
+
+\bibitem[Lenstra et al.(1982)]{lenstra1982factoring}
+Lenstra, A.~K., Lenstra, H.~W., and Lov\'asz, L. (1982).
+Factoring polynomials with rational coefficients.
+\emph{Mathematische Annalen}, 261(4):515--534.
+
+\bibitem[Li et al.(2023)]{li2023g4satbench}
+Li, Z., Guo, J., and Si, X. (2023).
+G4SATBench: Benchmarking and advancing SAT solving with graph neural networks.
+\emph{Transactions on Machine Learning Research}.
+
+\bibitem[Marques-Silva and Sakallah(1999)]{marquessilva1999grasp}
+Marques-Silva, J.~P. and Sakallah, K.~A. (1999).
+GRASP: A search algorithm for propositional satisfiability.
+\emph{IEEE Transactions on Computers}, 48(5):506--521.
+
+\bibitem[Millidge(2022)]{millidge2022deconfusing}
+Millidge, B. (2022).
+Deconfusing direct vs amortized optimization.
+Unrefereed technical note, \url{https://www.beren.io/2022-09-25-Deconfusing-direct-vs-amortized-optimization/}.
+
+\bibitem[Moskewicz et al.(2001)]{moskewicz2001chaff}
+Moskewicz, M.~W., Madigan, C.~F., Zhao, Y., Zhang, L., and Malik, S. (2001).
+Chaff: Engineering an efficient SAT solver.
+In \emph{Design Automation Conference}, pages 530--535.
+
+\bibitem[Ohrimenko et al.(2009)]{ohrimenko2009propagation}
+Ohrimenko, O., Stuckey, P.~J., and Codish, M. (2009).
+Propagation via lazy clause generation.
+\emph{Constraints}, 14(3):357--391.
+
+\bibitem[Schnorr and Euchner(1994)]{schnorr1994lattice}
+Schnorr, C.~P. and Euchner, M. (1994).
+Lattice basis reduction: Improved practical algorithms and solving subset sum problems.
+\emph{Mathematical Programming}, 66(1--3):181--199.
+
+\bibitem[Selsam et al.(2019)]{selsam2019neurosat}
+Selsam, D., Lamm, M., B\"unz, B., Liang, P., de~Moura, L., and Dill, D.~L. (2019).
+Learning a SAT solver from single-bit supervision.
+In \emph{International Conference on Learning Representations}.
+
+\bibitem[Veli\v{c}kovi\'c et al.(2018)]{velickovic2018graph}
+Veli\v{c}kovi\'c, P., Cucurull, G., Casanova, A., Romero, A., Li\`o, P., and Bengio, Y. (2018).
+Graph attention networks.
+In \emph{International Conference on Learning Representations}.
+
+\bibitem[Xu et al.(2019)]{xu2019powerful}
+Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2019).
+How powerful are graph neural networks?
+In \emph{International Conference on Learning Representations}.
+
+\end{thebibliography}
+
+\end{document}
