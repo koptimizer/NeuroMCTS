@@ -3,6 +3,8 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{etoolbox}
+\AtBeginEnvironment{table}{\small\setlength{\tabcolsep}{4pt}}
 \usepackage{lineno}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \floatstyle{ruled}
@@ -298,7 +300,7 @@ $21\times60$ & 21 & 0.35 & 10 & --- & --- \\
 
 \paragraph{Training.} Adam, learning rate $10^{-3}$, $20$ epochs over $10{,}000$ in-tree states, batch size $1$ (instances vary in size), gradient-norm clipping at $1.0$, loss~\eqref{eq:loss} with exact marginal targets. Training states are drawn at depths $0$--$12$ uniformly, $6$ states per source instance, from a pool of $1{,}760$ instances; evaluation uses $440$ instances from a disjoint pool. Training takes approximately $20$ minutes on one CPU core. \emph{No hyperparameter was tuned}: width, depth, learning rate, epoch count and the training depth range are the values first tried, and there is no validation split. Reported figures are therefore not contaminated by selection on the test set, but neither is any of these settings claimed to be optimal.
 
-\paragraph{Threading.} All timing-sensitive components run single-threaded (\texttt{torch.set\_num\_threads(1)}). On graphs of this size multi-threaded BLAS is counterproductive: we measure $11.3$\,ms per forward pass at $8$ threads against $0.9$\,ms at one.
+\paragraph{Threading.} All timing-sensitive components run single-threaded (\texttt{torch.set\_\allowbreak num\_\allowbreak threads(1)}). On graphs of this size multi-threaded BLAS is counterproductive: we measure $11.3$\,ms per forward pass at $8$ threads against $0.9$\,ms at one.
 
 \paragraph{Search evaluation.} Each arm is run on identical instances with a hard per-instance wall-clock budget enforced by subprocess termination, since lattice reduction executes inside a blocking native call that in-process timers cannot interrupt. Instances run at concurrency $6$ on a $20$-core machine. This low concurrency is deliberate: wall-clock-budgeted comparisons are sensitive to CPU contention, and at higher concurrency we have observed instances solvable in $14$--$15$\,s standalone exceeding a $20$\,s cap.
 
@@ -316,7 +318,7 @@ attained by answering the majority value of the surviving solutions. No determin
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{lrrr}
 \toprule
 Predictor & all variables & top-3 & $L_1$ to true marginal \\
 \midrule
@@ -324,7 +326,7 @@ Bayes ceiling & \textbf{70.8\%} & \textbf{93.2\%} & 0.0000 \\
 Proposed network & 66.7\% & 86.6\% & 0.1216 \\
 LP relaxation rounding & 60.9\% & 65.8\% & --- \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{Root-level prediction against the exact posterior on the $182$ root states of the held-out $10\times25$ evaluation pool. The network is the same checkpoint used in every search experiment below. ``top-3'' restricts to the three variables the predictor is most confident about.}
 \label{tab:ceiling}
 \end{table}
@@ -358,7 +360,7 @@ Using Proposition~\ref{prop:reduce} we measure, at each depth along a prefix dra
 
 \begin{table}[h]
 \centering
-\begin{tabular}{rrrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{rrrrr}
 \toprule
 depth & surviving $|\SOL|$ & conditional ceiling & proposed network & LP rounding \\
 \midrule
@@ -370,7 +372,7 @@ depth & surviving $|\SOL|$ & conditional ceiling & proposed network & LP roundin
 \midrule
 all depths & --- & 87.2\% & 80.0\% & 76.5\% \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{Conditional information against depth on the held-out in-tree states of the $10\times25$ evaluation pool ($n=25$), LP-confidence variable ordering. Same checkpoint as Table~\ref{tab:ceiling}.}
 \label{tab:depth}
 \end{table}
@@ -405,7 +407,7 @@ Table~\ref{tab:gap} decomposes the residual gap at these depths and asks what ea
 
 \begin{table}[h]
 \centering
-\begin{tabular}{rrrrrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{rrrrrrr}
 \toprule
 depth & \% $\FORCED$ & network on $\FORCED$ & propagation & LP integrality & LP-probing & network on $\FREE$ \\
 \midrule
@@ -414,7 +416,7 @@ depth & \% $\FORCED$ & network on $\FORCED$ & propagation & LP integrality & LP-
 7 & 79.9\% & 88.8\% & 3.7\% & 73.3\% & 72.8\% & 51.2\% \\
 8 & 87.9\% & 89.4\% & 5.3\% & 76.9\% & 79.8\% & 53.8\% \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{Residual decomposition on the same states as Table~\ref{tab:depth}. Columns 4--6 are recall on the ground-truth $\FORCED$ set (LP-probing measured with the warm-started backend of Section~\ref{sec:exp-cost}); columns 3 and 7 are the network's argmax accuracy on each subset.}
 \label{tab:gap}
 \end{table}
@@ -462,7 +464,7 @@ We compare branching strategies under matched wall-clock budgets with the lattic
 
 \begin{table}[h]
 \centering
-\begin{tabular}{llrrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{llrrrr}
 \toprule
 Size (budget) & strategy & solve rate & median nodes & median time & nodes/s \\
 \midrule
@@ -475,7 +477,7 @@ $18\times50$ (300\,s) & \textsc{lp} & $100\pm0.0\%$ & 4{,}224 & $2.43\pm0.33$\,s
 $21\times60$ (600\,s) & \textsc{lp} & $100\pm0.0\%$ & 82{,}366 & $51.5\pm2.0$\,s & 1{,}627 \\
  & \textsc{model} & $100\pm0.0\%$ & \textbf{8{,}657} & $\mathbf{14.6\pm0.7}$\,\textbf{s} & 619 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{Branching strategy comparison on the warm-started loop, lattice stage disabled, $30$ instances per cell, mean $\pm$ standard deviation over three seeds of the per-seed median. Node counts are seed-invariant.}
 \label{tab:search}
 \end{table}
@@ -560,7 +562,7 @@ Section~\ref{sec:exp-residual} located the useful prediction regime at depths $6
 
 \begin{table}[h]
 \centering
-\begin{tabular}{rrrrrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{rrrrrrr}
 \toprule
 free vars & in training range & $m/|K|$ & network on $\FORCED$ & LP on $\FORCED$ & gain & corr(network, LP) \\
 \midrule
@@ -571,7 +573,7 @@ free vars & in training range & $m/|K|$ & network on $\FORCED$ & LP on $\FORCED$
 50 & no & 0.42 & 70.2\% & 65.0\% & $\mathbf{+5.3}$ & 0.664 \\
 60 & no & 0.35 & 93.3\% & 88.9\% & $\mathbf{+4.4}$ & 0.658 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{$21\times60$ in-tree states by number of free variables, $9$--$14$ enumerable states per row. Gain is the network's margin over relaxation rounding on $\FORCED$ variables; the last column is the Pearson correlation between the two predictors' outputs.}
 \label{tab:where}
 \end{table}
@@ -587,7 +589,7 @@ Table~\ref{tab:search} isolates branching by disabling lattice reduction. In dep
 
 \begin{table}[h]
 \centering
-\begin{tabular}{llrrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{llrrrr}
 \toprule
 Size & strategy & closed by lattice & residual solved by search & median time on residual & end-to-end \\
 \midrule
@@ -597,7 +599,7 @@ $21\times60$ & \textsc{random} & 10--16/30 & 0/50 & $>600$\,s & $44.4\pm8.3\%$ \
 $21\times60$ & \textsc{lp} & 10--16/30 & 50/50 & 52.9--65.1\,s & $100\pm0.0\%$ \\
 $21\times60$ & \textsc{model} & 10--16/30 & 50/50 & \textbf{14.2--20.2\,s} & $100\pm0.0\%$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{Cascade results on the warm-started loop, three seeds at every size, $600$\,s budget at $21\times60$. Lattice coverage varies across seeds ($16$, $14$, $10$ of $30$ at $21\times60$) because the lattice stage draws random column permutations, so the residual handed to the search varies with it; all arms within a seed receive the identical residual.}
 \label{tab:cascade}
 \end{table}
@@ -667,33 +669,34 @@ What remains, and what we claim, is methodological. For planted-solution instanc
 
 Code is organized by component under \texttt{proposed\_src/}, with shared modules in \texttt{util/} and a \texttt{ROLES.txt} in each directory describing every file. Scripts are run from their own directory. Every search number in Tables~\ref{tab:search}, \ref{tab:transfer} and~\ref{tab:cascade} comes from one chain, \texttt{v23\_ablation/run\_revision2.sh}, which runs the warm-started loop (\texttt{v23\_warm\_search.py}) over all conditions and seeds; \texttt{v23\_aggregate.py} produces the tables from its output.
 
-\begin{verbatim}
-# generate instances with matched |S| and exact marginals
+{\small\begin{verbatim}
+# instances with matched |S| and exact marginals
 cd proposed_src/v15_bayes
 python3 v15_gen_by_m.py --m 10 --n 25 --count 2200 --K 20 \
-        --out ../../runs/data/sols_10x25.json
+    --out ../../runs/data/sols_10x25.json
 
-# build in-tree training states (depths 0-12, 6 per instance)
+# in-tree training states (depths 0-12, 6 per instance)
 cd ../v17_conditional
-python3 v17_make_conditional_data.py --sols ../../runs/data/full_10x25_train.json \
-        --max_depth 12 --per_instance 6 --out ../../runs/data/cond_10x25_train.json
+python3 v17_make_conditional_data.py \
+    --sols ../../runs/data/full_10x25_train.json \
+    --max_depth 12 --per_instance 6 \
+    --out ../../runs/data/cond_10x25_train.json
 
 # train (about 20 minutes, single CPU core)
 python3 v17_train_conditional.py \
-        --train ../../runs/data/cond_10x25_train.json \
-        --test  ../../runs/data/cond_10x25_test.json \
-        --n_train 10000 --n_test 2000 --epochs 20 --target soft \
-        --out ../../runs/model_n25
+    --train ../../runs/data/cond_10x25_train.json \
+    --test  ../../runs/data/cond_10x25_test.json \
+    --n_train 10000 --n_test 2000 --epochs 20 \
+    --target soft --out ../../runs/model_n25
 
-# evaluate: branching arms x {lattice off, lattice on}
-cd ../v22_transfer
-python3 v22_cascade_search.py --data_dir ../../instances/v22test_21x60 \
-        --tag EVAL --time_limit 600 --block 12 --tries 10 \
-        --arms lp model --ckpt ../../runs/model_n25/conditional.pt \
-        --ahl off on --jobs 6 --out_root ../../runs/eval
-\end{verbatim}
+# every search table: warm-started loop, 3 seeds,
+# conditions A/B/R/C/D/Crand x {lattice off, on}
+cd ../v23_ablation
+bash run_revision2.sh          # -> runs/v23/, chain.log
+python3 v23_aggregate.py       # -> runs/v23/aggregate.json
+\end{verbatim}}
 
-All generators are seeded. The released checkpoints are $96$\,KB each. Instance data and weights are regenerated from the above rather than distributed, and the full evaluation cycle is scripted in \texttt{v22\_transfer/run\_v22\_cd.sh}.
+All generators are seeded. The released checkpoints are $96$\,KB each. Instance data and weights are regenerated from the above rather than distributed, and the full evaluation cycle is scripted in \texttt{v23\_ablation/\allowbreak run\_revision2.sh}.
 
 \begin{thebibliography}{99}
 
