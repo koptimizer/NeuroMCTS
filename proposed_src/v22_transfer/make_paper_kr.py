@@ -103,11 +103,12 @@ P('우리는 21.8K 파라미터의 bipartite graph network를 이 target에 학�
   '10×25에서만 학습한 network가 평가 크기에서 학습한 network와 통계적으로 구별되지 않는다.', abs_s)
 P('<b>달성하지 못한 것도 함께 보고한다.</b> CP-SAT는 동일 instance를 모든 크기에서 <b>41~62배 빠르게</b> 풀며, '
   '우리 시스템은 그것과 경쟁하지 못한다. 그 격차를 분해하면 우리 branching이 node를 <b>1.6배 적게</b> 쓰고 '
-  'node 처리는 <b>78배 느리다</b> — 결함이 탐색 품질이 아니라 연구용 구현에 있음을 가리킨다. 그리고 probing 대비 '
+  'node 처리는 <b>78배 느리다</b> — 결함이 branching 품질이 아니라 node당 비용에 있다는 뜻이나, 그것이 회복 가능함을 보인 것은 아니다. 그리고 probing 대비 '
   '비용 우위는 점근적으로는 실재하나, 우리 instance에서 예측이 가장 중요한 depth에서는 <b>1.3~1.7배</b>에 '
   '그치며 그 구간에서 probing은 예측이 아니라 <b>증명</b>을 제공한다. 따라서 우리가 주장하는 기여는 '
   '<b>방법론적</b>이다: 정확한 conditional posterior는 branching에 대해 얻을 수 있고 잘 정의된 지도 신호이며, '
-  'in-tree 상태가 root 상태보다 나은 학습 분포이고, 그렇게 얻은 heuristic은 instance 크기를 넘어 전이된다. '
+  'in-tree 상태가 root 상태보다 나은 학습 분포이며 — root로 학습한 network는 tree 안에 배치하면 relaxation rounding보다 못하고, '
+  'in-tree로 학습한 network는 3.4%p 앞선다 — 그렇게 얻은 heuristic은 instance 크기를 넘어 전이된다. '
   '코드, 생성기, 정확한 marginal label, 인스턴스 단위 결과를 공개한다.', abs_s)
 E.append(PageBreak())
 
@@ -165,10 +166,10 @@ P('<b>(3) 근사 대상인 건전 절차 대비 비용 특성 규명.</b> networ
   '있다는 점도 함께 밝힌다.', body_s)
 P('<b>(4) wall-clock 예산을 맞춘 종단 평가, 3-seed 반복.</b> 21×60에서 학습된 guidance는 LP 기반 branching 대비 '
   'median 3.29배 빠르고(seed별 sign test <i>p</i>=0.019), node를 6.2배 적게 전개하며, 모든 반복에서 600초 내 '
-  '30/30 대 25/30을 해결한다(§4.6). 실제 cascade에서는 end-to-end 해결율이 94.4±5.1%에서 100±0.0%로 오른다(§4.8).', body_s)
+  '30/30 대 25/30을 해결한다(§4.6). 실제 cascade에서는 end-to-end 해결율이 94.4±5.1%에서 100±0.0%로 오른다(§4.10).', body_s)
 P('<b>(5) solution multiplicity를 통제한 크기 transfer.</b> |<i>S</i>|를 크기 간에 비슷하게 유지하면, '
   '10×25에서만 학습한 network가 평가 크기 21×60에서 학습한 network와 대등하다(30개 중 15개에서 더 빠르고 '
-  '총 시간 차 0.4%). 학습된 양이 크기에 특수하지 않음을 보인다(§4.7).', body_s)
+  '총 시간 차 0.4%). 학습된 양이 크기에 특수하지 않음을 보인다(§4.8).', body_s)
 E.append(PageBreak())
 
 # ═══════════════════════ 2. 선행연구 ═══════════════════════
@@ -257,13 +258,13 @@ H2('3.3 Conditioning은 reduction이다')
 P('<b>명제 1.</b> <i>A<sub>F</sub></i>와 <i>A<sub>K</sub></i>를 각각 <i>F</i>, <i>K</i>로 인덱싱된 열 부분행렬이라 하자. 그러면<br/>'
   '&nbsp;&nbsp;&nbsp;&nbsp;<i>S</i>(<i>F</i>,<b>v</b>) ≅ {<b>y</b>∈{0,1}<sup>|<i>K</i>|</sup> : '
   '<i>A<sub>K</sub></i><b>y</b> = <b>b</b> − <i>A<sub>F</sub></i><b>v</b>} &nbsp;&nbsp;(3)<br/>'
-  '이며 대응은 <b>x</b> ↦ <b>x</b><sub><i>K</i></sub>이다. 따라서 원본 instance의 conditional marginal (2)는 '
+  '이며 대응은 <b>x</b> → <b>x</b><sub><i>K</i></sub>이다. 따라서 원본 instance의 conditional marginal (2)는 '
   '<b>축소된 instance의 통상적 marginal</b>이다.', prop_s)
 P('<b>증명.</b> <i>A</i><b>x</b> = <i>A<sub>F</sub></i><b>x</b><sub><i>F</i></sub> + '
   '<i>A<sub>K</sub></i><b>x</b><sub><i>K</i></sub>이다. <b>x</b><sub><i>F</i></sub>=<b>v</b>로 고정하면 '
-  '<i>A</i><b>x</b>=<b>b</b> ⟺ <i>A<sub>K</sub></i><b>x</b><sub><i>K</i></sub> = <b>b</b>−<i>A<sub>F</sub></i><b>v</b>이고, '
-  '<b>x</b><sub><i>F</i></sub>가 결정되어 있으므로 <b>x</b>↦<b>x</b><sub><i>K</i></sub>는 두 집합 사이의 전단사다. '
-  'marginal에 대한 진술은 개수를 세면 따라 나온다. ∎', body_s)
+  '<i>A</i><b>x</b>=<b>b</b> ⇔ <i>A<sub>K</sub></i><b>x</b><sub><i>K</i></sub> = <b>b</b>−<i>A<sub>F</sub></i><b>v</b>이고, '
+  '<b>x</b><sub><i>F</i></sub>가 결정되어 있으므로 <b>x</b>→<b>x</b><sub><i>K</i></sub>는 두 집합 사이의 전단사다. '
+  'marginal에 대한 진술은 개수를 세면 따라 나온다. □', body_s)
 P('이 항등식은 초등적이지만, <b>in-tree 지도학습을 실행 가능하게 만드는 것이 바로 이것이다.</b> '
   'depth-<i>d</i> search node는 자기만의 encoding을 요구하는 특수한 대상이 아니라, 같은 문제의 '
   '<i>n</i>−<i>d</i>개 변수 instance일 뿐이다. 따라서 하나의 network, 하나의 feature 추출기, 하나의 label 생성기가 '
@@ -286,7 +287,10 @@ P('이것이 conditional marginal의 운용적 독법을 준다. 그것은 지�
 P('두 가지 귀결이 따르고, 실험이 둘 다 확인한다. <b>첫째</b>, 모든 자유 변수에 대한 총계 정확도는 나쁜 '
   '목적함수다. backtrack을 유발할 수 있는 결정과 그럴 수 없는 결정을 섞기 때문이다. 관련 있는 양은 '
   '<b>DET에서의 정확도</b>다. <b>둘째</b>, 탐색이 내려갈수록 |<i>S</i>(<i>F</i>,<b>v</b>)|가 줄어들므로 '
-  'DET 비중이 depth에 따라 커지며, 쓸모 있는 예측은 root가 아니라 <b>tree 내부에 집중된다.</b>', body_s)
+  'DET 비중이 depth에 따라 커진다. 다만 이것만으로는 학습된 predictor가 <b>어디서</b> 유용한지 말할 수 없다 — '
+  'relaxation이 이미 올바르게 반올림하는 DET 변수에는 predictor가 필요 없기 때문이다. 유용한 영역은 DET 변수가 많으면서 '
+  '<b>동시에</b> relaxation이 약한 곳이며, §4.9는 이를 지배하는 것이 depth 자체가 아니라 <b>제약 밀도 <i>m</i>/|<i>K</i>|</b>임을 '
+  '보인다: 작은 instance에서는 둘이 일치하지만 큰 instance에서는 그렇지 않다.', body_s)
 
 H2('3.5 학습 target으로서의 정확한 conditional marginal')
 P('전수열거가 가능한 크기의 instance에서는 constraint solver의 all-solutions 모드로 <i>S</i>를 정확히 얻고, '
@@ -303,11 +307,12 @@ P('<b>열거 정합성.</b> 여기에 놓치기 쉬운 함정이 있고, 그것�
   'marginal이 편향된다. 우리 구현은 OPTIMAL과 INFEASIBLE만 인정하고 시간 초과한 instance는 평균에 섞지 않고 '
   '폐기한다. 유용한 진단 지표는 <b>평균 열거 시간이 시간제한과 같아지는 것</b>인데, 이는 잘린 instance가 '
   '완료로 집계되고 있다는 신호다.', body_s)
-P('<b>도달 가능한 상태의 표집.</b> depth-<i>d</i> 학습 상태는 <i>d</i>를 균등 범위에서 뽑고, '
+P('<b>도달 가능한 상태의 표집.</b> depth-<i>d</i> 학습 상태는 <i>d</i>를 {0,…,12}에서 균등하게 뽑고, '
   'LP 확신도 순서의 앞 <i>d</i>개를 취해, 무작위로 고른 <b>실제 해</b>의 값으로 고정해 만든다. '
   '임의의 값으로 고정하면 <i>S</i>(<i>F</i>,<b>v</b>)=∅인 상태가 생기는데, 그런 상태는 propagation이 즉시 '
   '가지치는 dead node이고 conditional marginal이 정의되지 않으며, branching heuristic이 질문받을 일이 없는 '
-  '상태다.', body_s)
+  '상태다. 이 depth 범위는 튜닝하지 않은 설계 선택이며, 10×25 instance에서 자유 변수 13~25개의 학습 상태를 만든다. '
+  '배포된 탐색이 그 범위 밖의 상태를 질의하면 — 21×60에서는 대부분이 그렇다 — 어떻게 되는지는 §4.9가 다룬다.', body_s)
 
 H2('3.6 Network')
 P('instance는 <i>n</i>개 variable node, <i>m</i>개 constraint node, 그리고 <i>a<sub>ij</sub></i>=1인 곳마다 '
@@ -399,12 +404,18 @@ P('<b>열거가 멈추는 지점.</b> <i>n</i>=70에서는 목표 multiplicity�
   '따라서 <i>n</i>≤60에서 평가하며 이 경계를 한계로 보고한다.', body_s)
 
 H2('4.2 구현과 프로토콜')
-P('<b>소프트웨어.</b> relaxation은 PySCIPOpt를 통한 SCIP, 열거와 CP-SAT baseline은 OR-Tools, '
-  'lattice reduction은 fpylll(LLL, BKZ)로 수행한다. network는 PyTorch와 PyTorch Geometric(GATConv)으로 구현했다.', body_s)
+P('<b>소프트웨어.</b> 학습 feature와 원래 탐색 루프의 relaxation은 PySCIPOpt를 통한 SCIP로 풀고, §4.5·§4.6의 warm start '
+  'relaxation은 Gurobi 13(dual simplex, bound 제자리 변경)을 쓴다 — 라이선스가 필요하며, HiGHS가 동등한 incremental 인터페이스를 '
+  '제공하므로 무료 대체가 가능하겠으나 그 타이밍은 검증하지 않았다. 열거와 CP-SAT baseline은 OR-Tools, lattice reduction은 '
+  'fpylll(LLL, BKZ)이다. network는 PyTorch와 PyTorch Geometric(GATConv)으로 구현했다. relaxation의 한 성질을 적어둔다: '
+  '<b>objective가 없으므로</b> 그 해는 relaxation polytope의 임의의 vertex이고 LP 코드마다 다른 vertex를 돌려준다. '
+  '한 실험 안에서 두 branching arm은 같은 vertex를 소비하므로 비교는 공정하지만, SCIP 기반과 Gurobi 기반 실행 사이의 절대 node 수는 다르다.', body_s)
 P('<b>학습.</b> Adam, learning rate 10<sup>−3</sup>, 20 epoch, in-tree 상태 10,000개, batch size 1'
   '(instance 크기가 달라서), gradient norm clipping 1.0, 정확한 marginal target에 대한 손실 (4). '
   '학습 상태는 depth 0~12에서 균등하게, 원본 instance당 6개씩, 1,760개 instance 풀에서 뽑는다. '
-  '평가는 분리된 풀의 440개 instance를 쓴다. 학습은 CPU 코어 1개로 약 <b>20분</b> 걸린다.', body_s)
+  '평가는 분리된 풀의 440개 instance를 쓴다. 학습은 CPU 코어 1개로 약 <b>20분</b> 걸린다. '
+  '<b>하이퍼파라미터는 튜닝하지 않았다</b>: 폭·깊이·learning rate·epoch 수·학습 depth 범위는 처음 시도한 값이며 validation split이 없다. '
+  '따라서 보고 수치는 test set 선택으로 오염되지 않았으나, 이 설정이 최적이라는 주장도 하지 않는다.', body_s)
 P('<b>스레딩.</b> 타이밍에 민감한 모든 구성요소는 단일 스레드로 실행한다(torch.set_num_threads(1)). '
   '이 크기의 graph에서 다중 스레드 BLAS는 역효과다: forward pass가 8스레드에서 <b>11.3ms</b>, '
   '1스레드에서 <b>0.9ms</b>로 측정된다.', body_s)
@@ -422,23 +433,20 @@ EQ('ceil = (1/|<i>K</i>|) Σ<sub><i>j</i></sub> max(<i>p<sub>j</sub></i>, 1−<i
 P('이는 살아남은 해들의 다수값을 답함으로써 달성되며, (<i>A</i>,<b>b</b>)로부터 <b>x</b>*를 예측하는 어떤 '
   '결정론적 predictor도 이를 넘을 수 없다. 표 2는 <i>S</i>가 완전히 열거된 held-out 10×25 instance 400개에서 '
   '여러 predictor를 이에 대조한다.', body_s)
-TBL([['Predictor', '전체 변수', 'top-3', 'top-5', 'marginal과의 <i>L</i><sub>1</sub>'],
-     ['Bayes ceiling', '<b>69.9%</b>', '<b>93.1%</b>', '<b>90.5%</b>', '0.0000'],
-     ['제안 network', '68.6%', '87.4%', '85.2%', '0.1261'],
-     ['&nbsp;&nbsp;soft target (4)로 학습', '67.7%', '87.2%', '85.3%', '<b>0.0977</b>'],
-     ['Multi-head GNN (2.11M 파라미터)', '60.7%', '72.0%', '69.5%', '0.1813'],
-     ['LP relaxation rounding', '60.6%', '64.5%', '64.1%', '0.3213']],
-    [6.0*cm, 2.6*cm, 2.0*cm, 2.0*cm, 3.4*cm],
-    '표 2. 정확한 posterior 대비 root 수준 예측, held-out 10×25 instance 400개. '
-    'top-<i>k</i>는 predictor가 가장 확신하는 <i>k</i>개 변수로 제한한 것이다. '
-    'multi-head 모델은 selection/assignment/value/feasibility 4개 head를 갖는 2.11M 파라미터 network이고, '
-    '제안 network는 21.8K 파라미터다.')
-P('두 가지가 관찰된다. 21.8K 파라미터 단일 head network가 ceiling의 1.9%p 이내, top-3 부분집합에서 5.7%p '
-  '이내에 도달하는 반면, <b>97배 큰</b> multi-head network는 단순 relaxation rounding과 통계적으로 구별되지 '
-  '않는다(60.7% 대 60.6%). 즉 <b>용량이 구속 조건이 아니며</b>, 출력이 곧 target인 모델이 그것을 여러 head 중 '
-  '하나로 생산하는 모델을 실질적으로 앞선다. 그리고 심어진 해 대신 정확한 marginal로 학습하면 posterior 추정이 '
-  '뚜렷이 개선되고(<i>L</i><sub>1</sub> 0.1261→0.0977) argmax 정확도는 변하지 않는데, §3.4의 분석이 소비하는 것이 '
-  'argmax가 아니라 <b>marginal</b>이므로 이것이 중요하다.', body_s)
+TBL([['Predictor', '전체 변수', 'top-3', 'marginal과의 <i>L</i><sub>1</sub>'],
+     ['Bayes ceiling', '<b>70.8%</b>', '<b>93.2%</b>', '0.0000'],
+     ['제안 network', '66.7%', '86.6%', '0.1216'],
+     ['LP relaxation rounding', '60.9%', '65.8%', '—']],
+    [5.6*cm, 2.8*cm, 2.4*cm, 4.0*cm],
+    '표 2. held-out 10×25 평가 풀의 root 상태 182개에서 정확한 posterior 대비 root 수준 예측. '
+    'network는 이하 모든 탐색 실험에 쓰인 것과 <b>동일한 checkpoint</b>다. top-3은 predictor가 가장 확신하는 변수 3개로 제한한 것이다.')
+P('network는 전체에서 ceiling의 4.1%p, top-3 부분집합에서 6.6%p 이내에 도달하며, relaxation rounding과 ceiling 사이 격차의 '
+  '대부분을 회수한다(ceiling 70.8에 대해 60.9→66.7). 설계 선택과 관련된 예비 실험 둘을 완전성을 위해 보고하되, 여기서 평가한 '
+  'checkpoint에서 나온 것이 아님을 밝힌다: 이전 10×25 풀에서 selection/assignment/value/feasibility 4개 head를 갖는 '
+  '2.11M 파라미터 network는 root 상태에서 60.7%로 relaxation rounding(60.6%)과 통계적으로 구별되지 않았다 — 즉 <b>용량이 '
+  '구속 조건이 아니며</b> 단일 목적 head가 낫다. 그리고 단일 head architecture를 심어진 해 대신 정확한 marginal로 학습하면 '
+  'posterior와의 <i>L</i><sub>1</sub>이 0.1261에서 0.0977로 개선되고 argmax 정확도는 변하지 않았는데, §3.4의 분석이 '
+  'argmax가 아니라 <b>marginal</b>을 소비하므로 이것이 중요하다.', body_s)
 P('<b>총계가 가리는 것.</b> 표 3은 같은 root 변수들을 §3.4의 분할로 분해한다.', body_s)
 TBL([['root 변수', '개수', '비중', '부분집합 ceiling'],
      ['<b>DET</b> (거슬러 분기하면 subtree가 빔)', '38', '6.3%', '100.0%'],
@@ -447,7 +455,7 @@ TBL([['root 변수', '개수', '비중', '부분집합 ceiling'],
     [8.2*cm, 2.0*cm, 2.0*cm, 3.8*cm],
     '표 3. root 수준 분해, <i>S</i>가 열거된 10×25 instance 24개. '
     '총계는 그 94%가 어떤 branching 결정도 backtrack을 유발할 수 없는 변수로 이뤄져 있다.')
-P('root에서는 변수의 93.7%가 OPEN이다. 따라서 총계 ceiling 69.9%는 <b>탐색에 영향을 줄 수 없는 예측이 '
+P('root에서는 변수의 93.7%가 OPEN이다. 따라서 총계 ceiling 70.8%는 <b>탐색에 영향을 줄 수 없는 예측이 '
   '지배하며</b>, 영향을 줄 수 있는 6.3%에서는 정보가 이미 완전하다(100%). 결과적으로 root 수준 정확도는 '
   'branching heuristic에게 약한 목적함수이고, 핵심 질문은 정보가 존재하는가가 아니라 <b>무엇이 그것을 '
   '탐지하는가</b>이다 — 다음 절의 주제다.', body_s)
@@ -455,33 +463,53 @@ P('root에서는 변수의 93.7%가 OPEN이다. 따라서 총계 ceiling 69.9%�
 H2('4.4 Depth, 그리고 잔차가 있는 곳')
 P('명제 1을 써서, 실제 해에서 뽑은 prefix를 따라 각 depth에서 conditional ceiling과 propagation이 강제하는 '
   '남은 변수의 비율을 측정한다(표 4).', body_s)
-TBL([['depth', '살아남은 |<i>S</i>|', 'conditional ceiling', 'propagation이 강제', '제안 network'],
-     ['0', '25.2', '70.5%', '0.0%', '67.9%'],
-     ['4', '4.1', '82.2%', '0.4%', '73.2%'],
-     ['7', '1.9', '92.6%', '4.1%', '80.4%'],
-     ['8', '1.6', '<b>93.4%</b>', '<b>8.2%</b>', '85.0%'],
-     ['12', '1.1', '98.6%', '56.7%', '97.4%'],
-     ['15', '1.0', '99.7%', '94.6%', '—']],
-    [2.0*cm, 3.0*cm, 4.0*cm, 3.8*cm, 3.2*cm],
-    '표 4. depth에 따른 conditional 정보량. <i>n</i>=25, instance 150개, LP 확신도 변수 순서.')
-P('중요한 변화는 수준이 아니라 <b>구성</b>에 있다: DET 비중이 root의 6.3%에서 depth 8의 <b>89.0%</b>로 오른다. '
+TBL([['depth', '살아남은 |<i>S</i>|', 'conditional ceiling', '제안 network', 'LP rounding'],
+     ['0', '25.3', '70.8%', '66.7%', '60.9%'],
+     ['4', '4.2', '82.3%', '72.8%', '68.5%'],
+     ['7', '1.8', '91.5%', '81.2%', '77.8%'],
+     ['8', '1.4', '94.4%', '84.3%', '80.9%'],
+     ['12', '1.1', '98.8%', '96.8%', '95.5%'],
+     ['전체 depth', '—', '87.2%', '80.0%', '76.5%']],
+    [2.4*cm, 3.0*cm, 3.8*cm, 3.2*cm, 3.0*cm],
+    '표 4. 10×25 평가 풀의 held-out in-tree 상태에서 depth에 따른 conditional 정보량(<i>n</i>=25, LP 확신도 변수 순서). '
+    '표 2와 동일한 checkpoint.')
+P('중요한 변화는 수준이 아니라 <b>구성</b>에 있다: DET 비중이 root의 6.3%에서 depth 8의 <b>87.9%</b>로 오른다(표 5). '
   'root에서는 거의 모든 branching 결정이 무해하다 — 양쪽 자식 모두 해를 포함하기 때문이다. depth 8에서는 '
-  '거의 모든 결정이 틀리면 subtree를 비운다. root 상태 대신 in-tree 상태로 학습하면 depth 6~10 구간에서 '
-  '정확도가 5.3~11.5%p 개선된다.', body_s)
+  '거의 모든 결정이 틀리면 subtree를 비운다. network의 relaxation rounding 대비 우위는 전 depth에서 3~6%p이며 depth에서 '
+  '사라지지 않는다 — network가 포착하는 것이 단순히 depth 의존적이지 않다는 첫 징후이며, §4.9가 이를 정밀하게 다룬다.', body_s)
+P('<b>다른 모든 것을 통제했을 때 in-tree 지도가 중요한가?</b> root 학습 network와 in-tree 학습 network의 비교는 '
+  '다른 것이 하나도 다르지 않을 때만 유익하다. 표 4b는 instance 풀, label 종류(정확한 marginal), architecture, optimizer, '
+  '학습 상태 수(각 1,760개)를 고정하고, 상태가 root 상태인지 depth 0~12에서 뽑은 in-tree 상태인지만 바꾼다. '
+  '둘 다 같은 held-out in-tree 상태에서 평가한다.', body_s)
+TBL([['depth', 'conditional ceiling', 'root 학습', 'in-tree 학습', 'LP rounding'],
+     ['0', '70.7%', '67.8%', '66.5%', '60.9%'],
+     ['4', '82.1%', '71.4%', '72.4%', '68.3%'],
+     ['6', '89.7%', '74.6%', '78.2%', '74.0%'],
+     ['8', '94.4%', '77.4%', '84.2%', '81.3%'],
+     ['10', '97.1%', '81.7%', '91.4%', '89.4%'],
+     ['12', '98.8%', '85.8%', '96.5%', '95.3%'],
+     ['전체 depth', '87.2%', '75.4%', '<b>79.8%</b>', '76.4%']],
+    [2.4*cm, 3.6*cm, 2.8*cm, 3.0*cm, 3.0*cm],
+    '표 4b. 학습 상태 분포의 통제 비교. 풀·label·architecture·optimizer·상태 수가 같고 상태를 뽑는 depth만 다르다. '
+    '10×25 풀의 held-out in-tree 상태에서 평가.')
+P('in-tree 지도의 가치는 전체 4.4%p다. 더 시사적인 것은 root 학습 network 자체다: 75.4%로, in-tree 상태에서는 '
+  'relaxation rounding<b>보다 낮다</b>. 즉 root 상태로 학습한 network는 tree 안에서 단지 뒤처지는 것이 아니라 '
+  '대체하려던 classical heuristic보다 못하다. root에서 interior로의 이동은 root 학습 network가 일반화하는 분포가 아니며, '
+  'in-tree 학습은 학습된 guidance를 baseline보다 낫게 만드는 요인 그 자체다.', body_s)
 P('표 5는 이 depth들에서 잔차를 분해하고 각 방법이 무엇을 탐지하는지 묻는다.', body_s)
 TBL([['depth', '%DET', 'network<br/>(DET)', 'propagation', 'LP integrality', 'LP-probing', 'network<br/>(OPEN)'],
-     ['5', '61.5%', '90.4%', '0.9%', '66.5%', '62.2%', '57.9%'],
-     ['6', '72.1%', '89.2%', '1.6%', '67.3%', '68.1%', '52.3%'],
-     ['7', '83.0%', '87.9%', '4.1%', '71.0%', '75.0%', '52.9%'],
-     ['8', '89.0%', '89.2%', '7.5%', '76.9%', '79.4%', '59.7%']],
+     ['5', '61.9%', '89.7%', '1.2%', '67.9%', '51.6%', '54.4%'],
+     ['6', '74.2%', '88.2%', '1.6%', '70.4%', '68.0%', '52.5%'],
+     ['7', '79.9%', '88.8%', '3.7%', '73.3%', '72.8%', '51.2%'],
+     ['8', '87.9%', '89.4%', '5.3%', '76.9%', '79.8%', '53.8%']],
     [1.6*cm, 1.8*cm, 2.4*cm, 2.6*cm, 2.8*cm, 2.4*cm, 2.4*cm],
-    '표 5. 잔차 분해. 4~6열은 ground-truth DET 집합에 대한 recall, 3열과 7열은 각 부분집합에서 network의 '
-    'argmax 정확도다.', font=8.0)
-P('잔차는 전적으로 DET 변수 위에 있다: depth 7에서 0.83×12.1≈10%p로, conditional ceiling 대비 측정된 '
-  '12.2%p 미달분과 부합한다. OPEN 변수에서 50% 근처 성능은 결함이 아니라 올바른 거동이다 — 그 변수들은 '
+    '표 5. 표 4와 같은 상태에서의 잔차 분해. 4~6열은 ground-truth DET 집합에 대한 recall(LP-probing은 §4.5의 warm start '
+    'backend로 측정), 3열과 7열은 각 부분집합에서 network의 argmax 정확도다.', font=8.0)
+P('잔차는 전적으로 DET 변수 위에 있다: depth 7에서 0.80×11.2≈9%p로, conditional ceiling 대비 측정된 '
+  '10.3%p 미달분과 부합한다. OPEN 변수에서 50% 근처 성능은 결함이 아니라 올바른 거동이다 — 그 변수들은 '
   '진정으로 미결정이기 때문이다. 두드러지는 수치는 <b>unit propagation이 논리적으로 결정된 변수의 '
-  '0.9~7.5%만 탐지한다</b>는 것이다: 정보가 존재하고 연역 가능한데도 가장 값싼 건전 규칙으로는 닿지 않는다. '
-  'LP-probing은 62~79%를 회수하고, LP integrality와 합치면 82.8~92.0%를 회수한다.', body_s)
+  '1.2~5.3%만 탐지한다</b>는 것이다: 정보가 존재하고 연역 가능한데도 가장 값싼 건전 규칙으로는 닿지 않는다. '
+  'LP-probing은 52~80%를, LP integrality는 68~77%를 회수한다.', body_s)
 
 H2('4.5 Node당 비용')
 P('두 방법 모두 instance 전체 판정에 도달하기까지 반드시 치러야 하는 비용 전부를 청구한다: network는 '
@@ -563,31 +591,33 @@ TBL([['크기', 'CP-SAT', 'SCIP', '제안 (model)', 'CP-SAT 우위'],
      ['18×50', '<b>0.046초</b>', '0.385초', '2.84초', '62배'],
      ['21×60', '<b>1.159초</b>', '3.687초', '47.28초', '41배']],
     [2.6*cm, 3.0*cm, 2.8*cm, 3.2*cm, 3.0*cm],
-    '표 9. 중앙값 해결 시간. 모든 방법이 모든 크기에서 30/30을 해결한다. 제안 시스템은 '
+    '표 8. 중앙값 해결 시간. 모든 방법이 모든 크기에서 30/30을 해결한다. 제안 시스템은 '
     '<b>어느 크기에서도 complete solver를 이기지 못하며</b>, 자신이 relaxation용으로 이미 쓰고 있는 SCIP에게도 뒤진다.')
 P('격차가 크고, 우리는 이를 명확히 진술한다: <b>본 논문의 기여는 CP-SAT와 경쟁하는 solver가 아니다.</b> '
   '다만 격차가 어디서 오는지는 물어볼 가치가 있다. branching heuristic이 실제로 무엇을 하고 있는지에 대한 '
-  '답이 거기 있기 때문이다. 표 10은 21×60에서 CP-SAT 자체의 branch 카운터를 써서 격차를 '
+  '답이 거기 있기 때문이다. 표 9는 21×60에서 CP-SAT 자체의 branch 카운터를 써서 격차를 '
   '<b>트리 크기</b>와 <b>node 처리량</b>으로 분해한다.', body_s)
 TBL([['', 'CP-SAT', '제안', '비율'],
      ['node (중앙값)', '18,827 branches', '<b>12,010</b>', '우리가 1.6배 적음'],
      ['처리량', '<b>19,782 node/초</b>', '254 node/초', 'CP-SAT 78배 빠름'],
      ['총 시간 (중앙값)', '1.065초', '47.28초', '41배']],
     [4.0*cm, 4.2*cm, 3.4*cm, 4.4*cm],
-    '표 10. 21×60 격차의 분해. CP-SAT는 추가로 instance당 중앙값 5,514개의 conflict clause를 학습한다.')
+    '표 9. 21×60 격차의 분해. CP-SAT는 추가로 instance당 중앙값 5,514개의 conflict clause를 학습한다.')
 P('학습된 guidance는 CP-SAT보다 <b>작은 탐색 트리</b>를 만든다 — CP-SAT의 clause learning에도 불구하고 node가 '
-  '1.6배 적다 — 그리고 전적으로 <b>node당 비용</b>에서 진다. 그 비용은 방법이 아니라 우리 구현의 산물이다: '
-  '탐색 루프가 Python이고, 부모 basis에서 warm start하는 대신 node relaxation을 매번 처음부터 재구성해 풀며, '
-  'incremental 자료구조 대신 매 node에서 축소 instance를 실체화한다. §4.5가 같은 효과를 직접 측정한다 — '
-  'warm start backend로 바꾸면 node당 LP 비용이 수 배 줄어든다. 탐색 루프 자체는 이식하지 않았으므로 '
-  '처리량 열은 접근법의 한계가 아니라 <b>연구용 코드</b>를 반영한다.', body_s)
+  '1.6배 적다 — 그리고 전적으로 <b>node당 비용</b>에서 진다. 그 비용이 어디로 가는지는 측정할 수 있다. 21×60 root에서 '
+  '우리 루프는 node relaxation을 재구성해 푸는 데 <b>4.34ms</b>, network forward pass에 <b>1.88ms</b>, propagation과 '
+  'bookkeeping에 0.1ms 미만을 쓴다. relaxation 비용은 Python을 벗어나지 않고도 제거된다 — 같은 LP의 warm start '
+  '재최적화는 <b>0.08ms</b>이며 §4.6은 그 변경을 적용한 탐색을 보고한다 — 그러나 그러면 남는 비용의 90% 이상이 '
+  'forward pass이고, 우리는 그것을 줄이지 않았다. 따라서 <b>격차가 구현 산물이라고 주장하지 않는다.</b> node 수가 '
+  '확립하는 것은 더 좁다: 부족분이 branching 품질에 있지는 않다는 것이다. 격차를 닫으려면 최소한 compiled inference '
+  '경로와, 다음 단락이 적듯 우리 탐색에 없는 알고리즘 구성요소가 필요하다.', body_s)
 P('이 해석에는 정직한 단서 두 가지가 붙는다. 트리 크기가 완전히 통약 가능하지는 않다 — CP-SAT의 "branch"에는 '
   'restart와 conflict 기반 점프가 포함되고 각 node가 우리보다 많은 propagation을 수행한다 — 따라서 1.6배는 '
   '자릿수 수준의 진술로 읽어야 한다. 그리고 경쟁력 있는 구현에는 언어 이식 이상이 필요하다: '
   '<b>incremental relaxation, clause learning, restart</b>가 모두 우리 탐색에 없고, 뒤의 둘은 CP-SAT가 우리가 '
   '멈추는 크기를 넘어 확장하게 해주는 요소다.', body_s)
 
-H2('4.7 크기 transfer')
+H2('4.8 크기 transfer')
 P('feature가 크기 정규화되어 있고 파라미터가 (<i>m</i>,<i>n</i>)에 의존하지 않으므로 하나의 network가 임의 '
   '크기에 적용된다. 표 1처럼 |<i>S</i>|를 맞춘 상태에서 그것이 실제로 전이되는지 검증한다.', body_s)
 TBL([['학습 크기', '평가 크기', '해결율', '시간 중앙값', 'node 중앙값'],
@@ -597,7 +627,7 @@ TBL([['학습 크기', '평가 크기', '해결율', '시간 중앙값', 'node �
      ['10×25', '21×60', '100%', '47.28초', '12,010'],
      ['18×50', '21×60', '100%', '54.75초', '14,108']],
     [3.0*cm, 3.0*cm, 2.6*cm, 3.2*cm, 3.0*cm],
-    '표 8. Transfer, lattice 단계 비활성화, 행마다 30개 instance. '
+    '표 10. Transfer, lattice 단계 비활성화, 행마다 30개 instance. '
     '2~3행과 4~5행은 각각 평가 크기를 고정하고 학습 크기만 바꾼 것이다.')
 P('21×60 평가 크기에서, 2.4배 작은 문제인 10×25에서만 학습한 network와 18×50에서 학습한 network는 '
   '<b>통계적으로 구별되지 않는다</b>: 전자가 정확히 30개 중 15개에서 더 빠르고, 속도비 중앙값 0.92배, '
@@ -608,7 +638,33 @@ P('이것이 실무적으로 중요한 이유는 <b>label 생성이 구속 조�
   '요구하는데 이는 <i>n</i>≈60을 넘으면 실패한다. transfer는 label을 얻을 수 있는 곳에서 학습한 network를 '
   '그럴 수 없는 곳에 <b>배치</b>할 수 있음을 뜻한다.', body_s)
 
-H2('4.8 전체 pipeline에서의 배치')
+H2('4.9 전이된 network는 어디서 도움이 되는가')
+P('§4.4는 유용한 예측 영역을 10×25 instance의 depth 6~8에 위치시켰다. 그 위치가 transfer 후에도 유지되는지는 별개의 '
+  '질문이며, 유지되지 않는다: 21×60에서 탐색은 자유 변수 5~60개인 상태에서 network를 질의하는데, 그중 학습 범위 13~25 '
+  '안에 드는 것은 <b>19.7%</b>뿐이고 <b>80.2%</b>는 어떤 학습 상태보다 크다. 표 11은 21×60 in-tree 상태 중 15초 안에 '
+  '열거 가능한 부분집합에서, 자유 변수 수별로 network와 relaxation rounding을 정확한 conditional marginal에 대조한다.', body_s)
+TBL([['자유 변수', '학습 범위 내', '<i>m</i>/|<i>K</i>|', 'network (DET)', 'LP (DET)', '이득', 'corr(network, LP)'],
+     ['20', '예', '1.05', '100.0%', '100.0%', '+0.0', '1.000'],
+     ['25', '예', '0.84', '100.0%', '100.0%', '+0.0', '0.998'],
+     ['30', '아니오', '0.70', '95.7%', '95.0%', '+0.7', '0.954'],
+     ['40', '아니오', '0.53', '75.5%', '75.2%', '+0.4', '0.747'],
+     ['50', '아니오', '0.42', '70.2%', '65.0%', '<b>+5.3</b>', '0.664'],
+     ['60', '아니오', '0.35', '93.3%', '88.9%', '<b>+4.4</b>', '0.658']],
+    [2.0*cm, 2.2*cm, 2.0*cm, 2.6*cm, 2.2*cm, 1.6*cm, 3.2*cm],
+    '표 11. 자유 변수 수별 21×60 in-tree 상태, 행당 열거 가능 상태 9~14개. 이득은 DET 변수에서 network의 relaxation rounding '
+    '대비 마진, 마지막 열은 두 predictor 출력의 Pearson 상관이다.', font=8.0)
+P('패턴은 depth 기반 설명이 예측하는 것과 <b>정반대</b>다. 학습 범위 안에서 network는 relaxation rounding과 구별되지 않는다 — '
+  '둘 다 완벽하고 출력 상관이 1.000이다 — <i>m</i>/|<i>K</i>|≥0.8에서는 축소 instance가 과제약이어서 relaxation이 이미 '
+  '모든 DET 변수에서 정수이기 때문이다. network의 마진 전부는 학습 중 본 적 없는 상태, 즉 자유 변수 50~60개에서 생기며, '
+  '거기서 relaxation이 가장 약하고(<i>m</i>/|<i>K</i>|≈0.35~0.42) network 출력은 relaxation과 탈상관되어 있다. '
+  '§3.4의 용어로는, DET 변수가 존재하지만 relaxation이 그것을 찾지 못하는 영역이다.', body_s)
+P('두 결론이 따른다. 첫째는 §4.4를 교정한다: depth는 10×25에서 우연히 성립한 제약 밀도의 대리변수였다 — 거기서는 root에서 '
+  '내려가도 <i>m</i>/|<i>K</i>|가 0.40에서 0.59로만 움직이지만, 21×60에서는 같은 하강이 0.35에서 1.0을 넘어선다. 유용한 '
+  '영역은 <i>m</i>/|<i>K</i>|로 정의되며, 배포 크기에서는 tree의 <b>위쪽</b>에 놓인다. 둘째, §4.8의 transfer 결과는 '
+  'multiplicity를 맞춘 비교만이 보이는 것보다 강하다: network는 크기와 제약 밀도 양쪽에서 학습 범위 밖의 상태로 외삽하며, '
+  '그 외삽이 기여가 있는 곳이다. 동시에 한계이기도 하다 — 학습 범위는 이를 염두에 두고 고른 것이 아니기 때문이다(§4.12).', body_s)
+
+H2('4.10 전체 pipeline에서의 배치')
 P('표 7은 lattice reduction을 꺼서 branching을 격리한 것이다. 실제 배치에서는 lattice 단계가 먼저 돌고 '
   'search는 그 잔여만 본다. 그 단계가 branching heuristic과 무관하므로 모든 arm이 동일한 잔여 집합을 받는다.', body_s)
 TBL([['크기', '전략', 'lattice가 해결', '잔여를 search가 해결', 'end-to-end'],
@@ -617,7 +673,7 @@ TBL([['크기', '전략', 'lattice가 해결', '잔여를 search가 해결', 'en
      ['21×60', 'lp', '10~16/30', '45/50', '94.4±5.1%'],
      ['21×60', 'model', '10~16/30', '<b>50/50</b>', '<b>100±0.0%</b>']],
     [2.4*cm, 2.8*cm, 3.2*cm, 4.2*cm, 3.0*cm],
-    '표 8. Cascade 결과. 21×60은 3개 seed 기준이고 작은 크기는 단일 실행이다. '
+    '표 12. Cascade 결과. 21×60은 3개 seed 기준이고 작은 크기는 단일 실행이다. '
     'lattice coverage가 seed마다 달라지는데(30개 중 16, 14, 10) lattice 단계가 무작위 열 순열을 '
     '뽑기 때문이며, 탐색에 넘어오는 잔여도 그에 따라 변한다.')
 P('lattice coverage는 크기에 따라 떨어진다 — 30/30, 24/30, 16/30 — 그리고 그 감소가 <b>branching 품질이 '
@@ -627,10 +683,10 @@ P('lattice coverage는 크기에 따라 떨어진다 — 30/30, 24/30, 16/30 —
   'lp arm의 분산은 branching이 아니라 <b>lattice 단계</b>에서 온다: coverage가 낮게 나온 seed에서 더 많은 '
   'instance가 탐색으로 떨어지고, 그 탐색이 때때로 닫지 못한다.', body_s)
 
-H2('4.9 graph 구조가 기여하는가')
+H2('4.11 graph 구조가 기여하는가')
 P('MarginalNet은 node당 6개 스칼라를 소비해 bipartite graph 위로 전파한다. 특징 집합이 이만큼 작으면 '
   'graph를 무시하는 변수별 모델이 진지한 baseline이 된다 — 그것이 대등하다면 message passing은 장식이다. '
-  '표 11은 동일한 target·손실·분할로 학습하고 <b>구조 사용 여부만</b> 다른 모델들을 비교한다. 집계 변형은 '
+  '표 13은 동일한 target·손실·분할로 학습하고 <b>구조 사용 여부만</b> 다른 모델들을 비교한다. 집계 변형은 '
   '각 변수에 인접한 row들의 제약측 특징 평균과 최대를 덧붙인 것으로, message passing 한 라운드가 전달할 '
   '정보에 해당한다.', body_s)
 TBL([['모델', '정확도', 'marginal과의 <i>L</i><sub>1</sub>', '파라미터'],
@@ -640,7 +696,7 @@ TBL([['모델', '정확도', 'marginal과의 <i>L</i><sub>1</sub>', '파라미�
      ['MarginalNet (bipartite graph)', '<b>84.1%</b>', '<b>0.1514</b>', '21,761'],
      ['Bayes ceiling', '87.3%', '0.0000', '—']],
     [6.4*cm, 2.6*cm, 3.6*cm, 2.6*cm],
-    '표 11. 10×25 instance의 tree 내부 상태에서의 ablation, 학습 2,000개·테스트 800개 상태.')
+    '표 13. 10×25 instance의 tree 내부 상태에서의 ablation, 학습 2,000개·테스트 800개 상태.')
 P('message passing은 <b>기여한다</b>: 구조를 쓰지 않는 최선 모델 대비 +4.7%p, <i>L</i><sub>1</sub> 36% 감소이며, '
   'MLP가 남기는 ceiling까지의 잔차 중 약 60%를 회수한다. 둘 중 <i>L</i><sub>1</sub> 쪽이 더 관련이 깊은데, '
   '§3.4의 분석이 소비하는 것이 argmax가 아니라 marginal이기 때문이다.', body_s)
@@ -648,7 +704,7 @@ P('다만 같은 표가 주장의 <b>한계</b>도 정한다. relaxation 값만 
   '도달하며 이는 ceiling에서 9.2%p 이내다. 가용 신호의 대부분은 그 단일 특징에 있고, graph는 그 위에 '
   '유용하지만 지배적이지는 않은 증분을 더한다.', body_s)
 
-H2('4.9 한계')
+H2('4.12 한계')
 P('<b>Label 생성이 평가만이 아니라 방법 자체를 제한한다.</b> 정확한 marginal은 <i>S</i>의 열거를 요구하는데 '
   '이 계열에서는 <i>n</i>≈60을 넘으면 완료되지 않는다. transfer는 더 큰 크기에서의 배치를 허용하지만 '
   '거기서의 학습은 허용하지 않는다. solution sampling으로 <i>p<sub>j</sub></i>를 근사하는 것이 자연스러운 '
@@ -671,6 +727,11 @@ P('<b>비용 우위는 규모와 baseline 구현 품질에 의존한다.</b> amo
 P('<b>탐색 구현이 경쟁력이 없다.</b> 21×60에서 CP-SAT가 종단으로 41배 빠르다. 우리 branching이 node를 더 적게 '
   '만들므로 부족분은 node 처리량(78배)이지만, 경쟁력 있는 구현이 달성 가능함을 보인 것은 아니다: '
   'incremental relaxation, clause learning, restart가 모두 없고, 뒤의 둘은 더 큰 크기에서 CP-SAT에게 결정적이다.', body_s)
+P('<b>학습 분포와 배포 분포가 거의 겹치지 않는다.</b> 학습 범위 {0,…,12}는 배포를 염두에 두고 고른 것이 아니다. 그것은 '
+  '자유 변수 13~25개인 상태를 만드는 반면 21×60 탐색은 5~60개인 상태를 질의하며 질의의 80%가 25 위에 있다. 방법은 이 때문이 '
+  '아니라 이에도 <b>불구하고</b> 작동하며(§4.9), 학습 범위를 배포 영역에 맞추는 것은 명백하지만 미검증인 개선이다.', body_s)
+P('<b>하이퍼파라미터가 튜닝되지 않았고 validation split이 없다.</b> §4.2 참조. 이 설정은 첫 시도로서 방어 가능하고 test set에 '
+  '오염되지 않았으나, 튜닝된 baseline MLP나 튜닝된 depth 범위가 마진을 바꾸는지 묻는 것은 정당한 지적이다.', body_s)
 P('<b>단일 instance 계열.</b> 모든 결과가 하나의 응용에서 나온 하나의 생성기에 관한 것이다. amortization 논변이 '
   '다른 constraint 계열로 전이되는지는 미검증이다.', body_s)
 
@@ -758,7 +819,7 @@ for r in [
  'Ohrimenko, O., Stuckey, P. J., and Codish, M. (2009). Propagation via lazy clause generation. <i>Constraints</i>, 14(3):357–391.',
  'Schnorr, C. P. and Euchner, M. (1994). Lattice basis reduction: Improved practical algorithms and solving subset sum problems. <i>Mathematical Programming</i>, 66(1–3):181–199.',
  'Selsam, D., Lamm, M., Bünz, B., Liang, P., de Moura, L., and Dill, D. L. (2019). Learning a SAT solver from single-bit supervision. In <i>International Conference on Learning Representations</i>.',
- 'Veličković, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., and Bengio, Y. (2018). Graph attention networks. In <i>International Conference on Learning Representations</i>.',
+ 'Velickovic, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., and Bengio, Y. (2018). Graph attention networks. In <i>International Conference on Learning Representations</i>.',
  'Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2019). How powerful are graph neural networks? In <i>International Conference on Learning Representations</i>.']:
 	P(r, ref_s)
 

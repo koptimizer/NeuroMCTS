@@ -1239,3 +1239,24 @@ Gurobi incremental LP(bound만 변경, 부모 basis에서 재최적화)로 양�
 
 **Elsevier 양식 전환**: `elsarticle` 클래스(CTAN에서 생성), `preprint` 옵션, `elsarticle-num`.
 → `docs/tex/LPneuroBLS_paper_els.tex`
+
+### v23 3차 (2026-09-15 22:45): warm-start loop 3-seed 재실행 — seed 0 중간 결과
+
+체인 `v23_ablation/run_revision2.sh` → `runs/v23/`, 집계 `v23_ablation/v23_aggregate.py`.
+seed 0, AHL off (branching 격리):
+
+| 조건 | lp 해결 | model 해결 | 중앙 시간 lp / model | lp/model 비율 | model 승 | sign p | 중앙 node lp / model |
+|---|---|---|---|---|---|---|---|
+| A 10×25 | 30/30 | 30/30 | 0.03 / 0.07 s | 0.37× | 1/30 | — | 46 / 24 |
+| B 18×50 | 30/30 | 30/30 | 1.98 / 1.47 s | 1.37× | 18/30 | 0.36 | 4,224 / 1,085 |
+| C 21×60 | 30/30 | **30/30** | 48.6 / **15.2** s | **2.57×** | 23/30 | **0.005** | 82,366 / **8,657** (9.5×) |
+
+예상대로 **해결율 우위(30/30 vs 25/30)가 사라짐** — warm start로 lp arm이 600초 안에 전부 풂.
+남는 것은 (i) 시간 2.6× (SCIP loop의 3.3×보다 작음), (ii) **node 9.5×** — branching 품질 자체는 그대로.
+A에서 model이 느린 것은 tree가 수십 node라 forward 1.9ms가 LP 0.08ms를 지배하기 때문.
+논문 수정 방향: 해결율 문장 삭제, 시간·node 우위로 재기술, node 수는 SCIP 기반 실행과 비교 불가(vertex 상이) 명시.
+seed 1·2와 D/Crand 완료 후 확정.
+
+**국문판 동기화**: `make_paper_kr.py`에 2차 검토 수정 전부 반영(표 2/4/5 model_n25, 표 4b 통제 비교,
+§4.9 "전이된 network는 어디서 도움이 되는가", §3.4/§3.5/§4.2/§4.7/한계 문구, 표·절 번호 재조정).
+NotoSansKR 미수록 글리프 5종(↦ ⟺ ∎ ć č) 교체.
