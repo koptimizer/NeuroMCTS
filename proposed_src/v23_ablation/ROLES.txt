@@ -1,0 +1,8 @@
+v23_ablation — 논문 검토(1차·2차) 대응 실험. 모든 스크립트는 이 폴더에서 실행.
+
+v23_mlp_baseline.py   graph 구조 기여 검증: linear / MLP / MLP+row-aggregate vs MarginalNet, 동일 target·손실·분할 (표 13)
+v23_warmstart_cost.py node당 비용 재측정: warm start(Gurobi, bound 제자리 변경) backend를 양쪽에 적용한 network vs LP-probing (표 6)
+v23_warm_search.py    warm start DFS 탐색 루프: WarmLP(원본 변수 전체 LP 하나 유지) + guide(random/lp/lp_probe/model). probe 후 model.update() 필수
+v23_cascade_warm.py   v22 cascade driver를 v23_warm_search로 교체한 실행기 (AHL → 탐색), out_root runs/v23
+run_revision2.sh      탐색 실험 전체 재실행 체인: seed 0/1/2 × {A 10×25, B 18×50, R 50→50, C 21×60, D 50→60, Crand} → runs/v23/chain.log
+v23_aggregate.py      runs/v23 집계: 해결율·중앙 시간·중앙 node·인스턴스별 비율·부호검정 → runs/v23/aggregate.json (표 7·10·12의 출처)

@@ -32,3 +32,8 @@ texput.log
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+
+# LaTeX intermediates (elsarticle)
+docs/tex/*.bbl
+docs/tex/*.blg
+docs/tex/*.spl
