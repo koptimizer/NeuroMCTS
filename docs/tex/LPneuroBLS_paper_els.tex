@@ -337,7 +337,7 @@ The network comes within $4.1$ points of the ceiling overall and $6.6$ on the to
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lrrr}
+\resizebox{\textwidth}{!}{\begin{tabular}{lrrr}
 \toprule
 Root variables & count & share & ceiling on subset \\
 \midrule
@@ -346,7 +346,7 @@ $\FREE$ (either branch reaches a solution) & 562 & 93.7\% & 67.2\% \\
 \midrule
 all variables & 600 & 100\% & 69.3\% \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \caption{Root-level decomposition, $24$ instances of $10\times25$ with $\SOL$ enumerated. The aggregate is $94\%$ composed of variables on which no branching decision can cost a backtrack.}
 \label{tab:rootsplit}
 \end{table}
@@ -696,7 +696,7 @@ bash run_revision2.sh          # -> runs/v23/, chain.log
 python3 v23_aggregate.py       # -> runs/v23/aggregate.json
 \end{verbatim}}
 
-All generators are seeded. The released checkpoints are $96$\,KB each. Instance data and weights are regenerated from the above rather than distributed, and the full evaluation cycle is scripted in \texttt{v23\_ablation/\allowbreak run\_revision2.sh}.
+All generators are seeded. The released checkpoints are $96$\,KB each. Instance data and weights are regenerated from the above rather than distributed, and the full evaluation cycle is scripted in \texttt{run\_revision2.sh} under \texttt{v23\_ablation/}.
 
 \begin{thebibliography}{99}
 
