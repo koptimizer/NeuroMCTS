@@ -1289,3 +1289,12 @@ depth 8 DET 비중 89.0% → 87.9%(표 5 기준)로 통일.
 |---|---|
 | 완료 | 비용 측정 정정(warm 양측), CP-SAT/SCIP 비교, 시드 재현성, MLP ablation, 체크포인트 통일, 통제 root-vs-in-tree, 학습 범위 밖 질의 분석(m/n_c), "구현 산물" 약화, hyperparameter/validation 명시, Gurobi 의존·임의 vertex 명기, random arm cascade, warm-start 루프로 탐색 전체 재실행, Elsevier 양식 |
 | 미완(한계로 명시) | C++/compiled inference 미구현, n≥100 미시연, 평가셋 30개(검정력), 단일 instance 계열, 학습 depth 범위를 배포 영역에 맞추지 않음, validation split 부재 |
+
+### v23 4차 (2026-09-16 04:30~): Swarm and Evolutionary Computation 투고 양식
+
+- 영문: `docs/tex/SWEVO_EN_v22.tex` — `elsarticle[final,5p,times,twocolumn]`(Elsevier 2단), `\journal{Swarm and Evolutionary Computation}`.
+  저자 Gwang-Jong Ko*(교신), Taesu Cheong†, In-Chan Choi†, 소속 School of Industrial and Management Engineering, Korea University.
+  † 각주 본문은 미정(placeholder). 5열 이상 표는 `table*`(전폭), 나머지는 단 폭에 맞춰 `\resizebox`(폭 초과 시에만). 13쪽, overfull 0, 오류 0.
+- 국문: `docs/tex/SWEVO_KR_v22.tex` — `make_swevo_kr.py`가 `make_paper_kr.py`의 본문(같은 원천)에서 emit. 표 번호(4b 포함)는 수동 캡션으로 유지.
+  **이 머신에는 xelatex/xeCJK/luaotfload가 없어 컴파일 불가** — lualatex로 문법 검사만 통과(비폰트 오류 0). 컴파일 환경: `sudo apt install texlive-xetex texlive-lang-korean`.
+  검증된 국문 PDF는 여전히 reportlab판 `LPneuroBLS_paper_kr.pdf`.

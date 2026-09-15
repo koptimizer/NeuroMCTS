@@ -58,3 +58,8 @@ n=60 m=21 채택(|S| 중앙 12, 열거 10/10).
     (빠른 비율 15/30, 총시간 2924.9s vs 2914.5s, 차이 0.4%). ** 전이 손실 측정되지 않음 **.
   AHL 커버리지: n=25 30/30 -> n=50 24/30 -> n=60 16/30으로 감소.
     n=60의 잔여 14개에서 model은 14/14, lp는 12/14 해결 -> 운용 조건에서도 93.3% -> 100%.
+
+make_paper_kr.py            국문 논문(LPneuroBLS_paper_kr.pdf)을 reportlab+NotoSansKR로 생성. 국문 본문의 단일 원천.
+make_swevo_kr.py            같은 국문 본문에서 Swarm and Evolutionary Computation 투고용 elsarticle 2단
+                            LaTeX 원고(docs/tex/SWEVO_KR_v22.tex)를 생성. 컴파일에는 xelatex+xeCJK(또는
+                            lualatex+luaotfload)와 Noto Sans KR이 필요 — 이 머신에는 없어 문법 검사만 함.
