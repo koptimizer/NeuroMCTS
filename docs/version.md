@@ -1298,3 +1298,12 @@ depth 8 DET 비중 89.0% → 87.9%(표 5 기준)로 통일.
 - 국문: `docs/tex/SWEVO_KR_v22.tex` — `make_swevo_kr.py`가 `make_paper_kr.py`의 본문(같은 원천)에서 emit. 표 번호(4b 포함)는 수동 캡션으로 유지.
   **이 머신에는 xelatex/xeCJK/luaotfload가 없어 컴파일 불가** — lualatex로 문법 검사만 통과(비폰트 오류 0). 컴파일 환경: `sudo apt install texlive-xetex texlive-lang-korean`.
   검증된 국문 PDF는 여전히 reportlab판 `LPneuroBLS_paper_kr.pdf`.
+
+### v23 종료 검증 감사 (2026-09-16 04:40~05:05) — `docs/audit_v23_verification.md`
+
+사용자 요청("테스트 데이터 컨닝·정답 분포 해킹·파이프라인 실제 실행 여부")으로 전수 점검.
+- **누출 없음**: 학습 파일 ↔ 평가 디렉토리 (A,b) 해시 겹침 0; v22test_10x25/18x50은 test split 앞 30개; 분석 표 전부 held-out `cond_10x25_test`; checkpoint는 마지막 epoch 저장(test 선택 없음).
+- **라벨 정확**: CP-SAT와 독립인 2^n brute force로 root 6개·in-tree 9개 상태 재열거 → 해집합·marginal 완전 일치.
+- **결과 진위**: 탐색을 전체 배정 복원판으로 재실행해 A₀x=b₀ 검증(21×60 4개, 10×25 5개, 3 arm) 전부 통과, node 수 기록과 일치; 1,530 결과 파일 이상 0; 헤드라인 C 조건은 외부 CPU 경합(00:45 시작) 이전에 완료.
+- **결함 1건(재현성)**: 표 11·표 4b·"80.2%" 계측·train/test split 스크립트가 저장소에 없었음(heredoc 실행) → 대화 기록에서 복구해 저장(`v23_where_analysis.py`, `v23_ctrl_data.sh`, `v23_query_range.py`, `v22_split.py`); split은 저장 파일과 동일, where는 재실행으로 표 11 수치 동일 확인.
+- 논문 4개 판본 재현성 절에 split 단계 추가, 경로 `runs/data/`→`runs/v22/` 정정.

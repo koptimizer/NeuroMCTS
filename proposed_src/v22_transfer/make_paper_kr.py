@@ -781,19 +781,25 @@ E.append(Preformatted(
 """# |S|를 맞춘 instance와 정확한 marginal 생성
 cd proposed_src/v15_bayes
 python3 v15_gen_by_m.py --m 10 --n 25 --count 2200 --K 20 \\
-        --out ../../runs/data/sols_10x25.json
+        --out ../../runs/v22/sols_10x25.json
+
+# 해집합을 붙인 뒤 train/test 분할 (seed 0, 80/20)
+cd ../v22_transfer
+python3 v22_add_solutions.py --inp ../../runs/v22/sols_10x25.json \\
+        --out ../../runs/v22/full_10x25.json
+python3 v22_split.py   # -> full_10x25_{train,test}
 
 # in-tree 학습 상태 구성 (depth 0-12, instance당 6개)
 cd ../v17_conditional
 python3 v17_make_conditional_data.py \\
-        --sols ../../runs/data/full_10x25_train.json \\
+        --sols ../../runs/v22/full_10x25_train.json \\
         --max_depth 12 --per_instance 6 \\
-        --out ../../runs/data/cond_10x25_train.json
+        --out ../../runs/v22/cond_10x25_train.json
 
 # 학습 (CPU 1코어로 약 20분)
 python3 v17_train_conditional.py \\
-        --train ../../runs/data/cond_10x25_train.json \\
-        --test  ../../runs/data/cond_10x25_test.json \\
+        --train ../../runs/v22/cond_10x25_train.json \\
+        --test  ../../runs/v22/cond_10x25_test.json \\
         --n_train 10000 --n_test 2000 --epochs 20 --target soft \\
         --out ../../runs/model_n25
 

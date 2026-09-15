@@ -6,3 +6,7 @@ v23_warm_search.py    warm start DFS 탐색 루프: WarmLP(원본 변수 전체 
 v23_cascade_warm.py   v22 cascade driver를 v23_warm_search로 교체한 실행기 (AHL → 탐색), out_root runs/v23
 run_revision2.sh      탐색 실험 전체 재실행 체인: seed 0/1/2 × {A 10×25, B 18×50, R 50→50, C 21×60, D 50→60, Crand} → runs/v23/chain.log
 v23_aggregate.py      runs/v23 집계: 해결율·중앙 시간·중앙 node·인스턴스별 비율·부호검정 → runs/v23/aggregate.json (표 7·10·12의 출처)
+v23_where_analysis.py 표 11(tab:where): 21×60 in-tree 상태를 자유변수 수별로 만들어 정확한 conditional marginal에 대해 network vs LP rounding 비교
+v23_query_range.py    "질의의 80.2%가 학습 n_c 범위 밖" 계측: 배포 탐색이 network에 질의하는 상태의 자유변수 수 분포 (v20 SCIP loop, 8 instance × 60 s)
+v23_ctrl_data.sh      표 4b(tab:ctrl): 동일 풀·라벨·1,760 상태로 root-only vs in-tree 학습 데이터 생성 + 두 학습 실행
+                      (위 셋은 2026-09-15 대화 기록에서 복구해 저장 — 감사 시 저장소에 없던 것을 발견)
