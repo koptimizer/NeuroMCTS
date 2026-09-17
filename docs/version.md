@@ -1396,3 +1396,10 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 학습 seed 1(PVb, epoch 2 선택): H 100개 node 4,940(M0 대비 2.38× 적음, 68/100, p<0.001), 시간 1.86–2.42×(66–68/100, p≤0.002); C 30개 node 4,040(1.9×, 19/30), 시간 2.3×(20–21/30). seed 0(PV)과 일관, 30개에서는 더 큼.
 - **크기 전이**: 21×60 상태로만 fine-tuning한 PV(seed 0)가 18×50에서 node 424 vs 1,085(1.74×, 20/30, p=0.099), 시간 1.75–2.21×(22–24/30, p≤0.016). AHL on 잔여(3/2/6개)에서도 방향 일치.
 - 논문 4개 판본 placeholder 채움(§4.11 "반복과 전이" 단락, 한계 절). 영문 39/16쪽 오류·overfull 0.
+
+### 260917 간결판 논문 (2026-09-17 17:45): ML+RL 2단계 방법으로 재구성
+- `docs/tex/260917_paper.tex` → `260917_paper.pdf`(elsarticle 5p 2단, **8쪽**, 그림 4장, overfull 0): 제목 "Exact Posteriors for Values, Exact Costs for Choices: Two-Stage Learned Branching for Binary Linear Systems".
+  서사: branching 결정의 두 질문(어느 값 / 어느 변수) ↔ 두 정확한 신호(conditional posterior / subtree 비용). legacy 서술·정정 경위·장황한 분석 제거. 기여 4개.
+- 그림: `v24_deploy_range/make_260917_figures.py` — framework(cascade + node 결정), reduction(명제 1·FORCED/OPEN), training(2단계), results(a–d). PDF·PNG 공용.
+- 국문 `260917_paper_kr.pdf`: `v22_transfer/make_260917_kr.py`(reportlab, 1단, 같은 그림). 미수록 글리프 정리.
+- 기존 4개 판본(LPneuroBLS_paper_els / SWEVO_EN / KR / SWEVO_KR)은 상세판으로 유지.
