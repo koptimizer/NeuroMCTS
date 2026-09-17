@@ -113,11 +113,13 @@ Our generator (Section~\ref{sec:exp-instances}) makes this mechanism explicit by
 
 \paragraph{Constraint programming with clause learning.} CP-SAT-style solvers combine constraint propagation with conflict-driven clause learning \citep{marquessilva1999grasp, moskewicz2001chaff} and lazy clause generation \citep{ohrimenko2009propagation}. Their strength on this family comes from a property central to our argument: a search \emph{manufactures} information as it descends. A marginal $\Pr[x_j=1\mid A,\mathbf{b}]$ may be uninformative at the root while $\Pr[x_j=1\mid A,\mathbf{b},x_1{=}1,x_5{=}0]$ is $0$ or $1$. Structure invisible at the root becomes deducible after commitments are made, which is why Section~\ref{sec:method-partition} studies the interior of the tree rather than the root.
 
-\paragraph{Lattice reduction.} An alternative attack embeds~\eqref{eq:bls} in a lattice and searches for short vectors. LLL \citep{lenstra1982factoring} reduces a basis in polynomial time and BKZ \citep{schnorr1994lattice} generalizes it with a block size trading time against basis quality. The Aardal--Hurkens--Lenstra embedding \citep{aardal2000diophantine, aardal2000market} is constructed so that a $0/1$ solution appears directly as a short vector, making reduction a certificate-producing procedure rather than a heuristic. We use it as the first stage of the deployed pipeline.
+\paragraph{Lattice reduction.} An alternative attack embeds~\eqref{eq:bls} in a lattice and searches for short vectors. LLL \citep{lenstra1982factoring} reduces a basis in polynomial time and BKZ \citep{schnorr1994lattice} generalizes it with a block size trading time against basis quality. The Aardal--Hurkens--Lenstra embedding \citep{aardal2000diophantine, aardal2000market} is constructed so that a $0/1$ solution appears directly as a short vector, making reduction a certificate-producing procedure rather than a heuristic. We use it as the first stage of the deployed pipeline. Lattice enumeration remains the state of the art on the canonical benchmark: \citet{wassermann2025solving} solves QOBLIB market-split instances up to $m=14$ on one CPU where branch-and-cut stops at $m=7$; our instances are a different regime (multiplicity matched, $m/n\approx0.35$) and our contribution is a branching methodology rather than a record there.
 
 \subsection{Learning for combinatorial optimization}
 
 \citet{bengio2021machine} survey this field and frame it in terms we adopt: solvers rely on hand-crafted heuristics for decisions that are ``otherwise too expensive to compute or mathematically not well defined,'' and learning is a candidate for making those decisions better. The phrase \emph{too expensive to compute} presumes the decision is computable in principle and asks only about cost, which is the situation we measure in Section~\ref{sec:exp-cost}.
+
+\paragraph{Marginals of the solution set as a branching signal.} The fraction of solutions agreeing with a decision was a branching criterion before learning: counting-based search \citep{pesant2012counting} branches on the variable--value pair of maximum solution density computed inside individual constraints, and belief-propagation-guided decimation \citep{montanari2007solving} fixes the most biased variable under approximate marginals recomputed after each fixing. Learned versions replace the counting by a network: NSNet \citep{li2022nsnet} trains a BP-structured graph network on exact marginals of a SAT formula's satisfying assignments, obtained by enumeration, and rounds them into a local-search initialization; MIP-GNN \citep{khalil2022mipgnn}, Neural Diving \citep{nair2020solving} and predict-and-search \citep{han2023gnn} predict per-variable biases from collected near-optimal solutions and use them to fix variables, warm-start or restrict a search. Our target is the same as NSNet's; what differs is that the marginals are conditional, carried to every node by the reduction identity, and used to guide a complete search without fixing anything, and that the $\FORCED$/$\FREE$ partition and the in-tree-versus-root comparison have no counterpart there.
 
 \paragraph{Branching imitation.} The clearest success in this area is imitation of an expensive expert. Strong branching scores candidates by tentatively solving both children's relaxations; it yields small trees and is too slow to run at every node. \citet{gasse2019exact} train a bipartite graph network to imitate it and recover most of the benefit at a fraction of the cost, following \citet{khalil2016learning}. The gain is not new information --- the expert already knew the answer --- but cheap access to it. Our method occupies the same structural position, with two differences: the target is an exact posterior rather than an expert's scores, and the analysis identifies which of the expert's decisions matter.
 
@@ -125,7 +127,7 @@ Our generator (Section~\ref{sec:exp-instances}) makes this mechanism explicit by
 
 \paragraph{Graph representations.} We use graph attention \citep{velickovic2018graph} over the bipartite variable--constraint graph, the standard encoding for MILP in this literature \citep{gasse2019exact}.
 
-\paragraph{Reinforcement learning for branching.} Imitation targets an expert's ranking, not the search cost the ranking is meant to reduce. \citet{etheve2020reinforcement} and \citet{scavuzzo2022learning} instead optimize tree size directly, the latter formalizing branch-and-bound as a tree MDP in which the return of a decision is the size of its subtree, so that credit is assigned per decision rather than per episode. Our fine-tuning stage (Section~\ref{sec:method-rl}) uses the same per-subtree credit with a plain policy-gradient update \citep{williams1992simple}, and differs in its starting point: the policy is initialized at a supervised rule derived from exact conditional marginals, and the marginal network is frozen, so the only thing the cost signal can change is which variable is branched on. The classical statement of the objective is the fail-first principle \citep{haralick1980increasing}: choose the variable whose wrong branch is refuted soonest.
+\paragraph{Reinforcement learning for branching.} Imitation targets an expert's ranking, not the search cost the ranking is meant to reduce. FMSTS \citep{etheve2020reinforcement} uses a node's subtree size as an observable Q-value, shows that under depth-first search minimizing every subtree minimizes the whole tree, and learns from scratch; tree MDPs \citep{scavuzzo2022learning} formalize that per-subtree credit assignment; retro branching \citep{parsonson2023reinforcement} learns from retrospectively extracted subtree trajectories; SORREL \citep{sorrel2025} initializes from suboptimal demonstrations; Neuro\# \citep{vaezipoor2021learning} trains a graph network on the residual formula of a \#SAT solver by evolution strategies to minimize branching decisions. In constraint programming, value ordering has been learned from solutions \citep{chu2015learning} and by deep Q-learning \citep{cappart2021combining}, and impact-based search \citep{refalo2004impact} prefers the variable whose assignment shrinks the search space most. Our fine-tuning stage (Section~\ref{sec:method-rl}) uses the same per-subtree credit with a plain policy-gradient update \citep{williams1992simple}, and differs in its starting point: the policy is initialized at a supervised rule derived from exact conditional marginals, and the marginal network is frozen, so the only thing the cost signal can change is which variable is branched on. The classical statement of the objective is the fail-first principle \citep{haralick1980increasing}: choose the variable whose wrong branch is refuted soonest.
 
 \subsection{Amortized optimization}
 
@@ -914,6 +916,71 @@ In \emph{Advances in Neural Information Processing Systems}, volume 35.
 Haralick, R. M. and Elliott, G. L. (1980).
 Increasing tree search efficiency for constraint satisfaction problems.
 \emph{Artificial Intelligence}, 14(3):263--313.
+
+\bibitem[Cappart et al.(2021)]{cappart2021combining}
+Cappart, Q., Moisan, T., Rousseau, L.-M., Pr\'emont-Schwarz, I., and Cire, A. A. (2021).
+Combining reinforcement learning and constraint programming for combinatorial optimization.
+In \emph{AAAI Conference on Artificial Intelligence}.
+
+\bibitem[Chu and Stuckey(2015)]{chu2015learning}
+Chu, G. and Stuckey, P. J. (2015).
+Learning value heuristics for constraint programming.
+In \emph{CPAIOR}.
+
+\bibitem[Feng and Yang(2025)]{sorrel2025}
+Feng, S. and Yang, Y. (2025).
+SORREL: Suboptimal-demonstration-guided reinforcement learning for learning to branch.
+In \emph{AAAI Conference on Artificial Intelligence}.
+
+\bibitem[Han et al.(2023)]{han2023gnn}
+Han, Q., Yang, L., Chen, Q., Zhou, X., Zhang, D., Wang, A., Sun, R., and Luo, X. (2023).
+A GNN-guided predict-and-search framework for mixed-integer linear programming.
+In \emph{International Conference on Learning Representations}.
+
+\bibitem[Khalil et al.(2022)]{khalil2022mipgnn}
+Khalil, E. B., Morris, C., and Lodi, A. (2022).
+MIP-GNN: A data-driven framework for guiding combinatorial solvers.
+In \emph{AAAI Conference on Artificial Intelligence}.
+
+\bibitem[Li and Si(2022)]{li2022nsnet}
+Li, Z. and Si, X. (2022).
+NSNet: A general neural probabilistic framework for satisfiability problems.
+In \emph{Advances in Neural Information Processing Systems}, volume 35.
+
+\bibitem[Montanari et al.(2007)]{montanari2007solving}
+Montanari, A., Ricci-Tersenghi, F., and Semerjian, G. (2007).
+Solving constraint satisfaction problems through belief propagation-guided decimation.
+In \emph{Allerton Conference on Communication, Control, and Computing}.
+
+\bibitem[Nair et al.(2020)]{nair2020solving}
+Nair, V., Bartunov, S., Gimeno, F., et al. (2020).
+Solving mixed integer programs using neural networks.
+\emph{arXiv:2012.13349}.
+
+\bibitem[Parsonson et al.(2023)]{parsonson2023reinforcement}
+Parsonson, C. W. F., Laterre, A., and Barrett, T. D. (2023).
+Reinforcement learning for branch-and-bound optimisation using retrospective trajectories.
+In \emph{AAAI Conference on Artificial Intelligence}.
+
+\bibitem[Pesant et al.(2012)]{pesant2012counting}
+Pesant, G., Quimper, C.-G., and Zanarini, A. (2012).
+Counting-based search: Branching heuristics for constraint satisfaction problems.
+\emph{Journal of Artificial Intelligence Research}, 43:173--210.
+
+\bibitem[Refalo(2004)]{refalo2004impact}
+Refalo, P. (2004).
+Impact-based search strategies for constraint programming.
+In \emph{Principles and Practice of Constraint Programming (CP)}, pages 557--571.
+
+\bibitem[Vaezipoor et al.(2021)]{vaezipoor2021learning}
+Vaezipoor, P., Lederman, G., Wu, Y., Maddison, C., Grosse, R. B., Seshia, S. A., and Bacchus, F. (2021).
+Learning branching heuristics for propositional model counting.
+In \emph{AAAI Conference on Artificial Intelligence}.
+
+\bibitem[Wassermann(2025)]{wassermann2025solving}
+Wassermann, A. (2025).
+Solving the market split problem with lattice enumeration.
+\emph{arXiv:2508.08702}; to appear in \emph{Mathematical Programming Computation}.
 
 \bibitem[Xu et al.(2019)]{xu2019powerful}
 Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2019).

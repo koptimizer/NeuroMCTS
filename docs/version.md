@@ -1403,3 +1403,8 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 그림: `v24_deploy_range/make_260917_figures.py` — framework(cascade + node 결정), reduction(명제 1·FORCED/OPEN), training(2단계), results(a–d). PDF·PNG 공용.
 - 국문 `260917_paper_kr.pdf`: `v22_transfer/make_260917_kr.py`(reportlab, 1단, 같은 그림). 미수록 글리프 정리.
 - 기존 4개 판본(LPneuroBLS_paper_els / SWEVO_EN / KR / SWEVO_KR)은 상세판으로 유지.
+
+### 선행연구 조사와 관련연구 절 개정 (2026-09-17 19:30) — `docs/related_work_survey_260917.md`
+- 노벨티를 깎는 선행연구 확인: **NSNet**(Li & Si 2022; ALLSAT 열거로 정확한 marginal을 KL로 학습 — Stage 1의 target과 동일), **FMSTS**(Etheve 2020; subtree 크기 Q-value, DFS 국소=전역 명제, from scratch), **counting-based search/maxSD**(Pesant 2012), **BP-guided decimation**(Montanari 2007), MIP-GNN/Neural Diving/Predict-and-Search(수집 해의 bias), Neuro#(ES, residual formula), retro branching, SORREL, impact-based search, Cappart 2021, Chu & Stuckey 2015, **Wassermann 2025**(lattice enumeration으로 QOBLIB m=14 — 정식 벤치마크 SOTA).
+- 기여 문구 정정: (1) "정확한 marginal 지도" → "complete search의 모든 node에서 conditional·guidance 전용으로 사용"(target은 NSNet과 같음을 명시), (2) "subtree 비용 return" → "확립된 것; 우리 것은 posterior 초기화·동결·순서만 학습". 한계 절 "무엇이 새롭고 무엇이 아닌가" 신설.
+- 관련연구 절 재작성("Marginals of the solution set as a branching signal" 단락 신설 등), 참고문헌 13건 추가. 6개 파일(260917 EN/KR, preprint, SWEVO EN/KR, KR 상세) 동기화. 260917 영문 9쪽.

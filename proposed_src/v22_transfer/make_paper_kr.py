@@ -214,7 +214,9 @@ P('<b>Clause learning을 갖춘 constraint programming.</b> CP-SAT 계열 solver
 P('<b>Lattice reduction.</b> 대안적 접근은 식 (1)을 lattice에 embedding하고 짧은 vector를 찾는다. '
   'LLL은 다항시간에 basis를 축소하고, BKZ는 block size로 시간과 품질을 교환하며 이를 일반화한다. '
   'Aardal–Hurkens–Lenstra(AHL) embedding은 0/1 해가 <b>짧은 vector로 직접 나타나도록</b> 구성되어, '
-  'reduction이 heuristic이 아니라 <b>certificate를 생산하는 절차</b>가 된다. 우리는 이를 전체 pipeline의 '
+  'reduction이 heuristic이 아니라 <b>certificate를 생산하는 절차</b>가 된다. lattice enumeration은 정식 벤치마크에서 여전히 최고 수준이다: Wassermann(2025)은 QOBLIB '
+  'market-split instance를 CPU 하나로 <i>m</i>=14까지 푸는데 branch-and-cut은 <i>m</i>=7에서 멈춘다; 우리 instance는 다른 영역(multiplicity 일치, <i>m</i>/<i>n</i>≈0.35)이고 '
+  '우리 기여는 그 기록이 아니라 branching 방법론이다. 우리는 lattice reduction을 전체 pipeline의 '
   '첫 단계로 사용한다.', body_s)
 
 H2('2.3 조합최적화를 위한 학습')
@@ -222,6 +224,12 @@ P('Bengio 등(2021)은 이 분야를 개관하며 우리가 채택하는 표현�
   '"<b>계산하기에 너무 비싸거나</b> 수학적으로 잘 정의되지 않은 결정"에 대해 수작업 heuristic에 의존하며, '
   '학습이 그 결정을 개선할 후보라는 것이다. <b>too expensive to compute</b>라는 표현은 그 결정이 '
   '원리적으로 계산 가능함을 전제하고 <b>비용만을 묻는다</b> — 이것이 §4.5에서 우리가 측정하는 상황이다.', body_s)
+P('<b>해집합의 marginal을 branching 신호로.</b> 결정에 동의하는 해의 비율은 학습 이전부터 분기 기준이었다: counting-based search(Pesant et al., 2012)는 개별 제약 안에서 '
+  '계산한 solution density가 최대인 변수-값으로 분기하고, belief-propagation-guided decimation(Montanari et al., 2007)은 고정할 때마다 다시 계산한 근사 marginal로 가장 편향된 '
+  '변수를 고정한다. 학습 버전은 counting을 network로 대체한다: NSNet(Li and Si, 2022)은 SAT 공식의 만족 배정을 열거해 얻은 정확한 marginal로 BP 구조의 graph network를 학습해 '
+  'local search 초기값으로 반올림하고, MIP-GNN(Khalil et al., 2022)·Neural Diving(Nair et al., 2020)·predict-and-search(Han et al., 2023)는 수집한 준최적 해의 변수별 bias를 '
+  '예측해 변수 고정·warm start·탐색 제한에 쓴다. 우리 target은 NSNet과 같다; 다른 것은 marginal이 conditional이고 reduction 항등식으로 모든 node에 옮겨지며 아무것도 확정하지 '
+  '않고 complete search를 안내한다는 점, 그리고 FORCED/OPEN 분할과 in-tree 대 root 비교에 대응물이 없다는 점이다.', body_s)
 P('<b>Branching imitation.</b> 이 분야의 가장 분명한 성공은 비싼 expert의 모방이다. strong branching은 '
   '두 자식의 relaxation을 잠정적으로 풀어 후보에 점수를 매기며, 작은 tree를 만들지만 매 node에서 돌리기에는 '
   '너무 느리다. Gasse 등(2019)은 bipartite graph network에 이를 모방시켜 훨씬 적은 비용으로 이득 대부분을 '
@@ -234,12 +242,14 @@ P('<b>직접적 satisfiability 예측.</b> network가 satisfiability를 종단�
   'network가 어떤 feasible/infeasible MILP 쌍을 <b>원리적으로</b> 구분할 수 없음을 증명했다. '
   '따라서 우리는 network에게 feasibility 판정을 요구하지 않는다. network는 건전성을 책임지는 '
   'complete search 내부에서 <b>branching guidance만</b> 제공한다.', body_s)
-P('<b>branching을 위한 강화학습.</b> 모방은 expert의 순위를 target으로 삼지, 그 순위가 줄이려는 탐색 비용을 target으로 삼지 않는다. '
-  'Etheve 등(2020)과 Scavuzzo 등(2022)은 tree 크기를 직접 최적화하며, 후자는 branch-and-bound를 tree MDP로 형식화해 결정의 return이 그 subtree의 '
-  '크기가 되게 함으로써 credit을 episode가 아니라 결정 단위로 배정한다. 우리의 fine-tuning 단계(§3.8)는 같은 subtree 단위 credit을 '
-  '단순 policy-gradient(Williams, 1992)로 쓰되 출발점이 다르다: policy는 정확한 conditional marginal에서 유도된 지도 규칙으로 초기화되고 '
-  'marginal network는 동결되므로, 비용 신호가 바꿀 수 있는 것은 어느 변수로 분기하는가뿐이다. 이 목적함수의 고전적 진술이 fail-first 원칙'
-  '(Haralick and Elliott, 1980)이다: 틀린 branch가 가장 빨리 반증되는 변수를 골라라.', body_s)
+P('<b>branching을 위한 강화학습.</b> 모방은 expert의 순위를 target으로 삼지, 그 순위가 줄이려는 탐색 비용을 target으로 삼지 않는다. FMSTS(Etheve et al., 2020)는 node의 '
+  'subtree 크기를 관측 가능한 Q-value로 쓰고 depth-first search에서는 모든 subtree의 최소화가 전체 tree의 최소화임을 보이며 from scratch로 학습한다; tree MDP(Scavuzzo et al., 2022)는 '
+  '그 subtree 단위 credit assignment를 형식화하고; retro branching(Parsonson et al., 2023)은 회고적으로 추출한 subtree 경로에서 학습하며; SORREL(Feng and Yang, 2025)은 준최적 시연으로 '
+  '초기화하고; Neuro#(Vaezipoor et al., 2021)은 #SAT solver의 residual formula 위 graph network를 evolution strategies로 학습해 branching 횟수를 최소화한다. constraint '
+  'programming에서는 value ordering을 해로부터(Chu and Stuckey, 2015) 또는 deep Q-learning으로(Cappart et al., 2021) 학습했고, impact-based search(Refalo, 2004)는 배정이 '
+  '탐색공간을 가장 많이 줄이는 변수를 선호한다. 우리의 fine-tuning 단계(§3.8)는 같은 subtree 단위 credit을 단순 policy-gradient(Williams, 1992)로 쓰되 출발점이 다르다: policy는 '
+  '정확한 conditional marginal에서 유도된 지도 규칙으로 초기화되고 marginal network는 동결되므로, 비용 신호가 바꿀 수 있는 것은 어느 변수로 분기하는가뿐이다. 이 목적함수의 고전적 '
+  '진술이 fail-first 원칙(Haralick and Elliott, 1980)이다: 틀린 branch가 가장 빨리 반증되는 변수를 골라라.', body_s)
 
 H2('2.4 Amortized optimization')
 P('우리 결과를 조직하는 구분은 조합최적화에서 쓰이기 전부터 있었다. Gershman과 Goodman(2014)은 '
@@ -954,19 +964,32 @@ for r in [
  'Cornuéjols, G. and Dawande, M. (1999). A class of hard small 0-1 programs. In <i>Integer Programming and Combinatorial Optimization</i>, pages 284–293.',
  'Gasse, M., Chételat, D., Ferroni, N., Charlin, L., and Lodi, A. (2019). Exact combinatorial optimization with graph convolutional neural networks. In <i>Advances in Neural Information Processing Systems</i>.',
  'Gershman, S. J. and Goodman, N. D. (2014). Amortized inference in probabilistic reasoning. In <i>Proceedings of the 36th Annual Meeting of the Cognitive Science Society</i>, pages 517–522.',
+ 'Khalil, E. B., Morris, C., and Lodi, A. (2022). MIP-GNN: A data-driven framework for guiding combinatorial solvers. In <i>AAAI Conference on Artificial Intelligence</i>.',
  'Khalil, E. B., Le Bodic, P., Song, L., Nemhauser, G., and Dilkina, B. (2016). Learning to branch in mixed integer programming. In <i>AAAI Conference on Artificial Intelligence</i>, pages 724–731.',
  'Lenstra, A. K., Lenstra, H. W., and Lovász, L. (1982). Factoring polynomials with rational coefficients. <i>Mathematische Annalen</i>, 261(4):515–534.',
+ 'Li, Z. and Si, X. (2022). NSNet: A general neural probabilistic framework for satisfiability problems. In <i>Advances in Neural Information Processing Systems</i>, volume 35.',
  'Li, Z., Guo, J., and Si, X. (2023). G4SATBench: Benchmarking and advancing SAT solving with graph neural networks. <i>Transactions on Machine Learning Research</i>.',
  'Marques-Silva, J. P. and Sakallah, K. A. (1999). GRASP: A search algorithm for propositional satisfiability. <i>IEEE Transactions on Computers</i>, 48(5):506–521.',
  'Millidge, B. (2022). Deconfusing direct vs amortized optimization. 비심사 기술 노트, https://www.beren.io/2022-09-25-Deconfusing-direct-vs-amortized-optimization/',
  'Moskewicz, M. W., Madigan, C. F., Zhao, Y., Zhang, L., and Malik, S. (2001). Chaff: Engineering an efficient SAT solver. In <i>Design Automation Conference</i>, pages 530–535.',
+ 'Montanari, A., Ricci-Tersenghi, F., and Semerjian, G. (2007). Solving constraint satisfaction problems through belief propagation-guided decimation. In <i>Allerton Conference on Communication, Control, and Computing</i>.',
+ 'Nair, V., Bartunov, S., Gimeno, F., et al. (2020). Solving mixed integer programs using neural networks. arXiv:2012.13349.',
  'Ohrimenko, O., Stuckey, P. J., and Codish, M. (2009). Propagation via lazy clause generation. <i>Constraints</i>, 14(3):357–391.',
+ 'Cappart, Q., Moisan, T., Rousseau, L.-M., Prémont-Schwarz, I., and Cire, A. A. (2021). Combining reinforcement learning and constraint programming for combinatorial optimization. In <i>AAAI Conference on Artificial Intelligence</i>.',
+ 'Chu, G. and Stuckey, P. J. (2015). Learning value heuristics for constraint programming. In <i>CPAIOR</i>.',
+ 'Feng, S. and Yang, Y. (2025). SORREL: Suboptimal-demonstration-guided reinforcement learning for learning to branch. In <i>AAAI Conference on Artificial Intelligence</i>.',
+ 'Vaezipoor, P., Lederman, G., Wu, Y., Maddison, C., Grosse, R. B., Seshia, S. A., and Bacchus, F. (2021). Learning branching heuristics for propositional model counting. In <i>AAAI Conference on Artificial Intelligence</i>.',
+ 'Wassermann, A. (2025). Solving the market split problem with lattice enumeration. arXiv:2508.08702; <i>Mathematical Programming Computation</i>, to appear.',
  'Schnorr, C. P. and Euchner, M. (1994). Lattice basis reduction: Improved practical algorithms and solving subset sum problems. <i>Mathematical Programming</i>, 66(1–3):181–199.',
  'Selsam, D., Lamm, M., Bünz, B., Liang, P., de Moura, L., and Dill, D. L. (2019). Learning a SAT solver from single-bit supervision. In <i>International Conference on Learning Representations</i>.',
  'Velickovic, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., and Bengio, Y. (2018). Graph attention networks. In <i>International Conference on Learning Representations</i>.',
  'Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist reinforcement learning. <i>Machine Learning</i>, 8(3–4):229–256.',
  'Etheve, M., Alès, Z., Bissuel, C., Juan, O., and Kedad-Sidhoum, S. (2020). Reinforcement learning for variable selection in a branch and bound algorithm. In <i>CPAIOR</i>, pages 176–185.',
+ 'Parsonson, C. W. F., Laterre, A., and Barrett, T. D. (2023). Reinforcement learning for branch-and-bound optimisation using retrospective trajectories. In <i>AAAI Conference on Artificial Intelligence</i>.',
+ 'Pesant, G., Quimper, C.-G., and Zanarini, A. (2012). Counting-based search: Branching heuristics for constraint satisfaction problems. <i>Journal of Artificial Intelligence Research</i>, 43:173–210.',
+ 'Refalo, P. (2004). Impact-based search strategies for constraint programming. In <i>Principles and Practice of Constraint Programming (CP)</i>, pages 557–571.',
  'Scavuzzo, L., Chen, F. Y., Chételat, D., Gasse, M., Lodi, A., Yorke-Smith, N., and Aardal, K. (2022). Learning to branch with tree MDPs. In <i>Advances in Neural Information Processing Systems</i>, volume 35.',
+ 'Han, Q., Yang, L., Chen, Q., Zhou, X., Zhang, D., Wang, A., Sun, R., and Luo, X. (2023). A GNN-guided predict-and-search framework for mixed-integer linear programming. In <i>International Conference on Learning Representations</i>.',
  'Haralick, R. M. and Elliott, G. L. (1980). Increasing tree search efficiency for constraint satisfaction problems. <i>Artificial Intelligence</i>, 14(3):263–313.',
  'Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2019). How powerful are graph neural networks? In <i>International Conference on Learning Representations</i>.']:
 	P(r, ref_s)
