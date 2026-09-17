@@ -1363,3 +1363,8 @@ depth 8 DET 비중 89.0% → 87.9%(표 5 기준)로 통일.
 ### v24 switch arm 결과 (10:22): 상단 이득도 탐색으로 전이되지 않음
 n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스턴스별 비율 중앙 1.03, 15/29, n.s.), 시간 17.0–18.8 s vs 14.4–14.7 s. H 100개: node 17,252 vs 13,386(43/99, p=0.23), 시간 21.7–22.1 s vs 15.6–16.9 s.
 → where 표의 +1%p DET 정확도 이득은 subtree 절감으로 이어지지 않음. **Track 1 종결(부정, 100개 세트로 검정력 확보)**: 학습 상태의 크기 분포는 지렛대가 아니며, 병목은 R0가 보인 대로 "어느 변수를 고르는가"의 순위 품질. → Track 3(R1 critic → R2 actor-critic)로 이행.
+
+### v24 Track 3 R1 결과 (12:30): critic 관문 통과
+- 데이터: M0 policy 하의 결정별 정확한 subtree 비용 — train 37,275 결정(range 상태 1,491개), test 9,375(375개). 재귀 DFS = iterative loop node 수 일치 self-check 3/3 OK. 비용 중앙 13, p90 55; 결정의 66%가 자유변수 25–34인 interior 노드(node 질량이 깊은 곳에 있음을 재확인).
+- critic(value head, trunk 동결): held-out Spearman **0.80**(Pearson 0.83); size-only baseline(log n_free 선형) 0.70. trunk 미동결 0.82. 자유변수 구간별(동결): 25–34 0.65 vs size-only 0.55, 35–44 0.68 vs 0.38, 45–55 0.57 vs 0.37 → 크기 이상의 정보를 잡음.
+- 관문(≥0.5) 통과, 동결 critic으로 R2 초기화(미동결 이득 +0.02 < 0.1 기준). R2 fine-tuning 자동 시작(12:30).
