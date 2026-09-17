@@ -7,3 +7,5 @@ v24_where_eval.py        표 11 프로토콜을 여러 checkpoint에 짝지어 �
 v24_search_util.py       root 결정을 강제할 수 있는 warm DFS (R0용; v23_warm_search와 동일 루프)
 v24_r0_residual.py       R0: 확신도 순 선택이 비용 최소인지 — top-k 후보의 subtree 크기 직접 측정 (Track 3 RL 착수 여부 판단)
 run_v24.sh               전체 체인: 풀 → 상태 → 학습(M1, M2, 사전진단 3종) → where 표 → 21×60/18×50 3-seed 평가(lp/M0/M1/M2) → 100개 평가셋 → R0
+v24_aggregate.py            runs/v24 집계: lp/M0/M1/M2 해결·시간·node, 짝 비교(M0 vs lp, M1/M2 vs M0), 30개·100개 세트
+run_v24_switch.sh           후속: n_free ≥ 50은 M1, 나머지는 M0로 라우팅하는 switch arm 평가 (C 30개 off/on, H 100개 off, 3 seed)

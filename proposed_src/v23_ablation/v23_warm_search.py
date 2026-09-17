@@ -119,7 +119,15 @@ def g_model(A, b, fixed, alive, warm, model, device, rng):
 	return j, int(p[j] >= 0.5), []
 
 
-GUIDES = dict(random=g_random, lp=g_lp, lp_probe=g_lp_probe, model=g_model)
+def g_switch(A, b, fixed, alive, warm, model, device, rng):
+	# model = (net_small, net_large, threshold): route the node to one network by its free-variable
+	# count. v24 test of whether a network that is better only near the top of a large tree can be
+	# combined with one that is better in the dense interior.
+	net = model[1] if A.shape[1] >= model[2] else model[0]
+	return g_model(A, b, fixed, alive, warm, net, device, rng)
+
+
+GUIDES = dict(random=g_random, lp=g_lp, lp_probe=g_lp_probe, model=g_model, switch=g_switch)
 
 
 def search(A0, b0, guide, model, device, time_limit, seed, env):

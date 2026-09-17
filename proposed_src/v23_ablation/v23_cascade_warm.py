@@ -52,12 +52,17 @@ def ahl_stage(A, b, block, tries, seed):
 def _worker(arm, ahl_on, inst_path, out_path, ckpt, time_limit, ahl_share, block, tries, seed_off=0):
 	from v15_train_marginal import MarginalNet
 	device = torch.device('cpu')
+	def load(path):
+		net = MarginalNet()
+		net.load_state_dict(torch.load(path, map_location=device, weights_only=False)['model_state_dict'])
+		net.eval()
+		return net
 	model = None
 	if arm == 'model':
-		model = MarginalNet()
-		st = torch.load(ckpt, map_location=device, weights_only=False)
-		model.load_state_dict(st['model_state_dict'])
-		model.eval()
+		model = load(ckpt)
+	elif arm == 'switch':                      # ckpt = "small.pt,large.pt,threshold"
+		p1, p2, thr = ckpt.split(',')
+		model = (load(p1), load(p2), int(thr))
 
 	d = json.load(open(inst_path))
 	A = np.array(d['A'], dtype=np.int64)
