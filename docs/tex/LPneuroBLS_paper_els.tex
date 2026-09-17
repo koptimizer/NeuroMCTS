@@ -778,8 +778,8 @@ cd ../v23_ablation
 bash run_revision2.sh          # -> runs/v23/, chain.log
 python3 v23_aggregate.py       # -> runs/v23/aggregate.json
 
-# v24: deployment-range training (negative), 100-instance set,
-# R0/R1/R2 cost-aware fine-tuning and its evaluation
+# v24: range training (negative), 100-instance
+# set, R0/R1/R2 fine-tuning and evaluation
 cd ../v24_deploy_range
 bash run_v24.sh; bash run_v24_switch.sh
 bash run_v24_r1.sh; bash run_v24_r2.sh
