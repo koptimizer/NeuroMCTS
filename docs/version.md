@@ -1408,3 +1408,9 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 노벨티를 깎는 선행연구 확인: **NSNet**(Li & Si 2022; ALLSAT 열거로 정확한 marginal을 KL로 학습 — Stage 1의 target과 동일), **FMSTS**(Etheve 2020; subtree 크기 Q-value, DFS 국소=전역 명제, from scratch), **counting-based search/maxSD**(Pesant 2012), **BP-guided decimation**(Montanari 2007), MIP-GNN/Neural Diving/Predict-and-Search(수집 해의 bias), Neuro#(ES, residual formula), retro branching, SORREL, impact-based search, Cappart 2021, Chu & Stuckey 2015, **Wassermann 2025**(lattice enumeration으로 QOBLIB m=14 — 정식 벤치마크 SOTA).
 - 기여 문구 정정: (1) "정확한 marginal 지도" → "complete search의 모든 node에서 conditional·guidance 전용으로 사용"(target은 NSNet과 같음을 명시), (2) "subtree 비용 return" → "확립된 것; 우리 것은 posterior 초기화·동결·순서만 학습". 한계 절 "무엇이 새롭고 무엇이 아닌가" 신설.
 - 관련연구 절 재작성("Marginals of the solution set as a branching signal" 단락 신설 등), 참고문헌 13건 추가. 6개 파일(260917 EN/KR, preprint, SWEVO EN/KR, KR 상세) 동기화. 260917 영문 9쪽.
+
+### v24 RL 상향 전이 (2026-09-18 06:42, `run_v24_up.sh`): **fine-tuning도 크기를 넘어 전이됨**
+- 18×50 range 상태(자유변수 35–50, 2,000개; root |S| 중앙 18)로 critic(Spearman 0.83 vs size-only 0.74) → R2 6 epoch(monitor 0.445, epoch 4) → **PV50**(18×50만 본 policy).
+- PV50 → 21×60 100개: node 7,796 vs M0 13,386(**2.03× 적음**, 69/100, p<0.001), 시간 1.7–1.9×(63–66/100, p≤0.012). PV60(같은 크기 학습)의 5,495보다는 크지만 상향 전이가 분명함. 30개 세트: 1.14× n.s.(이 세트는 또 둔감). 18×50 자체: node 1,147 vs 1,085(개선 없음), 시간 1.1–1.4× n.s. — 자기 크기(작은 tree)에서는 이득이 없고 큰 크기에서 생김.
+- **24×70 probe**(m/n 0.34, |S| 미검증 12개, 900 s, seed 0): lp 8/12(중앙 629 s), M0 11/12(467 s), **PV60 12/12(159 s), PV50 12/12(126 s)**; node 중앙 lp 1.15M / M0 347k / PV60 114k / PV50 91k. → 유용한 창이 60 너머로 이어지고, ML(25→70)·RL(50→70, 60→70) 모두 전이.
+- 진행 중: `run_v24_big.sh` — 24×70·28×80 각 30개, lp/M0/PV60/PV50, 1200 s, CP-SAT/SCIP baseline 포함.

@@ -13,7 +13,7 @@ from v24_search_util import search
 torch.set_num_threads(1)
 net = load_pv('../../runs/v22/model_n25/conditional.pt', '../../runs/v24/r2/pv_best.pt')
 base = MarginalNet(); base.load_state_dict(torch.load('../../runs/v22/model_n25/conditional.pt', map_location='cpu', weights_only=False)['model_state_dict']); base.eval()
-recs = [r for r in json.load(open('../../runs/v24/cond_21x60_range_test.json')) if r['n_free'] in (50, 55)][:120]
+recs = [r for r in json.load(open('../../runs/v24/cond_21x60_range_test.json')) if r['n_free'] in (50, 55)][:50]
 env = gp.Env(empty=True); env.setParam('OutputFlag', 0); env.start(); dev = torch.device('cpu')
 rows = []
 for r in recs:
@@ -27,8 +27,8 @@ for r in recs:
 	out = {}
 	for tag, j in [('rule', j0), ('pv', j1)]:
 		v = int(p[j] >= 0.5)
-		ok, n, _ = search(A, b, GUIDES['model'], base, dev, 90, 0, env, root_action=(j, v))
-		keep = np.setdiff1d(np.arange(A.shape[1]), [j]); ok1, n1, _ = search(A[:, keep], b - A[:, j] * v, GUIDES['model'], base, dev, 90, 0, env)
+		ok, n, _ = search(A, b, GUIDES['model'], base, dev, 60, 0, env, root_action=(j, v))
+		keep = np.setdiff1d(np.arange(A.shape[1]), [j]); ok1, n1, _ = search(A[:, keep], b - A[:, j] * v, GUIDES["model"], base, dev, 60, 0, env)
 		out[tag] = dict(total=n if ok else None, first_ok=ok1, first_cost=n1, first_right=bool((pt[j] > 0.5) == v) if (pt[j] < 1e-9 or pt[j] > 1 - 1e-9) else None)
 	rows.append(out)
 env.dispose()
