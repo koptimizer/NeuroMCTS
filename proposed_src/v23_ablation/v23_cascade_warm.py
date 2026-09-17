@@ -63,6 +63,10 @@ def _worker(arm, ahl_on, inst_path, out_path, ckpt, time_limit, ahl_share, block
 	elif arm == 'switch':                      # ckpt = "small.pt,large.pt,threshold"
 		p1, p2, thr = ckpt.split(',')
 		model = (load(p1), load(p2), int(thr))
+	elif arm == 'pv':                          # ckpt = "base.pt,pv.pt" (v24 Track 3 policy/value net)
+		from v24_rl_core import load_pv
+		p1, p2 = ckpt.split(',')
+		model = load_pv(p1, p2)
 
 	d = json.load(open(inst_path))
 	A = np.array(d['A'], dtype=np.int64)

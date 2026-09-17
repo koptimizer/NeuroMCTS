@@ -127,7 +127,19 @@ def g_switch(A, b, fixed, alive, warm, model, device, rng):
 	return g_model(A, b, fixed, alive, warm, net, device, rng)
 
 
-GUIDES = dict(random=g_random, lp=g_lp, lp_probe=g_lp_probe, model=g_model, switch=g_switch)
+def g_pv(A, b, fixed, alive, warm, model, device, rng):
+	# model = PolicyValueNet (v24 Track 3): branch on argmax of the policy logit, value from the marginal.
+	warm.set_node(fixed)
+	if not warm.solve():
+		return None, None, []
+	x = warm.values(alive)
+	with torch.no_grad():
+		m_logit, pol_logit, _ = model(*features(A, b, x, device))
+	j = int(torch.argmax(pol_logit))
+	return j, int(m_logit[j] >= 0), []
+
+
+GUIDES = dict(random=g_random, lp=g_lp, lp_probe=g_lp_probe, model=g_model, switch=g_switch, pv=g_pv)
 
 
 def search(A0, b0, guide, model, device, time_limit, seed, env):

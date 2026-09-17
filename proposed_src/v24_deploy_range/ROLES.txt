@@ -13,3 +13,5 @@ v24_rl_core.py            Track 3 핵심: PolicyValueNet(MarginalNet trunk + pol
 v24_r1_collect.py         R1 데이터: M0 policy 하의 결정별 subtree 비용 수집 (range 상태 n_free 45–60, 상태당 25개 표집)
 v24_r1_train_critic.py    R1: value head(critic) 학습 — held-out Spearman ≥ 0.5가 R2 착수 관문; size-only baseline 병기
 run_v24_r1.sh             R1 체인: 수집(train/test) → critic(trunk 동결) → critic(trunk 미동결)
+v24_r2_finetune.py        R2: actor-critic fine-tuning (정확한 subtree 비용, policy head 초기값=지도 규칙, base 동결 기본), held-out monitor로 epoch 선택
+run_v24_r2.sh             R2 체인: R1 종료 대기 → critic 관문(Spearman ≥ 0.5) → fine-tune 6 epoch → monitor 최적 epoch 선택 → pv arm 3-seed 평가(C off/on, H off) → 집계
