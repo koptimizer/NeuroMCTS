@@ -1368,3 +1368,19 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 데이터: M0 policy 하의 결정별 정확한 subtree 비용 — train 37,275 결정(range 상태 1,491개), test 9,375(375개). 재귀 DFS = iterative loop node 수 일치 self-check 3/3 OK. 비용 중앙 13, p90 55; 결정의 66%가 자유변수 25–34인 interior 노드(node 질량이 깊은 곳에 있음을 재확인).
 - critic(value head, trunk 동결): held-out Spearman **0.80**(Pearson 0.83); size-only baseline(log n_free 선형) 0.70. trunk 미동결 0.82. 자유변수 구간별(동결): 25–34 0.65 vs size-only 0.55, 35–44 0.68 vs 0.38, 45–55 0.57 vs 0.37 → 크기 이상의 정보를 잡음.
 - 관문(≥0.5) 통과, 동결 critic으로 R2 초기화(미동결 이득 +0.02 < 0.1 기준). R2 fine-tuning 자동 시작(12:30).
+
+### v24 Track 3 R2 결과 (14:07): **비용 기반 fine-tuning이 작동** — 100개 세트에서 M0 대비 node 2.3×, 시간 2.0–2.2×
+- 학습: 400 상태/epoch × 6 epoch(rollout τ=1, base 동결, policy·value head만 학습, 초기 policy = 지도 규칙). held-out monitor(150 range test 상태, root subtree 비용, 초기 대비): epoch 1 0.79 → 2 0.49 → 4 **0.46**(선택) → 6 0.56; wins 111/38(epoch 4). entropy 1.73 → 0.10.
+- 평가(pv arm = argmax policy logit, 값은 marginal), warm loop, 3 seed:
+
+| 세트 (AHL off) | lp | M0 | **PV** | PV vs M0 |
+|---|---|---|---|---|
+| H 21×60 100개 node 중앙 | 79,609 | 13,386 | **5,495** | 2.29× 적음, 70/100, p<0.001 |
+| H 시간 중앙 | 39–44 s | 15.6–16.9 s | **7.4–8.0 s** | 2.0–2.2×, 64–67/100, p≤0.007 |
+| C 21×60 30개 node | 82,366 | 8,657 | 8,873 | 1.10×, 17/30, n.s. |
+| C 시간 | 47–49 s | 14.4–14.7 s | 11.5–14.3 s | 1.24–1.46×, p 0.04–0.36 |
+
+- 100개 중 기존 30개(seed 700000–700029)에서는 M0/PV node 비율 중앙 1.10(17/30), 새 70개에서는 **2.48(53/70)**, M0 node 중앙 15,747 vs PV 4,858. 기존 30개는 M0에 유리했던 표본 → 논문 기준은 100개 세트.
+- lp 대비(100개): 시간 ≈5×, node 14.5×. CP-SAT(1.159 s) 대비 격차 13× → 약 6.4×.
+- 감사: RL 학습 풀(seed 800000+) ∩ 평가셋 100/30 = 0; pv arm 해 8개를 전체 배정 복원으로 A₀x=b₀ 검증, node 수 기록과 정확히 일치.
+- 진행 중: 학습 seed 1 반복(PVb) + 18×50 검사(`run_v24_r2b.sh`).

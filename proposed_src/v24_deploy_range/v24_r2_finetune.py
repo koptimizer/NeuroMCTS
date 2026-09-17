@@ -85,6 +85,7 @@ def main():
 	ap.add_argument('--entropy', type=float, default=0.01)
 	ap.add_argument('--unfreeze', action='store_true')
 	ap.add_argument('--jobs', type=int, default=6)
+	ap.add_argument('--seed', type=int, default=0)
 	ap.add_argument('--out', required=True)
 	a = ap.parse_args()
 	out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
@@ -93,7 +94,7 @@ def main():
 	net = load_pv(a.base, a.init_pv)
 	params = list(net.pol.parameters()) + list(net.val.parameters()) + (list(net.base.parameters()) if a.unfreeze else [])
 	opt = torch.optim.Adam(params, lr=a.lr)
-	rng = np.random.default_rng(0)
+	rng = np.random.default_rng(a.seed); torch.manual_seed(a.seed)
 	dev = torch.device('cpu')
 	log = []
 
@@ -112,7 +113,7 @@ def main():
 	for ep in range(1, a.epochs + 1):
 		te0 = time.time()
 		pick = rng.choice(len(tr), min(a.states_per_epoch, len(tr)), replace=False)
-		tasks = [(int(i), tr[i], a.budget, a.tau, a.cap, 1000 * ep + int(i)) for i in pick]
+		tasks = [(int(i), tr[i], a.budget, a.tau, a.cap, 1000 * ep + int(i) + 100000 * a.seed) for i in pick]
 		res = run_pool(rollout, tasks, a.jobs, a.base, state_cpu())
 		recs = [r for _, _, _, rs in res for r in rs]
 		solved = sum(f for _, f, _, _ in res)
