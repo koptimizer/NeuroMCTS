@@ -1384,3 +1384,10 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - lp 대비(100개): 시간 ≈5×, node 14.5×. CP-SAT(1.159 s) 대비 격차 13× → 약 6.4×.
 - 감사: RL 학습 풀(seed 800000+) ∩ 평가셋 100/30 = 0; pv arm 해 8개를 전체 배정 복원으로 A₀x=b₀ 검증, node 수 기록과 정확히 일치.
 - 진행 중: 학습 seed 1 반복(PVb) + 18×50 검사(`run_v24_r2b.sh`).
+
+### v24 논문 반영 1차 (2026-09-17 15:30): 영문 preprint·SWEVO·국문·SWEVO_KR 4개 판본
+- 초록·기여(4 갱신, 6·7 신설)·선행연구(RL for branching: Etheve 2020, Scavuzzo 2022 tree MDP, Williams 1992, fail-first Haralick–Elliott 1980)·
+  §3.8 "Cost-aware fine-tuning"(결정 과정·policy/value·갱신식·관문·epoch 선택)·§4.2 평가셋·§4.6 100개 반복(표 7b/tab:search100)·§4.7 100개 CP-SAT/SCIP 행·
+  §4.10 "배포 크기 상태 학습: 부정 결과"·§4.11 "비용 기반 fine-tuning"(R0/R1/R2/평가/무엇이 바뀌었나)·표 12 model+ft 행·한계 2건 개정+1건 신설·결론·재현성.
+- 영문 39쪽(preprint)/16쪽(SWEVO), 오류 0. SWEVO는 `make_swevo_en.py`로 파생. 국문은 generator에 동일 반영, 절 번호 재조정(3.8/3.9, 4.10–4.14).
+- 대기 중 placeholder(%%PVB-REPLICATION%%, %%PVB-LIM%%): 학습 seed 1 반복(PVb)과 18×50 검사 결과 반영 예정.

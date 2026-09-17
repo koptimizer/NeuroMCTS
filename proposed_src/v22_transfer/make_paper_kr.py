@@ -100,8 +100,15 @@ P('우리는 21.8K 파라미터의 bipartite graph network를 이 target에 학�
   'sign test p=0.005), node를 <b>9.5배</b> 적게 전개하며, 두 전략 모두 모든 instance를 푼다. lattice reduction이 먼저 도는 '
   '전체 pipeline에서는 잔여 instance를 LP 기반 branching보다 3.0배 빠르게 닫고, random branching은 잔여를 하나도 닫지 못한다. '
   'solution 개수를 크기 간에 통제하면 transfer 손실이 측정되지 않는다: '
-  '10×25에서만 학습한 network가 평가 크기에서 학습한 network와 통계적으로 구별되지 않는다.', abs_s)
-P('<b>달성하지 못한 것도 함께 보고한다.</b> CP-SAT는 동일 instance를 모든 크기에서 <b>13~40배 빠르게</b> 풀며, '
+  '10×25에서만 학습한 network가 평가 크기에서 학습한 network와 통계적으로 구별되지 않는다. 21×60 100개 세트에서 지도학습 guidance는 '
+  'LP 기반 branching보다 2.0~2.3배 빠르고 node를 5.5배 적게 쓴다. 추가 실험 둘이 지도 target이 무엇을 잡고 무엇을 놓치는지를 특정한다. '
+  'network의 예측 이득이 사는 배포 크기의 상태로 학습하는 것은 <b>도움이 되지 않는다</b>: 대부분의 node가 소비되는 작은 interior 상태에서 '
+  '능력을 잃어 탐색이 느려진다. 도움이 되는 것은 탐색이 실제로 지불하는 목적함수를 최적화하는 것이다. 모든 branching 결정의 정확한 subtree 비용을 '
+  '탐색 자체에서 얻을 수 있으므로, 지도 규칙에서 출발한 branching policy의 actor-critic fine-tuning은 같은 100개 instance에서 지도 policy보다 '
+  'node를 2.3배 적게 전개하고 2.0~2.2배 빠르며(<i>p</i>&lt;0.01), LP 기반 branching보다 4.8~5.9배 빠르다. fine-tuning된 policy는 held-out 상태의 '
+  '95%에서 확신도 규칙과 다른 변수 — 대개 network가 <b>덜</b> 확신하는 변수 — 로 분기하는데, 이는 맞을 확률과 틀렸을 때의 비용이 서로 다른 '
+  '목적함수라는 직접 증거다.', abs_s)
+P('<b>달성하지 못한 것도 함께 보고한다.</b> CP-SAT는 동일 instance를 모든 크기에서 <b>9~40배 빠르게</b>(fine-tuning 후 21×60에서 9~10배) 풀며, '
   '우리 시스템은 그것과 경쟁하지 못한다. 그 격차를 분해하면 우리 branching이 node를 <b>2.2배 적게</b> 쓰고 '
   'node 처리는 <b>32배 느리다</b> — 결함이 branching 품질이 아니라 node당 비용에 있다는 뜻이나, 그것이 회복 가능함을 보인 것은 아니다. 그리고 probing 대비 '
   '비용 우위는 점근적으로는 실재하나, 우리 instance에서 예측이 가장 중요한 depth에서는 <b>1.3~1.7배</b>에 '
@@ -165,12 +172,19 @@ P('<b>(3) 근사 대상인 건전 절차 대비 비용 특성 규명.</b> networ
   '우리 탐색이 실제로 작동하는 크기에서는 우위가 크지 않고 probing에는 <b>건전성</b>이라는 추가 장점이 '
   '있다는 점도 함께 밝힌다.', body_s)
 P('<b>(4) wall-clock 예산을 맞춘 종단 평가, 3-seed 반복.</b> warm start한 탐색 루프에서 21×60의 학습된 guidance는 LP 기반 '
-  'branching 대비 median 2.6~3.0배 빠르고(모든 seed에서 30개 중 23개 우세, sign test <i>p</i>=0.005) node를 9.5배 적게 전개하며, '
-  '두 전략 모두 600초 내 30/30을 푼다(§4.6). 실제 cascade에서는 두 건전 전략 모두 잔여 instance를 전부 닫되 학습된 쪽이 '
-  '3.0배 빠르고(seed 합산 50개 중 40개 우세, <i>p</i>=2×10<sup>−5</sup>), random branching은 잔여 50개 중 하나도 닫지 못한다(§4.10).', body_s)
+  'branching 대비 100개 세트에서 median 2.0~2.3배 빠르고(70~71/100 우세, sign test <i>p</i>&lt;0.001) node를 5.5배 적게 전개한다. 원래의 30개 세트에서는 '
+  '2.6~3.0배·9.5배이며, 두 전략 모두 600초 내 모든 instance를 푼다(§4.6). 실제 cascade에서는 두 건전 전략 모두 잔여 instance를 전부 닫되 학습된 쪽이 '
+  '3.0배 빠르고(seed 합산 50개 중 40개 우세, <i>p</i>=2×10<sup>−5</sup>), random branching은 잔여 50개 중 하나도 닫지 못한다(§4.12).', body_s)
 P('<b>(5) solution multiplicity를 통제한 크기 transfer.</b> |<i>S</i>|를 크기 간에 비슷하게 유지하면, '
   '10×25에서만 학습한 network가 평가 크기 21×60에서 학습한 network보다 못하지 않다(30개 중 18~19개에서 더 빠르고 '
   'node도 18개에서 더 적으며, 어느 방향도 유의하지 않음). 학습된 양이 크기에 특수하지 않음을 보인다(§4.8).', body_s)
+P('<b>(6) 학습 분포를 배포에 맞추는 것에 대한 부정 결과.</b> network가 relaxation rounding을 앞서는 곳은 자유변수 50~60개 상태이며 학습 범위 13~25 '
+  '밖이다. 다른 모든 것을 고정하고 정확히 그 상태로 학습하면 그곳의 정확도는 약 1%p 오르지만 search tree는 <b>두 배</b>가 된다 — 전체 node의 '
+  '2/3가 소비되는 작은 interior 상태에서 능력을 잃기 때문이다(§4.10).', body_s)
+P('<b>(7) branching policy의 비용 기반 fine-tuning.</b> branching 결정의 정확한 비용 — 그 subtree가 전개하는 node 수 — 은 탐색 자체에서 얻어지며, '
+  'held-out 상태에서 확신도 규칙이 후보 5개 중 가장 싼 것을 고르는 경우는 22%뿐이다. 그 비용에 대한 actor-critic fine-tuning은 지도 규칙에서 '
+  '출발해 marginal network를 동결한 채, 100개 세트에서 지도 policy보다 node를 2.3배 적게 전개하고 2.0~2.2배 빠르며(70/100, 64~67/100 우세, '
+  '모든 seed에서 <i>p</i>&lt;0.01), LP 기반 branching보다 4.8~5.9배 빠르다(§4.11).', body_s)
 E.append(PageBreak())
 
 # ═══════════════════════ 2. 선행연구 ═══════════════════════
@@ -220,6 +234,12 @@ P('<b>직접적 satisfiability 예측.</b> network가 satisfiability를 종단�
   'network가 어떤 feasible/infeasible MILP 쌍을 <b>원리적으로</b> 구분할 수 없음을 증명했다. '
   '따라서 우리는 network에게 feasibility 판정을 요구하지 않는다. network는 건전성을 책임지는 '
   'complete search 내부에서 <b>branching guidance만</b> 제공한다.', body_s)
+P('<b>branching을 위한 강화학습.</b> 모방은 expert의 순위를 target으로 삼지, 그 순위가 줄이려는 탐색 비용을 target으로 삼지 않는다. '
+  'Etheve 등(2020)과 Scavuzzo 등(2022)은 tree 크기를 직접 최적화하며, 후자는 branch-and-bound를 tree MDP로 형식화해 결정의 return이 그 subtree의 '
+  '크기가 되게 함으로써 credit을 episode가 아니라 결정 단위로 배정한다. 우리의 fine-tuning 단계(§3.8)는 같은 subtree 단위 credit을 '
+  '단순 policy-gradient(Williams, 1992)로 쓰되 출발점이 다르다: policy는 정확한 conditional marginal에서 유도된 지도 규칙으로 초기화되고 '
+  'marginal network는 동결되므로, 비용 신호가 바꿀 수 있는 것은 어느 변수로 분기하는가뿐이다. 이 목적함수의 고전적 진술이 fail-first 원칙'
+  '(Haralick and Elliott, 1980)이다: 틀린 branch가 가장 빨리 반증되는 변수를 골라라.', body_s)
 
 H2('2.4 Amortized optimization')
 P('우리 결과를 조직하는 구분은 조합최적화에서 쓰이기 전부터 있었다. Gershman과 Goodman(2014)은 '
@@ -359,7 +379,30 @@ P('<b>Algorithm 1 — Guided backtracking search</b><br/>'
   '&nbsp;&nbsp;push reduce(A\',b\',{j*=1−v}), 이어서 reduce(A\',b\',{j*=v})<br/>'
   'return unresolved</font>', prop_s)
 
-H2('3.8 비용 모델')
+H2('3.8 branching policy의 비용 기반 fine-tuning')
+P('Algorithm 1의 규칙은 network가 가장 확신하는 변수로 분기한다. 이는 첫 자식이 해를 포함할 확률을 최대화하지만, 첫 자식이 해를 포함하지 '
+  '않을 때 탐색이 얼마를 지불하는지, 자식이 얼마나 작아지는지는 말하지 않는다. 둘 다 <b>subtree</b>의 성질이고, 탐색은 그것을 부산물로 만든다: '
+  'node <i>u</i>에서의 branching 결정의 비용은 <i>u</i> 아래에서 해를 찾거나 subtree를 소진할 때까지 전개한 node 수이며, depth-first search는 '
+  '<i>u</i>에서 backtrack해 나올 때 그 값을 정확히 돌려준다. 우리는 이 비용으로 어느 변수로 분기할지를 fine-tuning한다.', body_s)
+P('<b>결정 과정.</b> 상태는 propagation 후의 축소 instance (<i>A</i>′,<b>b</b>′), 행동은 자유변수 <i>j</i>이며, 먼저 시도하는 값은 '
+  'marginal network의 1[<i>p</i>^<sub><i>j</i></sub> ≥ 1/2]로 두고 바꾸지 않는다. <i>u</i>에서의 행동의 return은 −log <i>c</i>(<i>u</i>), '
+  '<i>c</i>(<i>u</i>)는 subtree 비용이다. 모든 결정이 자기 subtree를 가지므로 credit은 episode가 아니라 결정 단위로 배정되며, 이것이 우리가 '
+  '앞서 시도했던 sparse-reward 형식들이 학습 불가능했던 이유를 해소한다.', body_s)
+P('<b>Policy와 value.</b> 동결한 MarginalNet trunk 위에 head 둘을 얹는다. policy logit은', body_s)
+EQ('<i>g<sub>j</sub></i>(<i>s</i>) = log |<i>p</i>^<sub><i>j</i></sub> − 1/2| + <i>h</i><sub>φ</sub>(<b>h</b><sub><i>j</i></sub>)')
+P('이며, <i>h</i><sub>φ</sub>는 변수 embedding <b>h</b><sub><i>j</i></sub> 위의 2층 network로 마지막 층을 0으로 초기화한다. 따라서 '
+  'π(<i>j</i>|<i>s</i>) ∝ exp(<i>g<sub>j</sub></i>/τ)는 지도 규칙을 부드럽게 한 것에서 출발하고 그 argmax는 정확히 Algorithm 1이다. '
+  'value head <i>V</i><sub>ψ</sub>(<i>s</i>)는 pooling한 graph embedding과 log|<i>K</i>|, log <i>m</i>을 읽어 log <i>c</i>를 예측한다.', body_s)
+P('<b>갱신.</b> 매 epoch 학습 상태를 뽑아 표집 policy(τ=1)를 해가 나올 때까지 전개하고 모든 결정을 정확한 비용과 함께 기록한다. '
+  'epoch 안에서 표준화한 advantage α(<i>u</i>) = <i>V</i><sub>ψ</sub>(<i>s<sub>u</sub></i>) − log <i>c</i>(<i>u</i>)로 손실은', body_s)
+EQ('<i>L</i> = Σ<sub><i>u</i></sub> [ −α(<i>u</i>) log π(<i>j<sub>u</sub></i>|<i>s<sub>u</sub></i>) − λ H(π(·|<i>s<sub>u</sub></i>)) '
+   '+ (<i>V</i><sub>ψ</sub>(<i>s<sub>u</sub></i>) − log <i>c</i>(<i>u</i>))<sup>2</sup> ]')
+P('이고 entropy 가중치 λ=0.01이다. φ와 ψ만 학습하며 trunk와 marginal head는 고정이므로, 첫 값과 §3.4의 분석에 쓰이는 marginal은 변하지 않는다. '
+  'critic은 actor를 갱신하기 전에 지도 policy 하에서 기록한 결정으로 사전학습하고, 그 held-out 순위 상관을 관문으로 쓴다: baseline이 비용 순위를 '
+  '못 매기면 advantage는 잡음이므로 fine-tuning을 시도하지 않는다. epoch 선택은 학습 분포의 held-out 상태에서의 총 subtree 비용으로 하며 '
+  '평가 instance는 결코 쓰지 않는다. 배포 시 policy는 greedy로 쓴다: <i>j</i>* = argmax<sub><i>j</i></sub> <i>g<sub>j</sub></i>(<i>s</i>).', body_s)
+
+H2('3.9 비용 모델')
 P('설계를 뒷받침하는 비교는 <b>instance 전체 판정 1회당 node 비용</b>이며, 그 구조는 상수배가 아니라 '
   '<b>점근적</b>이다. node의 자유 변수 수를 <i>n<sub>c</sub></i>라 하자. network는 feature를 만들기 위해 '
   'relaxation을 <b>한 번</b> 풀고 forward pass를 <b>한 번</b> 수행하므로 LP 호출 수가 '
@@ -427,6 +470,10 @@ P('<b>탐색 평가.</b> 각 arm은 동일한 instance에 대해 subprocess 종�
   '20초 상한을 넘는 것을 관측했다.', body_s)
 P('<b>통계.</b> 동일 instance에 대한 arm 간 해결율 차이는 McNemar 정확검정으로, 인스턴스 단위 속도 차이는 '
   '양측 부호검정으로 검정한다. 검정력이 다를 수 있으므로 단일 총계 대신 둘 다 보고한다.', body_s)
+P('<b>평가셋.</b> 21×60에는 두 세트를 쓴다: 원래의 30개(생성기 seed 700000~700029)와 그것을 포함하는 100개 세트(seed 700000~700099). 후자는 '
+  '30개 결과를 보고한 뒤에 만들었고 |<i>S</i>|는 92/100 검증, 중앙값 11이다. 100개 세트의 모든 수치는 lattice off, 3 seed다. §4.10·§4.11의 학습 풀은 '
+  '별도의 21×60 instance 500개(seed 800000~800499, 400/100 분할)로, 모든 평가셋과의 겹침은 (<i>A</i>,<b>b</b>) 해시 기준 0이며, 그 풀의 held-out '
+  '100개가 fine-tuning epoch 선택용 상태를 공급한다.', body_s)
 
 H2('4.3 Bayes ceiling 대비 예측 품질')
 P('<i>S</i>가 정확히 열거되므로 Bayes-optimal per-variable 정확도를 계산할 수 있다:', body_s)
@@ -574,10 +621,21 @@ P('세 가지를 짚는다. <b>첫째</b>, 학습된 guidance는 모든 크기�
   '인스턴스별 비율 중앙값이 seed별 2.57배, 3.03배, 2.96배이고 network가 각 seed에서 정확히 30개 중 23개에서 빠르며'
   '(<i>p</i>=0.005), 두 arm 모두 예산 안에 모든 instance를 푼다.', body_s)
 P('두 전략을 더, 매 node에서 relaxation을 재구성하던 이전 루프에서 측정했다. random branching은 20×50에서 300초 내 0/30을 '
-  '풀었고, §4.10은 현재 루프에서도 21×60 잔여를 하나도 닫지 못함을 보인다. lp-probe(전 자유 변수를 probing해 강제된 것을 '
+  '풀었고, §4.12은 현재 루프에서도 21×60 잔여를 하나도 닫지 못함을 보인다. lp-probe(전 자유 변수를 probing해 강제된 것을 '
   '건전하게 확정한 뒤 lp처럼 분기)는 압도적으로 작은 tree를 만들었으나(20×50에서 lp 대비 node 51배 적음) 가장 느린 arm이었다 — '
   '초당 6 node 대 376 node. 즉 node 수와 wall-clock이 방법들을 정반대 순서로 세우며, tree 크기 관행은 최악의 방법을 고르게 된다. '
   'lp-probe를 warm start 루프에서 반복하지는 않았고, §4.5가 그 node당 비용을 직접 측정한다.', body_s)
+P('<b>100개 instance에서의 반복.</b> 30개로는 부호검정의 검정력이 낮고 중앙값의 불확실성이 크므로, 21×60 비교를 100개 세트에서 반복했다(표 7b). '
+  '방향과 유의성은 유지되지만 — model이 70~71/100에서 빠르고(<i>p</i>&lt;0.001) node 5.5배 적음 — 마진은 원래 30개보다 작다: 시간 2.0~2.3배 대 '
+  '2.6~3.0배, node 5.5배 대 9.5배. 원래 30개는 큰 세트의 앞 30개 seed이며 거기서 지도 policy가 유난히 잘한다. 100개 수치를 추정치로, 30개 수치를 '
+  '그 표집 변동의 유리한 끝으로 본다.', body_s)
+TBL([['전략', '해결율', 'node 중앙값', '시간 중앙값', 'node/s', 'lp 대비 (인스턴스별)'],
+     ['lp', '100±0.0%', '79,609', '41.2±1.9초', '1,966', '—'],
+     ['model', '100±0.0%', '13,386', '16.5±0.6초', '796', '2.0~2.3배, 70~71/100, p&lt;0.001'],
+     ['model+ft (§4.11)', '100±0.0%', '<b>5,495</b>', '<b>7.6±0.3초</b>', '738', '4.8~5.9배, 81~84/100, p&lt;0.001']],
+    [3.0*cm, 2.2*cm, 2.4*cm, 2.6*cm, 1.6*cm, 4.6*cm],
+    '표 7b. 21×60, 100개 instance, lattice off, 600초 예산, seed 3개(seed별 중앙값의 평균±표준편차; node 수는 seed 불변). '
+    '마지막 행은 §4.11의 비용 기반 fine-tuning policy.', font=8.0)
 P('재구성 루프가 21×60 비교에서 보고했던 것도 기록해 둔다. 이 논문의 이전 초고가 그것에 기대고 있었기 때문이다: 30/30 대 25/30 '
   '해결과 median 3.29배. relaxation을 warm start하자 해결율 차이는 완전히 사라졌고 — lp가 600초 안에 못 풀던 5개 instance를 '
   '이제 65~270초에 닫는다 — 속도배수도 줄었다. <b>해결율 우위는 node를 더 많이 전개하는 arm에 불리한 느린 backend의 산물</b>이었고, '
@@ -590,9 +648,10 @@ P('표 7은 <b>우리 탐색 루프 안에서</b> branching 전략을 비교한 
 TBL([['크기', 'CP-SAT', 'SCIP', '제안 (model)', 'CP-SAT 우위'],
      ['10×25', '<b>0.002초</b>', '0.009초', '0.07초', '35배'],
      ['18×50', '<b>0.046초</b>', '0.385초', '1.82초', '40배'],
-     ['21×60', '<b>1.159초</b>', '3.687초', '14.6초', '13배']],
+     ['21×60', '<b>1.159초</b>', '3.687초', '14.6초', '13배'],
+     ['21×60, 100개', '<b>0.792초</b>', '2.590초', '16.5초 / 7.6초 (fine-tuned)', '21배 / 10배']],
     [2.6*cm, 3.0*cm, 2.8*cm, 3.2*cm, 3.0*cm],
-    '표 8. 중앙값 해결 시간. 모든 방법이 모든 크기에서 30/30을 해결한다. 제안 열은 표 7의 model arm(seed별 중앙값의 평균)이다. 제안 시스템은 '
+    '표 8. 중앙값 해결 시간. 모든 방법이 모든 instance를 해결한다. 제안 열은 표 7의 model arm(seed별 중앙값의 평균)이고, 마지막 행은 100개 세트와 §4.11의 fine-tuning policy를 더한 것이다. 제안 시스템은 '
     '<b>어느 크기에서도 complete solver를 이기지 못하며</b>, 학습 feature에 그 LP 코드를 쓰는 SCIP에게도 뒤진다.')
 P('격차가 크고, 우리는 이를 명확히 진술한다: <b>본 논문의 기여는 CP-SAT와 경쟁하는 solver가 아니다.</b> '
   '다만 격차가 어디서 오는지는 물어볼 가치가 있다. branching heuristic이 실제로 무엇을 하고 있는지에 대한 '
@@ -666,9 +725,57 @@ P('두 결론이 따른다. 첫째는 §4.4를 교정한다: depth는 10×25에�
   '내려가도 <i>m</i>/|<i>K</i>|가 0.40에서 0.59로만 움직이지만, 21×60에서는 같은 하강이 0.35에서 1.0을 넘어선다. 유용한 '
   '영역은 <i>m</i>/|<i>K</i>|로 정의되며, 배포 크기에서는 tree의 <b>위쪽</b>에 놓인다. 둘째, §4.8의 transfer 결과는 '
   'multiplicity를 맞춘 비교만이 보이는 것보다 강하다: network는 크기와 제약 밀도 양쪽에서 학습 범위 밖의 상태로 외삽하며, '
-  '그 외삽이 기여가 있는 곳이다. 동시에 한계이기도 하다 — 학습 범위는 이를 염두에 두고 고른 것이 아니기 때문이다(§4.12).', body_s)
+  '그 외삽이 기여가 있는 곳이다. 동시에 한계이기도 하다 — 학습 범위는 이를 염두에 두고 고른 것이 아니기 때문이다(§4.14).', body_s)
 
-H2('4.10 전체 pipeline에서의 배치')
+H2('4.10 배포 크기의 상태로 학습하기: 부정 결과')
+P('§4.9는 network의 마진이 자유변수 50~60개 상태, 즉 학습 상태 범위 13~25 밖에 있음을 찾았고, 이전 초고의 한계 절은 둘을 맞추는 것을 명백하지만 '
+  '미검증인 개선으로 적었다. 학습 상태 분포 외의 모든 것을 고정하고 이를 검증했다.', body_s)
+P('<b>상태.</b> 별도의 21×60 풀(§4.2)에서 LP 확신도 순서의 prefix를 심어진 해로 고정해 자유변수 30, 35, …, 60개인 in-tree 상태를 만들고 §3.5의 '
+  '열거 규칙으로 정확한 conditional marginal을 붙였다. 자유변수 55개 이하 상태는 전부 90초 안에 열거됐고, 60(root)에서는 291/400이 됐으며 실패분은 '
+  '|<i>S</i>|가 큰 instance라 root 라벨은 작은 해집합 쪽으로 편향된다. 뒤에서 중요한 성질 하나: prefix를 해로 고정하면 자유변수가 50개 이하로 남을 때 '
+  '살아남는 해집합은 거의 항상 단일원소이며(|<i>S</i>(<i>F</i>,<b>v</b>)| 중앙값 1, DET 비중 97%) 라벨이 사실상 hard다. §4.2의 architecture·optimizer·'
+  'epoch·손실로 세 network를 학습했다: <b>M0</b>(위의 모든 곳에 쓴 network, 10×25 in-tree 상태), <b>M1</b>(배포 범위 상태 2,691개만), '
+  '<b>M2</b>(반반). 10×25 안에서만 depth 범위 0~6, 6~12, 0~12로 같은 개수를 학습한 사전진단은 in-tree 정확도 79.3%, 79.9%, 79.9%였다: 한 크기 안에서는 '
+  'depth 범위가 중요하지 않다.', body_s)
+P('<b>예측.</b> 표 11의 분석을 세 network를 동일 상태에서 채점해 다시 하면, 자유변수 50과 60에서 DET 변수의 relaxation rounding 대비 이득은 M0 '
+  '+5.4·+9.7%p, M1 +6.1·+10.7%p, M2 +5.9·+10.6%p다. 배포 영역 학습이 거기서 사는 것은 약 1%p다.', body_s)
+P('<b>탐색.</b> 다른 곳에서 훨씬 많이 잃는다. 100개 세트에서 M1은 node 중앙 21,337개를 전개해 M0의 13,386개보다 1.6배 많고(더 적은 경우 38/100뿐, '
+  '<i>p</i>=0.021) 1.7~1.8배 느리다. 원래 30개에서는 20,746 대 8,657이다. M2는 그 사이다(18,558, <i>p</i>=0.089). 자유변수 ≥50인 node를 M1에, 나머지를 '
+  'M0에 보내는 switch도 아무것도 회복하지 못한다(17,252 node, 43/99, <i>p</i>=0.23). 기제는 예측 진단에 보인다: 작고 촘촘한 interior 상태(10×25 depth '
+  '6~8, 탐색이 node의 2/3를 쓰는 종류)에서 M1의 최고 확신 변수가 DET이면서 올바르게 예측될 확률은 94.4%에서 77.6%로, 확신도와 실제 마진의 순위 상관은 '
+  '0.36에서 0.12로 떨어지는 반면, 배포 범위 상태에서는 개선된다(77.2→86.0%). node는 interior에 있고, tree 상단에서 조금 낫고 내부에서 훨씬 못한 '
+  'network는 탐색을 느리게 한다. 학습 상태의 크기 분포는 지렛대가 아니며, §4.9가 찾은 잔차는 분포 이동의 산물이 아니라고 결론짓는다.', body_s)
+
+H2('4.11 비용 기반 fine-tuning')
+P('DET 변수 정확도도 학습 분포도 지도 guidance가 남겨두는 것을 설명하지 못한다면, 자연스러운 용의자는 목적함수다: 규칙은 가장 확신하는 변수로 '
+  '분기하는데 확신하는 것과 싼 것은 같지 않다. 세 측정이 이를 검증하고 세 번째가 그것을 방법으로 만든다.', body_s)
+P('<b>R0: 확신하는 선택이 가장 싼가?</b> 자유변수 45~50개의 held-out 상태 100개에서 root 결정을 network가 가장 확신하는 변수 5개 각각으로 강제하고 '
+  '그 아래를 지도 탐색으로 돌려 각 subtree의 정확한 비용을 기록했다. 확신도 규칙의 선택이 5개 중 가장 싼 경우는 22%, 가장 싼 후보 대비 비용 비율의 '
+  '중앙값 1.29, 평균 2.97, 24%의 상태에서 2배 이상 싼 후보가 있으며, root에서만 가장 싼 후보를 고르더라도 이 상태들의 총 node가 55% 줄어든다. '
+  'LP 규칙의 root 선택이 network의 것과 같은 비용인 경우는 10%뿐이라 두 규칙이 단순히 동률인 것도 아니다. 큰 잔차가 있고, 그것은 <b>어느</b> 변수로 '
+  '분기하는가에 관한 것이다.', body_s)
+P('<b>R1: 비용을 예측할 수 있는가?</b> critic은 policy 갱신의 baseline이므로 본 적 없는 상태에서 결정을 비용순으로 매길 수 있어야 한다. 학습 풀에서 '
+  '지도 탐색의 모든 결정을 기록하면 결정 37,275개(held-out 9,375개)와 정확한 subtree 비용이 나오는데 그 2/3가 자유변수 25~34개에서 일어난다. 동결한 '
+  'trunk 위의 value head는 log <i>c</i>와 held-out Spearman 상관 0.80에 이르고, 상태 크기만 아는 baseline(log|<i>K</i>| 선형 적합)은 0.70이며 크기 구간 '
+  '안에서는 critic의 우위가 더 크다(자유변수 35~44에서 0.68 대 0.38, 45~55에서 0.57 대 0.37). trunk를 풀면 0.02가 더해진다. §3.8의 관문은 동결 critic으로 '
+  '통과된다.', body_s)
+P('<b>R2: fine-tuning.</b> 자유변수 45~60개 학습 상태에서 rollout 400개씩 6 epoch(τ=1, 90초 예산, epoch당 약 21,000 결정). held-out monitor 상태 '
+  '150개에서 greedy policy의 총 subtree 비용은 지도 규칙 대비 epoch 1~6 후 0.79, 0.49, 0.56, 0.46, 0.65, 0.56이었고 epoch 4를 선택했다. 같은 기간 '
+  'policy entropy는 1.73에서 0.10으로 떨어져 선택 시점의 policy는 거의 결정론적이다.', body_s)
+P('<b>평가.</b> 표 7b는 100개 세트에서 fine-tuning policy(model+ft)를 지도 policy 옆에 보고한다: node 5,495 대 13,386(2.3배 적음, 70/100에서 적음, '
+  '모든 seed에서 <i>p</i>&lt;0.001), 시간 중앙 7.6초 대 16.5초(2.0~2.2배, 64~67/100에서 빠름, <i>p</i>≤0.007), node당 비용은 불변(738 대 796 node/s). '
+  'LP 기반 branching 대비로는 시간 4.8~5.9배, node 14배다. 원래 30개에서는 효과가 작다(node 8,873 대 8,657; 시간 1.2~1.5배, 18~21/30, <i>p</i> 0.04~0.36): '
+  '추가된 70개가 이득을 만들며(node 2.5배 적음, 53/70), 이는 30개가 지도 규칙에 유리한 표본이었다는 것과 일관된다. 배치된 cascade(표 12)에서 '
+  'fine-tuning policy는 lattice 잔여를 7.3~11.7초에 닫고 지도 policy는 12.2~17.7초에 닫는다.', body_s)
+#%%PVB-REPLICATION%%
+P('<b>무엇이 바뀌었나.</b> held-out 상태 300개에서 fine-tuning policy는 95%에서 확신도 규칙과 다른 root 변수로 분기한다. 그 선택은 대개 15번째로 '
+  '확신하는 변수이고(|<i>p</i>^−1/2| 0.26 대 규칙 선택의 0.43), DET이면서 첫 값이 맞을 확률도 낮다(57.5% 대 82.5%). policy는 가장 확신하는 변수'
+  '<b>에서 멀어졌고</b> 탐색은 싸졌다. 이 개선은 root 결정 하나에 귀속되지 않는다: root만 fine-tuning 선택으로 강제하고 아래를 지도 policy로 돌리면 '
+  '비용 비율 중앙값 0.93(불일치 상태 46개 중 22개에서 더 쌈)이므로, 이득은 개별 결정이 아니라 결정 수열의 성질이다. 따라서 fine-tuning이 무엇을 '
+  '최적화하는지는 말할 수 있어도 — 맞을 확률을 soft prior로 둔 subtree 비용 — 그것이 찾아낸 특징의 이름은 아직 붙이지 못한다. 값싼 대리 지표인 '
+  '첫 자식에서 propagation이 촉발되는 양은 두 선택 사이에 차이가 없다.', body_s)
+
+H2('4.12 전체 pipeline에서의 배치')
 P('표 7은 lattice reduction을 꺼서 branching을 격리한 것이다. 실제 배치에서는 lattice 단계가 먼저 돌고 '
   'search는 그 잔여만 본다. 그 단계가 branching heuristic과 무관하므로 모든 arm이 동일한 잔여 집합을 받는다.', body_s)
 TBL([['크기', '전략', 'lattice가 해결', '잔여를 search가 해결', '잔여 시간 중앙값', 'end-to-end'],
@@ -676,7 +783,8 @@ TBL([['크기', '전략', 'lattice가 해결', '잔여를 search가 해결', '�
      ['18×50', 'lp / model', '24~28/30', '11/11 / 11/11', '0.5~5.0초 / 0.6~2.5초', '100% / 100%'],
      ['21×60', 'random', '10~16/30', '0/50', '>600초', '44.4±8.3%'],
      ['21×60', 'lp', '10~16/30', '50/50', '52.9~65.1초', '100±0.0%'],
-     ['21×60', 'model', '10~16/30', '50/50', '<b>14.2~20.2초</b>', '100±0.0%']],
+     ['21×60', 'model', '10~16/30', '50/50', '14.2~20.2초', '100±0.0%'],
+     ['21×60', 'model+ft', '10~16/30', '50/50', '<b>7.3~11.7초</b>', '100±0.0%']],
     [2.0*cm, 2.4*cm, 2.6*cm, 3.0*cm, 3.6*cm, 2.6*cm],
     '표 12. warm start 루프에서의 cascade 결과, 모든 크기 seed 3개, 21×60은 600초 예산. '
     'lattice coverage가 seed마다 달라지는데(21×60에서 30개 중 16, 14, 10) lattice 단계가 무작위 열 순열을 '
@@ -690,7 +798,7 @@ P('lattice coverage는 크기에 따라 떨어진다 — 30/30, 24~28/30, 10~16/
   '합산 50개 중 40개, 비율 중앙값 3.00배(<i>p</i>=2.4×10<sup>−5</sup>)이며 node를 6.9~9.5배 적게 전개한다. 잔여는 배치 시 '
   'branching heuristic이 실제로 작동하는 곳이고, 거기서의 속도 이득은 표 7의 격리 측정과 일치한다.', body_s)
 
-H2('4.11 graph 구조가 기여하는가')
+H2('4.13 graph 구조가 기여하는가')
 P('MarginalNet은 node당 6개 스칼라를 소비해 bipartite graph 위로 전파한다. 특징 집합이 이만큼 작으면 '
   'graph를 무시하는 변수별 모델이 진지한 baseline이 된다 — 그것이 대등하다면 message passing은 장식이다. '
   '표 13은 동일한 target·손실·분할로 학습하고 <b>구조 사용 여부만</b> 다른 모델들을 비교한다. 집계 변형은 '
@@ -711,7 +819,7 @@ P('다만 같은 표가 주장의 <b>한계</b>도 정한다. relaxation 값만 
   '도달하며 이는 ceiling에서 9.2%p 이내다. 가용 신호의 대부분은 그 단일 특징에 있고, graph는 그 위에 '
   '유용하지만 지배적이지는 않은 증분을 더한다.', body_s)
 
-H2('4.12 한계')
+H2('4.14 한계')
 P('<b>Label 생성이 평가만이 아니라 방법 자체를 제한한다.</b> 정확한 marginal은 <i>S</i>의 열거를 요구하는데 '
   '이 계열에서는 <i>n</i>≈60을 넘으면 완료되지 않는다. transfer는 더 큰 크기에서의 배치를 허용하지만 '
   '거기서의 학습은 허용하지 않는다. solution sampling으로 <i>p<sub>j</sub></i>를 근사하는 것이 자연스러운 '
@@ -720,7 +828,8 @@ P('<b>유용한 크기 창이 양쪽에서 막혀 있다.</b> 그 아래에서�
   '무의미하고, 그 위(<i>n</i>=100)에서는 constraint solver가 20초 내에 해를 하나도 찾지 못해 모든 전략에서 '
   'search가 실패한다. 우리 시연은 <i>n</i>=60에 있으며 창이 더 확장된다는 것은 보이지 못했다.', body_s)
 P('<b>우위는 시간과 tree 크기에 있지 해결율에 있지 않다.</b> warm start 루프에서는 두 건전 전략 모두 우리가 평가한 모든 instance를 '
-  '예산 안에 푼다. 학습된 guidance가 21×60에서 사는 것은 median 2.6~3.0배의 속도와 9.5배 적은 node이며, 이는 모든 seed에서 '
+  '예산 안에 푼다. 지도 guidance가 21×60에서 사는 것은 100개 instance에서 median 2.0~2.3배의 속도와 5.5배 적은 node(원래 30개에서는 2.6~3.0배·9.5배, 유리한 표본)이고 '
+  'fine-tuning policy가 추가로 2.0~2.2배·2.3배이며, 이는 모든 seed에서 '
   '인스턴스 단위로 유의하다. 이전 초고는 매 node에서 relaxation을 재구성하는 루프에서 5–0의 해결율 우위를 보고했다. 그 차이는 '
   '빠른 backend에서 사라졌고 우리는 그것을 주장하지 않는다. 더 큰 예산이나 크기에서 해결율 우위가 존재하는지는 미검증이며, '
   '크기당 평가 instance 30개로는 어차피 그것을 검출할 검정력이 낮다.', body_s)
@@ -732,14 +841,19 @@ P('<b>비용 우위는 규모와 baseline 구현 품질에 의존한다.</b> amo
   '우리 탐색이 작동하는 크기에서는 가치가 크지 않다: 예측이 가장 중요한 depth에서 warm start한 probing 대비 '
   '<b>1.3~1.7배</b>이며, 그 probing은 건전하기까지 하다. 15~18배에 이르는 것은 <i>n</i>≥100부터인데 '
   '그 구간에서는 우리가 시도한 모든 전략에서 탐색이 실패한다. 즉 <b>논변이 가장 강한 영역을 우리는 시연하지 못한다.</b>', body_s)
-P('<b>탐색 구현이 경쟁력이 없다.</b> 21×60에서 CP-SAT가 종단으로 13배 빠르다. 우리 branching이 node를 더 적게 '
+P('<b>탐색 구현이 경쟁력이 없다.</b> 21×60 100개 세트에서 CP-SAT가 fine-tuning policy보다 9~10배, 지도 policy보다 20배 빠르다(원래 30개에서는 13배). 우리 branching이 node를 더 적게 '
   '만들므로 부족분은 node 처리량(32배)이며 이제 그것은 network forward pass가 지배한다. 경쟁력 있는 구현이 달성 가능함을 보인 것은 아니다: '
   'compiled inference 경로, clause learning, restart가 모두 없고, 뒤의 둘은 더 큰 크기에서 CP-SAT에게 결정적이다.', body_s)
-P('<b>학습 분포와 배포 분포가 거의 겹치지 않는다.</b> 학습 범위 {0,…,12}는 배포를 염두에 두고 고른 것이 아니다. 그것은 '
-  '자유 변수 13~25개인 상태를 만드는 반면 21×60 탐색은 5~60개인 상태를 질의하며 질의의 80%가 25 위에 있다. 방법은 이 때문이 '
-  '아니라 이에도 <b>불구하고</b> 작동하며(§4.9), 학습 범위를 배포 영역에 맞추는 것은 명백하지만 미검증인 개선이다.', body_s)
-P('<b>하이퍼파라미터가 튜닝되지 않았고 validation split이 없다.</b> §4.2 참조. 이 설정은 첫 시도로서 방어 가능하고 test set에 '
-  '오염되지 않았으나, 튜닝된 baseline MLP나 튜닝된 depth 범위가 마진을 바꾸는지 묻는 것은 정당한 지적이다.', body_s)
+P('<b>학습 분포와 배포 분포가 거의 겹치지 않으며, 맞추는 것은 도움이 되지 않았다.</b> 학습 범위 {0,…,12}는 자유변수 13~25개인 상태를 만드는 반면 '
+  '21×60 탐색은 5~60개인 상태를 질의하며 질의의 80%가 25 위에 있다. §4.10은 배포 영역으로 학습하면 탐색이 느려짐을 보인다. 큰 학습 상태를 다르게 '
+  '구성하면(해가 아니라 탐색 자신의 경로에서 prefix를 뽑거나, 살아남는 해가 여럿인 상태) 달라질지는 모른다.', body_s)
+P('<b>fine-tuning 결과는 하나의 학습 풀과 적은 학습 seed에 기대고 있다.</b> policy는 하나의 21×60 풀의 상태로 fine-tuning했고 그 크기에서만 평가했다.'
+  #%%PVB-LIM%%
+  ' entropy는 4 epoch 안에 붕괴하고, epoch 선택은 원칙적 중단 규칙이 아니라 held-out monitor로 하며, policy가 이용하는 특징의 이름은 아직 붙이지 '
+  '못했다(§4.11). 지도 policy처럼 크기 간 전이되는지는 미검증이다.', body_s)
+P('<b>지도 network의 하이퍼파라미터는 튜닝되지 않았고 validation split이 없다.</b> §4.2 참조. 이 설정은 첫 시도로서 방어 가능하고 test set에 '
+  '오염되지 않았으며, 적어도 depth 범위는 한 크기 안에서 중요하지 않음이 뒤에 확인됐다(§4.10). fine-tuning 단계는 held-out 상태에서 epoch를 선택하는데, '
+  '그 상태는 학습 풀에서 나오며 모든 평가 instance와 분리되어 있다.', body_s)
 P('<b>단일 instance 계열.</b> 모든 결과가 하나의 응용에서 나온 하나의 생성기에 관한 것이다. amortization 논변이 '
   '다른 constraint 계열로 전이되는지는 미검증이다.', body_s)
 
@@ -752,11 +866,11 @@ P('본 논문은 binary linear system을 위한 학습 기반 branching heuristi
   '<b>어떤 예측이 탐색에 영향을 줄 수 있는지를 식별한다</b>: 살아남은 모든 해가 일치하는 변수만이 backtrack을 '
   '유발할 수 있으며, 그 비중은 root의 6.3%에서 depth 8의 87.9%로 오른다.', body_s)
 P('우리 탐색 루프 안에서 측정하면 heuristic은 설계대로 동작한다. 21×60에서 relaxation 기반 branching 대비 '
-  '세 seed 모두에서 median 2.6~3.0배 빠르고 node를 9.5배 적게 전개하며, 배치된 pipeline의 잔여를 3.0배 빠르게 닫는다 — 거기서 random branching은 아무것도 닫지 못한다. '
+  '100개 instance·세 seed 모두에서 median 2.0~2.3배 빠르고 node를 5.5배 적게 전개하며, 배치된 pipeline의 잔여를 3.0배 빠르게 닫는다 — 거기서 random branching은 아무것도 닫지 못한다. '
   'solution multiplicity를 통제하면 2.4배 작은 규모에서 학습한 network가 평가 크기에서 학습한 것과 구별되지 '
   '않게 동작하는데, 정확한 지도가 작은 크기에서만 가능하므로 이는 중요한 성질이다.', body_s)
 P('<b>결과가 입증하지 못하는 것도 동등하게 명시한다.</b> 이 시스템은 complete solver와 경쟁하지 못한다: '
-  'CP-SAT가 시험한 모든 크기에서 13~40배 빠르다. 그 격차의 분해는 변명이 아니라 정보다 — 우리 branching이 '
+  'CP-SAT가 시험한 모든 크기에서 9~40배 빠르다. 그 격차의 분해는 변명이 아니라 정보다 — 우리 branching이 '
   'node를 2.2배 적게 만들고 처리량에서 32배 지므로, 부족분은 node당 비용이 이제 network forward pass인, clause learning과 restart가 '
   '없는 Python 연구 구현에 있다 — 그러나 그것을 메울 수 있음을 보인 것은 아니다. 비용 논변도 우리가 처음 '
   '부여했던 무게를 지지 못한다. 제대로 warm start한 probing baseline에 대해 우리 instance에서 예측이 중요한 '
@@ -765,11 +879,18 @@ P('<b>결과가 입증하지 못하는 것도 동등하게 명시한다.</b> 이
   '이 비교의 이전 버전은 probe마다 LP를 재구성하는 backend를 쓰고 network 자신의 feature 풀이를 타이머에서 '
   '제외해 <b>실제 값이 1에 가까운 규모에서 19~23배를 보고했다.</b> 오류가 두 방법의 계산 내용이 아니라 전적으로 '
   '계측에서 비롯됐으므로 이 정정을 기록해 둔다.', body_s)
+P('추가 결과 둘이 지도 target이 무엇인지를 벼린다. network의 예측 마진이 사는 배포 영역으로 학습 상태를 옮기는 것은 도움이 되지 않고 오히려 '
+  'search tree를 두 배로 만든다 — 탐색은 옮겨진 network가 더 이상 잘 다루지 못하는 작은 interior 상태에 node를 쓰기 때문이다. 학습 상태 분포는 '
+  '지렛대가 아니다. 탐색이 지불하는 비용을 최적화하는 것이 지렛대다. 모든 결정의 정확한 subtree 비용을 탐색에서 읽어, 지도 규칙에서 출발하고 marginal '
+  'network를 동결한 채 branching 선택을 actor-critic으로 fine-tuning하면 100개 instance에서 지도 policy보다 node를 2.3배 적게 전개하고 2.0~2.2배 빠르며, '
+  '그 policy는 network가 <b>덜</b> 확신하는 변수로 분기한다. branch가 맞을 확률과 branch가 틀렸을 때의 비용은 다른 목적함수이고, 탐색이 최소화하는 것은 '
+  '후자다.', body_s)
 P('<b>남는 것, 그리고 우리가 주장하는 것은 방법론적이다.</b> planted-solution instance 계열에서 정확한 '
   'conditional posterior는 계산 가능하며 branching에 대해 잘 정의된 지도 신호다 — 관례적 target인 '
   '심어진 해 하나는 그렇지 않다. search tree 내부에서 뽑은 상태가 root 상태보다 나은 학습 분포이고, '
   'reduction 항등식이 그 생성을 solver 계측이 아니라 <b>대입</b>의 문제로 만든다. 그렇게 얻은 heuristic은 '
-  'solution multiplicity를 비슷하게 유지하면 instance 크기를 넘어 전이된다. 이것이 실용적으로 유용해지는지는 '
+  'solution multiplicity를 비슷하게 유지하면 instance 크기를 넘어 전이되고, 탐색에서 얻는 그 결정들의 정확한 비용은 그것을 개선하는 두 번째 잘 정의된 '
+  '학습 신호다. 이것이 실용적으로 유용해지는지는 '
   '우리가 하지 않은 두 가지에 달려 있다: 전수열거 없이 marginal을 근사해 정확한 지도를 <i>n</i>≈60 너머로 '
   '확장하는 것, 그리고 branching 개선이 시스템 수준에서 보일 만큼 탐색을 잘 구현하는 것이다.', body_s)
 
@@ -803,15 +924,19 @@ python3 v17_train_conditional.py \\
         --n_train 10000 --n_test 2000 --epochs 20 --target soft \\
         --out ../../runs/model_n25
 
-# 평가: branching arm x {lattice off, lattice on}
-cd ../v22_transfer
-python3 v22_cascade_search.py \\
-        --data_dir ../../instances/v22test_21x60 \\
-        --tag EVAL --time_limit 600 --block 12 --tries 10 \\
-        --arms lp model --ckpt ../../runs/model_n25/conditional.pt \\
-        --ahl off on --jobs 6 --out_root ../../runs/eval""", code_s))
+# 모든 탐색 표: warm start 루프, 3 seed,
+# 조건 A/B/R/C/D/Crand x {lattice off, on}
+cd ../v23_ablation
+bash run_revision2.sh          # -> runs/v23/, chain.log
+python3 v23_aggregate.py       # -> runs/v23/aggregate.json
+
+# v24: 배포 범위 학습(부정), 100개 세트, R0/R1/R2 fine-tuning
+cd ../v24_deploy_range
+bash run_v24.sh; bash run_v24_switch.sh
+bash run_v24_r1.sh; bash run_v24_r2.sh
+python3 v24_aggregate.py --tags M0 M1 M2 SW PV""", code_s))
 P('모든 생성기는 seed가 고정되어 있다. 공개 checkpoint는 각 96KB다. instance 데이터와 가중치는 배포 대신 '
-  '위 명령으로 재생성하며, 전체 평가 사이클은 v22_transfer/run_v22_cd.sh에 스크립트화되어 있다.', body_s)
+  '위 명령으로 재생성하며, 전체 평가 사이클은 v23_ablation/run_revision2.sh와 v24_deploy_range/run_v24*.sh에 스크립트화되어 있다.', body_s)
 
 # ═══════════════════════ 참고문헌 ═══════════════════════
 H1('참고문헌')
@@ -834,6 +959,10 @@ for r in [
  'Schnorr, C. P. and Euchner, M. (1994). Lattice basis reduction: Improved practical algorithms and solving subset sum problems. <i>Mathematical Programming</i>, 66(1–3):181–199.',
  'Selsam, D., Lamm, M., Bünz, B., Liang, P., de Moura, L., and Dill, D. L. (2019). Learning a SAT solver from single-bit supervision. In <i>International Conference on Learning Representations</i>.',
  'Velickovic, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., and Bengio, Y. (2018). Graph attention networks. In <i>International Conference on Learning Representations</i>.',
+ 'Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist reinforcement learning. <i>Machine Learning</i>, 8(3–4):229–256.',
+ 'Etheve, M., Alès, Z., Bissuel, C., Juan, O., and Kedad-Sidhoum, S. (2020). Reinforcement learning for variable selection in a branch and bound algorithm. In <i>CPAIOR</i>, pages 176–185.',
+ 'Scavuzzo, L., Chen, F. Y., Chételat, D., Gasse, M., Lodi, A., Yorke-Smith, N., and Aardal, K. (2022). Learning to branch with tree MDPs. In <i>Advances in Neural Information Processing Systems</i>, volume 35.',
+ 'Haralick, R. M. and Elliott, G. L. (1980). Increasing tree search efficiency for constraint satisfaction problems. <i>Artificial Intelligence</i>, 14(3):263–313.',
  'Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2019). How powerful are graph neural networks? In <i>International Conference on Learning Representations</i>.']:
 	P(r, ref_s)
 
