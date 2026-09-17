@@ -277,7 +277,10 @@ where $h_\phi$ is a two-layer network on the variable embedding $\mathbf{h}_j$ w
 
 \paragraph{Update.} Each epoch samples training states, rolls the sampled policy ($\tau=1$) out to a solution, and records every decision with its exact cost. With advantage $\alpha(u)=V_\psi(s_u)-\log c(u)$, standardized within the epoch, the update is
 \begin{equation}
-\mathcal{L} = \sum_u \Bigl[-\alpha(u)\,\log\pi(j_u\mid s_u) - \lambda\,\mathcal{H}\bigl(\pi(\cdot\mid s_u)\bigr) + \bigl(V_\psi(s_u)-\log c(u)\bigr)^2\Bigr],
+\begin{split}
+\mathcal{L} = \sum_u \Bigl[&-\alpha(u)\,\log\pi(j_u\mid s_u) - \lambda\,\mathcal{H}\bigl(\pi(\cdot\mid s_u)\bigr)\\
+&+ \bigl(V_\psi(s_u)-\log c(u)\bigr)^2\Bigr],
+\end{split}
 \end{equation}
 with entropy weight $\lambda=0.01$. Only $\phi$ and $\psi$ are trained; the trunk and the marginal head are fixed, so the marginal used for the first value and for the analysis of Section~\ref{sec:method-partition} is unchanged. The critic is pre-trained on decisions recorded under the supervised policy before the actor is updated, and its held-out rank correlation with the true cost is used as a gate: if the baseline cannot rank costs, the advantage is noise and fine-tuning is not attempted. Epoch selection uses the total subtree cost on held-out training-distribution states, never the evaluation instances. At deployment the policy is used greedily: $j^\star=\arg\max_j g_j(s)$.
 
