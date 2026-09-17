@@ -9,3 +9,7 @@ v24_r0_residual.py       R0: 확신도 순 선택이 비용 최소인지 — top
 run_v24.sh               전체 체인: 풀 → 상태 → 학습(M1, M2, 사전진단 3종) → where 표 → 21×60/18×50 3-seed 평가(lp/M0/M1/M2) → 100개 평가셋 → R0
 v24_aggregate.py            runs/v24 집계: lp/M0/M1/M2 해결·시간·node, 짝 비교(M0 vs lp, M1/M2 vs M0), 30개·100개 세트
 run_v24_switch.sh           후속: n_free ≥ 50은 M1, 나머지는 M0로 라우팅하는 switch arm 평가 (C 30개 off/on, H 100개 off, 3 seed)
+v24_rl_core.py            Track 3 핵심: PolicyValueNet(MarginalNet trunk + policy head(초기=지도 규칙) + value head) 및 결정별 정확한 subtree 비용을 기록하는 재귀 DFS (iterative loop와 node 수 동일함을 self-check)
+v24_r1_collect.py         R1 데이터: M0 policy 하의 결정별 subtree 비용 수집 (range 상태 n_free 45–60, 상태당 25개 표집)
+v24_r1_train_critic.py    R1: value head(critic) 학습 — held-out Spearman ≥ 0.5가 R2 착수 관문; size-only baseline 병기
+run_v24_r1.sh             R1 체인: 수집(train/test) → critic(trunk 동결) → critic(trunk 미동결)
