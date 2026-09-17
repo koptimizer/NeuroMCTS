@@ -18,72 +18,79 @@ def save(fig, name):
 	print('saved', name)
 
 
-def box(ax, x, y, w, h, text, fc=C['box'], fs=7.5, bold=False, ec=C['edge'], lw=0.8, style='round,pad=0.02,rounding_size=0.02'):
-	ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=style, fc=fc, ec=ec, lw=lw))
-	ax.text(x + w / 2, y + h / 2, text, ha='center', va='center', fontsize=fs, fontweight='bold' if bold else 'normal')
+def box(ax, x, y, w, h, text, fc=C['box'], fs=6.8, bold=False, ec=C['edge'], lw=0.7):
+	"""Rounded box with text that is shrunk until it fits inside the box (never overflows)."""
+	ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0.02,rounding_size=0.03', fc=fc, ec=ec, lw=lw))
+	t = ax.text(x + w / 2, y + h / 2, text, ha='center', va='center', fontsize=fs, fontweight='bold' if bold else 'normal', linespacing=1.25)
+	fig = ax.figure; fig.canvas.draw()
+	while fs > 4.5:
+		bb = t.get_window_extent(fig.canvas.get_renderer()).transformed(ax.transData.inverted())
+		if bb.width <= 0.92 * w and bb.height <= 0.9 * h: break
+		fs -= 0.25; t.set_fontsize(fs)
+	return t
 
 
-def arrow(ax, x0, y0, x1, y1, color=C['edge'], lw=0.9, style='-|>', ls='-'):
-	ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle=style, mutation_scale=9, color=color, lw=lw, linestyle=ls))
+def arrow(ax, x0, y0, x1, y1, color=C['edge'], lw=0.8, ls='-'):
+	ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle='-|>', mutation_scale=8, color=color, lw=lw, linestyle=ls, shrinkA=0, shrinkB=0))
+
+
+def canvas(w, h, xmax=10, ymax=None):
+	fig, ax = plt.subplots(figsize=(w, h)); ax.set_xlim(0, xmax); ax.set_ylim(0, ymax or xmax * h / w); ax.axis('off'); return fig, ax
 
 
 # ---------------- Fig 1: framework ----------------
-fig, ax = plt.subplots(figsize=(7.0, 3.1)); ax.set_xlim(0, 10); ax.set_ylim(0, 4.4); ax.axis('off')
-stages = ['propagation', 'LP infeasibility\nrule', 'kernel pump', 'AHL / BKZ\n(lattice)', 'guided DFS']
+fig, ax = canvas(7.0, 3.4)          # y range 0..4.86
+ax.text(0.15, 4.65, 'Deployed cascade: sound stages first, learned components only in the last stage', fontsize=7.2, va='center')
+stages = ['propagation', 'LP infeasibility\nrule', 'kernel pump', 'AHL / BKZ\nlattice reduction', 'guided DFS\n(this paper)']
+bw, gap = 1.72, 0.25
 for i, t in enumerate(stages):
-	box(ax, 0.2 + i * 1.98, 3.3, 1.7, 0.8, t, fc='#fff' if i < 4 else C['box'], bold=(i == 4))
-	if i < 4: arrow(ax, 0.2 + i * 1.98 + 1.7, 3.7, 0.2 + (i + 1) * 1.98, 3.7)
-ax.text(0.2, 4.25, 'Deployed cascade (sound stages first; the learned components act only in the last stage)', fontsize=7.5, va='bottom')
-# node decision zoom
-ax.add_patch(FancyBboxPatch((0.2, 0.15), 9.6, 2.75, boxstyle='round,pad=0.02,rounding_size=0.03', fc='#fafafa', ec='#999', lw=0.6, ls='--'))
-arrow(ax, 9.0, 3.3, 8.2, 2.9, ls='--', color='#999')
-ax.text(0.35, 2.7, 'One search node: reduced instance $(A^{\\prime}, b^{\\prime})$ after propagation', fontsize=7.5, va='center')
-box(ax, 0.4, 0.9, 1.8, 1.4, 'reduced\ninstance\n$(A^{\\prime}, b^{\\prime})$\n+ LP vertex $x_{LP}$', fc='#fff')
-arrow(ax, 2.2, 1.6, 2.9, 1.6)
-box(ax, 2.9, 0.9, 2.4, 1.4, 'MarginalNet (frozen)\nbipartite GAT, 21.8K params\n$\\hat p_j \\approx \\Pr[x_j{=}1 \\mid A^{\\prime}, b^{\\prime}]$', fc=C['learn'], fs=6.8)
-arrow(ax, 5.3, 1.9, 6.1, 2.15); arrow(ax, 5.3, 1.3, 6.1, 1.05)
-box(ax, 6.1, 1.85, 2.2, 0.75, 'value head: first value\n$v = \\mathbb{1}[\\hat p_{j^*} \\geq 1/2]$', fc=C['learn'])
-box(ax, 6.1, 0.65, 2.2, 0.85, 'policy head (cost-tuned)\n$j^* = \\arg\\max_j\\, g_j$,\n$g_j = \\log|\\hat p_j - 1/2| + h_\\phi(\\mathbf{h}_j)$', fc=C['rl'], fs=7)
-arrow(ax, 8.3, 2.2, 9.0, 1.7); arrow(ax, 8.3, 1.05, 9.0, 1.45)
-box(ax, 9.0, 1.2, 0.75, 0.75, 'branch\n$x_{j^*}{=}v$\nfirst', fc='#fff', fs=6.5)
-ax.text(0.4, 0.4, 'Stage 1 (supervised, exact conditional marginals) trains the network and the value rule; '
-                  'Stage 2 (actor-critic on exact subtree costs) trains only $h_\\phi$.\nNeither fixes a variable: soundness rests on propagation and LP-probing; a wrong prediction costs backtracking only.', fontsize=6.6, va='center')
+	x = 0.15 + i * (bw + gap)
+	box(ax, x, 3.65, bw, 0.8, t, fc='#ffffff' if i < 4 else C['box'], bold=(i == 4), fs=7)
+	if i < 4: arrow(ax, x + bw, 4.05, x + bw + gap, 4.05)
+# dashed panel: one node
+ax.add_patch(FancyBboxPatch((0.15, 0.15), 9.7, 3.15, boxstyle='round,pad=0.02,rounding_size=0.04', fc='#fbfbfb', ec='#9a9a9a', lw=0.6, ls='--'))
+arrow(ax, 8.9, 3.65, 8.4, 3.32, ls='--', color='#9a9a9a')
+ax.text(0.3, 3.1, 'Inside one search node', fontsize=7.2, va='center', fontweight='bold')
+box(ax, 0.3, 1.45, 1.75, 1.35, 'reduced instance\n$(A^{\prime}, b^{\prime})$\nafter propagation\n+ LP vertex', fc='#ffffff')
+arrow(ax, 2.05, 2.12, 2.4, 2.12)
+box(ax, 2.4, 1.45, 2.45, 1.35, 'MarginalNet $f_\\theta$ (frozen)\nbipartite graph attention\n21.8K parameters\n$\\hat p_j \\approx \\Pr[x_j{=}1 \\mid A^{\prime}, b^{\prime}]$', fc=C['learn'])
+arrow(ax, 4.85, 2.4, 5.35, 2.62); arrow(ax, 4.85, 1.85, 5.35, 1.6)
+box(ax, 5.35, 2.25, 2.55, 0.85, 'Stage 1: first value\n$v = \\mathbb{1}[\\hat p_{j^*} \\geq 1/2]$', fc=C['learn'])
+box(ax, 5.35, 1.1, 2.55, 1.0, 'Stage 2: variable (cost-tuned)\n$j^* = \\arg\\max_j g_j$\n$g_j = \\log|\\hat p_j - 1/2| + h_\\phi(\\mathbf{h}_j)$', fc=C['rl'])
+arrow(ax, 7.9, 2.67, 8.35, 2.3); arrow(ax, 7.9, 1.6, 8.35, 1.95)
+box(ax, 8.35, 1.7, 1.35, 0.85, 'branch\n$x_{j^*} = v$ first,\n$1{-}v$ on backtrack', fc='#ffffff')
+ax.text(0.3, 0.55, 'Neither head fixes a variable: fixing is done only by propagation and LP-probing (sound),\n'
+                   'so a wrong prediction costs backtracking and nothing else.', fontsize=6.4, va='center', color='#333')
 save(fig, 'framework')
 
 # ---------------- Fig 2: reduction identity + FORCED/OPEN partition ----------------
-fig, ax = plt.subplots(figsize=(7.0, 2.6)); ax.set_xlim(0, 10); ax.set_ylim(0, 3.4); ax.axis('off')
-ax.text(0.2, 3.2, 'Conditioning on a partial assignment is the same as reducing the instance (Proposition 1)', fontsize=7.5, va='center')
-box(ax, 0.2, 1.2, 2.6, 1.7, 'root: $Ax = b$\n$n$ variables, solution set $\\mathcal{S}$\n\n$\\mathcal{S}$ = {solutions}', fc='#fff')
-arrow(ax, 2.8, 2.05, 3.5, 2.05); ax.text(3.15, 2.95, 'fix $x_F{=}v$', ha='center', fontsize=6.5)
-box(ax, 3.5, 1.2, 3.4, 1.7, 'node: $A_K\\, y = b - A_F v$ ($|K|$ free)\n$\\mathcal{S}(F,v)$: solutions agreeing with $v$\n$p_j = $ share of $\\mathcal{S}(F,v)$ with $x_j{=}1$', fc='#fff', fs=7)
-arrow(ax, 6.9, 2.05, 7.3, 2.05)
-box(ax, 7.3, 1.9, 2.5, 1.0, 'FORCED: $p_j \\in \\{0, 1\\}$\nbranching against it\nempties the subtree', fc='#fde2e2', fs=7)
-box(ax, 7.3, 0.75, 2.5, 1.0, 'OPEN: $0 < p_j < 1$\neither branch still\nreaches a solution', fc='#e3f2e1', fs=7)
-ax.text(0.2, 0.55, 'Only errors on FORCED variables cost a backtrack. Their share rises from 6.3% at the root to 87.9% at depth 8 of a $10\\times25$ instance,\n'
-                   'so the same network is trained on in-tree states (reduced instances) rather than roots; the labels are exact because $\\mathcal{S}$ is enumerated.', fontsize=6.6, va='center')
+fig, ax = canvas(7.0, 2.7)          # y range 0..3.86
+ax.text(0.15, 3.65, 'Conditioning on a partial assignment is the same as reducing the instance (Proposition 1)', fontsize=7.2, va='center', fontweight='bold')
+box(ax, 0.15, 1.35, 2.5, 1.9, 'root instance\n$A x = b$\n$n$ variables\nsolution set $\\mathcal{S}$', fc='#ffffff')
+arrow(ax, 2.65, 2.3, 3.35, 2.3); ax.text(3.0, 2.62, 'fix\n$x_F{=}v$', ha='center', va='bottom', fontsize=6, linespacing=1.1)
+box(ax, 3.35, 1.35, 3.4, 1.9, 'node = reduced instance\n$A_K\\, y = b - A_F v$,  $|K|$ free variables\n\nsurviving solutions $\\mathcal{S}(F,v)$\n$p_j$ = fraction of $\\mathcal{S}(F,v)$ with $x_j{=}1$', fc='#ffffff')
+arrow(ax, 6.75, 2.3, 7.35, 2.3)
+box(ax, 7.35, 2.35, 2.5, 0.9, 'FORCED: $p_j \\in \\{0, 1\\}$\nwrong branch empties\nthe subtree', fc='#fde2e2')
+box(ax, 7.35, 1.35, 2.5, 0.9, 'OPEN: $0 < p_j < 1$\neither branch still\nreaches a solution', fc='#e3f2e1')
+ax.text(0.15, 0.6, 'Only errors on FORCED variables cost a backtrack. Their share is 6.3% at the root and 87.9% at depth 8 ($10\\times25$),\n'
+                   'so the network is trained on reduced instances (in-tree states); labels are exact because $\\mathcal{S}$ is enumerated.', fontsize=6.4, va='center', color='#333')
 save(fig, 'reduction')
 
 # ---------------- Fig 3: two-stage training ----------------
-fig, ax = plt.subplots(figsize=(7.0, 3.0)); ax.set_xlim(0, 10); ax.set_ylim(0, 4.2); ax.axis('off')
-ax.add_patch(FancyBboxPatch((0.15, 2.2), 9.7, 1.9, boxstyle='round,pad=0.02,rounding_size=0.03', fc=C['learn'], ec='#88a', lw=0.6))
-ax.text(0.3, 3.95, 'Stage 1 -- supervised: what value is a variable likely to take?', fontsize=8, fontweight='bold', va='center')
-box(ax, 0.3, 2.4, 2.0, 1.2, 'small instances\n($10\\times25$)\nenumerate $\\mathcal{S}$ exactly', fc='#fff')
-arrow(ax, 2.3, 3.0, 2.8, 3.0)
-box(ax, 2.8, 2.4, 2.3, 1.2, 'in-tree states\nprefix of a real solution,\ndepth $0$--$12$', fc='#fff')
-arrow(ax, 5.1, 3.0, 5.6, 3.0)
-box(ax, 5.6, 2.4, 2.0, 1.2, 'exact conditional\nmarginals $p_j$\n(soft labels)', fc='#fff')
-arrow(ax, 7.6, 3.0, 8.1, 3.0)
-box(ax, 8.1, 2.4, 1.6, 1.2, 'MarginalNet\nBCE to $p_j$', fc='#fff', bold=True)
-ax.add_patch(FancyBboxPatch((0.15, 0.1), 9.7, 1.9, boxstyle='round,pad=0.02,rounding_size=0.03', fc=C['rl'], ec='#c88', lw=0.6))
-ax.text(0.3, 1.85, 'Stage 2 -- cost-aware fine-tuning: which variable is cheapest to branch on?', fontsize=8, fontweight='bold', va='center')
-box(ax, 0.3, 0.3, 2.0, 1.2, 'deployment-size states\n($21\\times60$, 45--60 free)\npolicy init = Stage-1 rule', fc='#fff')
-arrow(ax, 2.3, 0.9, 2.8, 0.9)
-box(ax, 2.8, 0.3, 2.3, 1.2, 'roll out sampled policy\n$\\pi \\propto \\exp(g_j/\\tau)$\nto a solution', fc='#fff')
-arrow(ax, 5.1, 0.9, 5.6, 0.9)
-box(ax, 5.6, 0.3, 2.0, 1.2, 'exact cost per decision\n$c(u)$ = subtree nodes\n(from the search itself)', fc='#fff')
-arrow(ax, 7.6, 0.9, 8.1, 0.9)
-box(ax, 8.1, 0.3, 1.6, 1.2, 'actor-critic\n$\\alpha = V_\\psi - \\log c$\ntrains $h_\\phi, V_\\psi$', fc='#fff', bold=True)
-arrow(ax, 8.9, 2.4, 8.9, 1.5, ls='--', color='#c55'); ax.text(9.0, 1.95, 'frozen', fontsize=6.5, color='#c55', va='center')
+fig, ax = canvas(7.0, 3.1)          # y range 0..4.43
+def row(y0, title, fc, ec, items, last_bold=True):
+	ax.add_patch(FancyBboxPatch((0.15, y0), 9.7, 1.95, boxstyle='round,pad=0.02,rounding_size=0.04', fc=fc, ec=ec, lw=0.6))
+	ax.text(0.3, y0 + 1.75, title, fontsize=7.4, fontweight='bold', va='center')
+	bw, gap, x = 2.1, 0.35, 0.35
+	for k, t in enumerate(items):
+		box(ax, x, y0 + 0.2, bw, 1.3, t, fc='#ffffff', bold=(last_bold and k == len(items) - 1), fs=6.5)
+		if k < len(items) - 1: arrow(ax, x + bw, y0 + 0.85, x + bw + gap, y0 + 0.85)
+		x += bw + gap
+row(2.4, 'Stage 1 (supervised): which value should a variable take?', C['learn'], '#8899bb',
+    ['small instances ($10\\times25$)\nenumerate $\\mathcal{S}$ exactly', 'in-tree states\nprefix of a real solution\nfixed, depth 0--12', 'exact conditional\nmarginals $p_j$\n(soft labels)', 'train MarginalNet $f_\\theta$\ncross-entropy to $p_j$'])
+row(0.15, 'Stage 2 (cost-aware fine-tuning): which variable is cheapest to branch on?', C['rl'], '#cc8888',
+    ['deployment-size states\n($21\\times60$, 45--60 free)\npolicy starts at the\nStage-1 rule', 'roll out the sampled\npolicy $\\pi \\propto e^{g_j/\\tau}$\nto a solution', 'exact cost per decision\n$c(u)$ = nodes in its subtree\n(from the search itself)', 'actor-critic update\n$\\alpha = V_\\psi - \\log c$\ntrains $h_\\phi, V_\\psi$ only'])
+arrow(ax, 8.75, 2.6, 8.75, 1.65, ls='--', color='#c55'); ax.text(8.85, 2.12, '$f_\\theta$ frozen', fontsize=6.3, color='#c55', va='center')
 save(fig, 'training')
 
 # ---------------- Fig 4: results ----------------
