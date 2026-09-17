@@ -492,6 +492,8 @@ DET 변수 정확도도 학습 분포도 지도 guidance가 남겨두는 것을 
 
 \textbf{평가.} 표 7b는 100개 세트에서 fine-tuning policy(model+ft)를 지도 policy 옆에 보고한다: node 5,495 대 13,386(2.3배 적음, 70/100에서 적음, 모든 seed에서 \textit{p}<0.001), 시간 중앙 7.6초 대 16.5초(2.0\textasciitilde{}2.2배, 64\textasciitilde{}67/100에서 빠름, \textit{p}≤0.007), node당 비용은 불변(738 대 796 node/s). LP 기반 branching 대비로는 시간 4.8\textasciitilde{}5.9배, node 14배다. 원래 30개에서는 효과가 작다(node 8,873 대 8,657; 시간 1.2\textasciitilde{}1.5배, 18\textasciitilde{}21/30, \textit{p} 0.04\textasciitilde{}0.36): 추가된 70개가 이득을 만들며(node 2.5배 적음, 53/70), 이는 30개가 지도 규칙에 유리한 표본이었다는 것과 일관된다. 배치된 cascade(표 12)에서 fine-tuning policy는 lattice 잔여를 7.3\textasciitilde{}11.7초에 닫고 지도 policy는 12.2\textasciitilde{}17.7초에 닫는다.
 
+\textbf{fine-tuning policy의 반복과 전이.} 다른 학습 seed(rollout 표집과 보정 head 초기화가 다름, 같은 monitor로 epoch 2 선택)로 한 두 번째 fine-tuning은 100개 세트에서 같은 그림을 준다 — node 4,940(지도 policy보다 2.4배 적음, 68/100에서 적음, \textit{p}<0.001), 1.9\textasciitilde{}2.4배 빠름(66\textasciitilde{}68/100, \textit{p}≤0.002) — 그리고 원래 30개에서는 더 큰 이득을 준다(node 4,040, 19/30에서 1.9배 적음; 2.3배 빠름, 20\textasciitilde{}21/30). 두 실행은 많은 node에서 서로 다른 변수를 고르면서 비슷한 비용에 도달하는데, 특정 해가 아니라 목적함수가 학습된 것이라면 기대되는 바다. policy는 21×60 상태로만 fine-tuning했지만 18×50에서도 node 424 대 지도 policy 1,085(1.7배 적음, 20/30, \textit{p}=0.099), 1.8\textasciitilde{}2.2배 빠름(22\textasciitilde{}24/30, \textit{p}≤0.016)이다: 비용 기반 개선은 지도 개선처럼 작은 크기로 전이된다.
+
 \textbf{무엇이 바뀌었나.} held-out 상태 300개에서 fine-tuning policy는 95\%에서 확신도 규칙과 다른 root 변수로 분기한다. 그 선택은 대개 15번째로 확신하는 변수이고(|\textit{p}\^{}−1/2| 0.26 대 규칙 선택의 0.43), DET이면서 첫 값이 맞을 확률도 낮다(57.5\% 대 82.5\%). policy는 가장 확신하는 변수\textbf{에서 멀어졌고} 탐색은 싸졌다. 이 개선은 root 결정 하나에 귀속되지 않는다: root만 fine-tuning 선택으로 강제하고 아래를 지도 policy로 돌리면 비용 비율 중앙값 0.93(불일치 상태 46개 중 22개에서 더 쌈)이므로, 이득은 개별 결정이 아니라 결정 수열의 성질이다. 따라서 fine-tuning이 무엇을 최적화하는지는 말할 수 있어도 — 맞을 확률을 soft prior로 둔 subtree 비용 — 그것이 찾아낸 특징의 이름은 아직 붙이지 못한다. 값싼 대리 지표인 첫 자식에서 propagation이 촉발되는 양은 두 선택 사이에 차이가 없다.
 
 \subsection{전체 pipeline에서의 배치}
@@ -552,7 +554,7 @@ message passing은 \textbf{기여한다}: 구조를 쓰지 않는 최선 모델 
 
 \textbf{학습 분포와 배포 분포가 거의 겹치지 않으며, 맞추는 것은 도움이 되지 않았다.} 학습 범위 \{0,…,12\}는 자유변수 13\textasciitilde{}25개인 상태를 만드는 반면 21×60 탐색은 5\textasciitilde{}60개인 상태를 질의하며 질의의 80\%가 25 위에 있다. §4.10은 배포 영역으로 학습하면 탐색이 느려짐을 보인다. 큰 학습 상태를 다르게 구성하면(해가 아니라 탐색 자신의 경로에서 prefix를 뽑거나, 살아남는 해가 여럿인 상태) 달라질지는 모른다.
 
-\textbf{fine-tuning 결과는 하나의 학습 풀과 적은 학습 seed에 기대고 있다.} policy는 하나의 21×60 풀의 상태로 fine-tuning했고 그 크기에서만 평가했다. entropy는 4 epoch 안에 붕괴하고, epoch 선택은 원칙적 중단 규칙이 아니라 held-out monitor로 하며, policy가 이용하는 특징의 이름은 아직 붙이지 못했다(§4.11). 지도 policy처럼 크기 간 전이되는지는 미검증이다.
+\textbf{fine-tuning 결과는 하나의 학습 풀과 적은 학습 seed에 기대고 있다.} policy는 하나의 21×60 풀의 상태로 fine-tuning했다. 학습 seed 둘이 21×60에서 일치하고 이득은 18×50으로 전이되지만, 더 큰 크기는 시험하지 않았고 두 seed 모두 같은 monitor로 epoch를 고른다. entropy는 4 epoch 안에 붕괴하고, epoch 선택은 원칙적 중단 규칙이 아니라 held-out monitor로 하며, policy가 이용하는 특징의 이름은 아직 붙이지 못했다(§4.11). 지도 policy처럼 크기 간 전이되는지는 미검증이다.
 
 \textbf{지도 network의 하이퍼파라미터는 튜닝되지 않았고 validation split이 없다.} §4.2 참조. 이 설정은 첫 시도로서 방어 가능하고 test set에 오염되지 않았으며, 적어도 depth 범위는 한 크기 안에서 중요하지 않음이 뒤에 확인됐다(§4.10). fine-tuning 단계는 held-out 상태에서 epoch를 선택하는데, 그 상태는 학습 풀에서 나오며 모든 평가 instance와 분리되어 있다.
 
