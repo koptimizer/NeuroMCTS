@@ -16,3 +16,5 @@ run_v24_r1.sh             R1 체인: 수집(train/test) → critic(trunk 동결)
 v24_r2_finetune.py        R2: actor-critic fine-tuning (정확한 subtree 비용, policy head 초기값=지도 규칙, base 동결 기본), held-out monitor로 epoch 선택
 run_v24_r2.sh             R2 체인: R1 종료 대기 → critic 관문(Spearman ≥ 0.5) → fine-tune 6 epoch → monitor 최적 epoch 선택 → pv arm 3-seed 평가(C off/on, H off) → 집계
 run_v24_r2b.sh            R2 반복: 학습 seed 1로 fine-tune → H/C 평가(PVb), 그리고 seed-0 policy의 18×50(B) 평가
+v24_pv_diag.py            RL이 무엇을 바꿨나: root 선택 일치율, PV 선택의 확신도 순위, propagation cascade·column degree 비교
+v24_pv_root_diag.py       root 결정 격리: rule 선택 vs PV 선택(둘 다 아래는 M0), 총 비용·첫 자식 성공률·refutation 비용
