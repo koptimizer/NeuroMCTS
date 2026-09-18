@@ -449,6 +449,22 @@ feature가 크기 정규화되어 있고 파라미터가 (\textit{m},\textit{n})
 
 21×60 평가 크기에서, 2.4배 작은 문제인 10×25에서만 학습한 network는 18×50에서 학습한 network보다 \textbf{못하지 않다}. 굳이 말하면 낫다: 30개 중 18개에서 node가 더 적고 각 seed에서 18\textasciitilde{}19개에서 더 빨리 끝나며, 인스턴스별 시간 비율 중앙값은 그쪽으로 1.24\textasciitilde{}1.31배다. 어느 차이도 유의하지 않고(부호검정 \textit{p}≥0.20) 둘 다 30/30을 푼다. 18×50에서도 같은 그림이다: 10×25 network가 30개 중 16\textasciitilde{}17개에서 더 빠르지만(\textit{p}≥0.59) 시간 중앙값은 약간 높은데, 짝지은 차이가 instance 간 변동에 비해 작아 두 요약이 엇갈리는 것이다. 재구성 루프에서의 이전 비교는 15/30과 0.92배를 주었다. 방향은 루프에 따라 안정적이지 않으며, 우리는 이 결과를 transfer 이득이 아니라 \textbf{검출 가능한 transfer 손실 없음}으로 읽는다. root 수준 예측도 같은 결론을 준다: 10×25 network가 10×25, 20×50, 40×100에서 각각 67.8\%, 69.5\%, 69.4\%를 기록하며 relaxation rounding 대비 우위(+11.0, +7.2, +4.7\%p)를 모든 크기에서 유지한다.
 
+\textbf{21×60 너머에서의 두 단계 전이.} 표 10b는 모든 학습 컴포넌트의 학습 범위 위의 크기를 더한 것으로, 열거로 multiplicity를 검증할 수 없어 21×60의 제약 밀도(\textit{m}/\textit{n}≈0.35)로 \textit{m}을 골랐다. Stage 1은 24×70(3.8배)·28×80(2.4배)에서 LP 규칙보다 node가 적지만 시간 이득은 24×70에서 사라지는데(둘 다 푼 instance에서 0.7\textasciitilde{}1.1배), 260,000-node tree는 그만큼의 forward pass를 지불하기 때문이다. 21×60과 18×50에서만 학습한 비용 fine-tuning policy(§4.11)는 24×70에서 모든 seed에 30/30을 Stage 1보다 2.3\textasciitilde{}3.3배·2.1\textasciitilde{}2.7배 빠르게 풀고, 28×80에서는 1,200초 안에 18개·17개를 푸는데 Stage 1은 8개, LP 규칙은 4개이며 SCIP은 중앙 112초에 30개 전부를 푼다; 그 크기가 유용한 창의 위쪽 경계다.
+
+\begin{table*}[t]\centering
+\fitw{\begin{tabular}{lrrrrrrr}
+\toprule
+크기 & 지표 & CP-SAT & SCIP & lp & model (25) & model+ft (60) & model+ft (50) \\
+\midrule
+24×70 (1200초, seed 3) & 해결 / 시간 중앙 & 30/30 / 16초 & 30/30 / 12초 & 23\textasciitilde{}25/30 / 537\textasciitilde{}644초 & 29/30 / 358\textasciitilde{}457초 & \textbf{30/30 / 125\textasciitilde{}185초} & 30/30 / 135\textasciitilde{}165초 \\
+ & node 중앙 & — & — & 980,743 & 260,114 & \textbf{90,054} & 95,818 \\
+28×80 (1200초, seed 1) & 해결 / 시간 중앙 & 23/30 / 270초 & 30/30 / 112초 & 4/30 / >1200초 & 8/30 / >1200초 & \textbf{18/30} / 720초 & 17/30 / 852초 \\
+ & node 중앙 & — & — & 1,929,041 & 803,535 & \textbf{470,606} & 560,077 \\
+\bottomrule
+\end{tabular}}
+\par\vspace{3pt}{\footnotesize 표 10b. 모든 학습 범위 위의 크기, lattice off, 각 30개; multiplicity 미검증, 제약 밀도 일치. 괄호는 학습 크기.\par}
+\end{table*}
+
 이것이 실무적으로 중요한 이유는 \textbf{label 생성이 구속 조건}이기 때문이다. 정확한 marginal은 열거를 요구하는데 이는 \textit{n}≈60을 넘으면 실패한다. transfer는 label을 얻을 수 있는 곳에서 학습한 network를 그럴 수 없는 곳에 \textbf{배치}할 수 있음을 뜻한다.
 
 \subsection{전이된 network는 어디서 도움이 되는가}
@@ -544,7 +560,7 @@ message passing은 \textbf{기여한다}: 구조를 쓰지 않는 최선 모델 
 \subsection{한계}
 \textbf{Label 생성이 평가만이 아니라 방법 자체를 제한한다.} 정확한 marginal은 \textit{S}의 열거를 요구하는데 이 계열에서는 \textit{n}≈60을 넘으면 완료되지 않는다. transfer는 더 큰 크기에서의 배치를 허용하지만 거기서의 학습은 허용하지 않는다. solution sampling으로 \textit{p\textsubscript{j}}를 근사하는 것이 자연스러운 확장이며 미검증이다.
 
-\textbf{유용한 크기 창이 양쪽에서 막혀 있다.} 그 아래에서는 lattice reduction이 전부를 닫아 branching 품질이 무의미하고, 그 위(\textit{n}=100)에서는 constraint solver가 20초 내에 해를 하나도 찾지 못해 모든 전략에서 search가 실패한다. 우리 시연은 \textit{n}=60에 있으며 창이 더 확장된다는 것은 보이지 못했다.
+\textbf{유용한 크기 창이 양쪽에서 막혀 있다.} 그 아래에서는 lattice reduction이 전부를 닫아 branching 품질이 무의미하고, 그 위에서는 탐색이 실패한다: 28×80에서 fine-tuning policy는 1,200초 안에 18/30, 지도 규칙은 8/30을 풀고 \textit{n}=100에서는 constraint solver가 20초 내에 해를 하나도 찾지 못한다. 우리 시연은 \textit{n}=50\textasciitilde{}70에 있으며, 60 위의 크기는 제약 밀도만 맞췄고 28×80은 seed 1개다.
 
 \textbf{우위는 시간과 tree 크기에 있지 해결율에 있지 않다.} warm start 루프에서는 두 건전 전략 모두 우리가 평가한 모든 instance를 예산 안에 푼다. 지도 guidance가 21×60에서 사는 것은 100개 instance에서 median 2.0\textasciitilde{}2.3배의 속도와 5.5배 적은 node(원래 30개에서는 2.6\textasciitilde{}3.0배·9.5배, 유리한 표본)이고 fine-tuning policy가 추가로 2.0\textasciitilde{}2.2배·2.3배이며, 이는 모든 seed에서 인스턴스 단위로 유의하다. 이전 초고는 매 node에서 relaxation을 재구성하는 루프에서 5–0의 해결율 우위를 보고했다. 그 차이는 빠른 backend에서 사라졌고 우리는 그것을 주장하지 않는다. 더 큰 예산이나 크기에서 해결율 우위가 존재하는지는 미검증이며, 크기당 평가 instance 30개로는 어차피 그것을 검출할 검정력이 낮다.
 

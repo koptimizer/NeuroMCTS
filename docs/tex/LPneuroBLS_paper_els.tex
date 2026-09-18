@@ -602,6 +602,24 @@ $18\times50$ & $21\times60$ & 100\% & $23.7\pm0.7$\,s & 14{,}742 \\
 
 At the $21\times60$ evaluation size the network trained only at $10\times25$ --- a $2.4\times$ smaller problem --- is not worse than the one trained at $18\times50$; if anything it is better, expanding fewer nodes on $18/30$ instances and finishing faster on $18$--$19/30$ in each seed, with a median per-instance time ratio of $1.24$--$1.31\times$ in its favour. Neither difference is significant (sign test $p\ge0.20$), and both solve $30/30$. At $18\times50$ the picture is the same: the $10\times25$ network is faster on $16$--$17/30$ instances ($p\ge0.59$) although its median time is slightly higher, the two summaries disagreeing because the paired differences are small against instance-to-instance variation. A previous version of this comparison, on the rebuilt-relaxation loop, gave $15/30$ and a $0.92\times$ ratio; the direction is not stable across loops and we read the result as no detectable transfer loss rather than as a transfer gain. Root-level prediction agrees: the $10\times25$ network scores $67.8\%$, $69.5\%$ and $69.4\%$ at $10\times25$, $20\times50$ and $40\times100$, holding its margin over relaxation rounding ($+11.0$, $+7.2$, $+4.7$ points) at every size.
 
+\paragraph{Transfer of both stages beyond $21\times60$.} Table~\ref{tab:transfer2} adds sizes above the training range of every learned component, with $m$ chosen for the constraint density of $21\times60$ ($m/n\approx0.35$) because solution multiplicity cannot be verified by enumeration there. Stage~1 keeps a node advantage over the LP rule at $24\times70$ ($3.8\times$) and $28\times80$ ($2.4\times$) but its time advantage vanishes at $24\times70$ ($0.7$--$1.1\times$ on instances both solve), since a $260{,}000$-node tree pays for as many forward passes. The cost-fine-tuned policies (Section~\ref{sec:exp-rl}), trained at $21\times60$ and at $18\times50$ only, solve $30/30$ at $24\times70$ in every seed, $2.3$--$3.3\times$ and $2.1$--$2.7\times$ faster than Stage~1, and at $28\times80$ solve $18$ and $17$ of $30$ within $1{,}200$\,s against $8$ for Stage~1 and $4$ for the LP rule, where SCIP solves all $30$ in a median of $112$\,s; that size is the upper edge of the useful window.
+
+\begin{table}[h]
+\centering
+\resizebox{\textwidth}{!}{\begin{tabular}{llrrrrrr}
+\toprule
+size & measure & CP-SAT & SCIP & \textsc{lp} & \textsc{model} (25) & \textsc{model+ft} (60) & \textsc{model+ft} (50) \\
+\midrule
+$24\times70$ (1200\,s, 3 seeds) & solved / median time & 30/30 / 16\,s & 30/30 / 12\,s & 23--25/30 / 537--644\,s & 29/30 / 358--457\,s & \textbf{30/30} / \textbf{125--185\,s} & 30/30 / 135--165\,s \\
+ & median nodes & --- & --- & 980{,}743 & 260{,}114 & \textbf{90{,}054} & 95{,}818 \\
+$28\times80$ (1200\,s, 1 seed) & solved / median time & 23/30 / 270\,s & 30/30 / 112\,s & 4/30 / $>$1200\,s & 8/30 / $>$1200\,s & \textbf{18/30} / 720\,s & 17/30 / 852\,s \\
+ & median nodes & --- & --- & 1{,}929{,}041 & 803{,}535 & \textbf{470{,}606} & 560{,}077 \\
+\bottomrule
+\end{tabular}}
+\caption{Sizes above every training range, lattice off, $30$ instances each; solution multiplicity unverified, constraint density matched. Training sizes in parentheses.}
+\label{tab:transfer2}
+\end{table}
+
 This matters practically because label generation is the binding constraint. Exact marginals require enumeration, which fails beyond $n\approx60$; transfer means a network trained where labels are obtainable can be deployed where they are not.
 
 \subsection{Where the transferred network helps}
@@ -715,7 +733,7 @@ The same table bounds the claim, though. A four-parameter linear model on the re
 
 \paragraph{Label generation bounds the method, not only its evaluation.} Exact marginals require enumerating $\SOL$, which does not complete beyond $n\approx60$ on this family. Transfer permits deployment at larger sizes but not training there; approximating $p_j$ by solution sampling is the natural extension and is untested.
 
-\paragraph{The useful size window is bounded on both sides.} Below it, lattice reduction closes everything and branching quality is irrelevant. Above it ($n=100$), search fails outright for every strategy, since a constraint solver finds no solution within $20$\,s. Our demonstration lives at $n=60$ and we do not show the window extends further.
+\paragraph{The useful size window is bounded on both sides.} Below it, lattice reduction closes everything and branching quality is irrelevant. Above it the search fails: at $28\times80$ the fine-tuned policies solve $18/30$ within $1{,}200$\,s and the supervised rule $8/30$, and at $n=100$ a constraint solver finds no solution within $20$\,s. Our demonstration lives at $n=50$--$70$; sizes above $60$ are matched on constraint density only and $28\times80$ is a single seed.
 
 \paragraph{The advantage is in time and tree size, not in solve rate.} On a warm-started loop both sound strategies solve every instance we evaluate within budget; what the supervised guidance buys at $21\times60$ is a $2.0$--$2.3\times$ median speedup and $5.5\times$ fewer nodes on $100$ instances ($2.6$--$3.0\times$ and $9.5\times$ on the original thirty, a favourable sample), and the fine-tuned policy a further $2.0$--$2.2\times$ and $2.3\times$, significant per instance in every seed. An earlier draft reported a $5$--$0$ solve-rate advantage from a loop that rebuilt the relaxation at every node; that difference vanished with the faster backend and we do not claim it. Whether a solve-rate advantage exists at larger budgets or sizes is untested, and with $30$ evaluation instances per size the power to detect one would be low in any case.
 
