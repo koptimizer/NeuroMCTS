@@ -279,27 +279,72 @@ Lattice coverage falls with size ($30/30$, $24$--$28/30$, $10$--$16/30$), which 
 \subsection{Size transfer of both stages}
 \label{sec:exp-transfer}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\fitw{\begin{tabular}{llrrrrrr}
+\fitc{\begin{tabular}{lll}
 \toprule
-size & measure & CP-SAT & SCIP & \textsc{lp} & \textsc{stage 1} (25) & \textsc{stage 1+2} (60) & \textsc{stage 1+2} (50) \\
+arm & branches on & first value \\
 \midrule
-$18\times50$ (300\,s) & solved / median time & 30/30 / 0.05\,s & 30/30 / 0.39\,s & 30/30 / 2.4\,s & 30/30 / 1.8\,s & 30/30 / \textbf{0.5\,s} & 30/30 / 1.5\,s \\
- & median nodes & --- & --- & 4{,}224 & 1{,}085 & \textbf{424} & 1{,}147 \\
-$21\times60$, 100 inst.\ (600\,s) & solved / median time & 100/100 / 0.8\,s & 100/100 / 2.6\,s & 100/100 / 41\,s & 100/100 / 16.5\,s & 100/100 / \textbf{7.6\,s} & 100/100 / 10.7\,s \\
- & median nodes & --- & --- & 79{,}609 & 13{,}386 & \textbf{5{,}495} & 7{,}796 \\
-$24\times70$ (1200\,s) & solved / median time & 30/30 / 16\,s & 30/30 / 12\,s & 23--25/30 / 537--644\,s & 29/30 / 358--457\,s & \textbf{30/30} / \textbf{125--185\,s} & 30/30 / 135--165\,s \\
- & median nodes & --- & --- & 980{,}743 & 260{,}114 & \textbf{90{,}054} & 95{,}818 \\
-$28\times80$ (1200\,s, one seed) & solved / median time & 23/30 / 270\,s & 30/30 / 112\,s & 4/30 / $>$1200\,s & 8/30 / $>$1200\,s & \textbf{18/30} / 720\,s & 17/30 / 852\,s \\
- & median nodes & --- & --- & 1{,}929{,}041 & 803{,}535 & \textbf{470{,}606} & 560{,}077 \\
+\textsc{lp} & most integral relaxation value, $\arg\max_j|x^{LP}_j-\tfrac12|$ & rounded $x^{LP}_j$ \\
+\textsc{stage 1} (25) & most confident marginal, $\arg\max_j|\hat p_j-\tfrac12|$ & $\mathbb{1}[\hat p_j\ge\tfrac12]$ \\
+\textsc{stage 1+2} (60 / 50) & cost-tuned score, $\arg\max_j g_j$ & $\mathbb{1}[\hat p_j\ge\tfrac12]$ \\
 \bottomrule
 \end{tabular}}
-\caption{Size transfer of both stages, lattice off. The training size of each learned arm is in parentheses: \textsc{stage 1} is trained at $10\times25$ only; the two fine-tuned policies at $21\times60$ and $18\times50$ only. $18\times50$, $21\times60$ and $24\times70$ are three seeds (ranges over seeds); $28\times80$ is one seed. Solution multiplicity is matched at $n\le60$ and unverifiable at $n\ge70$, where $m$ is chosen for the same constraint density $m/n\approx0.35$.}
+\caption{The branching arms. All run in the same depth-first loop (one warm-started relaxation per node, same propagation, same budget) and differ only in this rule; the number in parentheses is the size the learned component was trained at. \textsc{lp} is not a solver: it is the same loop with the relaxation value in place of the network.}
+\label{tab:arms}
+\end{table}
+
+\begin{table*}[t]
+\centering
+\fitw{\begin{tabular}{lrrrrrr}
+\toprule
+& CP-SAT & SCIP & \textsc{lp} & \textsc{stage 1} (25) & \textsc{stage 1+2} (60) & \textsc{stage 1+2} (50) \\
+\midrule
+\multicolumn{7}{l}{\emph{(a) instances solved within budget}} \\
+$18\times50$ (300\,s) & 30/30 & 30/30 & 30/30 & 30/30 & 30/30 & 30/30 \\
+$21\times60$, 100 inst.\ (600\,s) & 100/100 & 100/100 & 100/100 & 100/100 & 100/100 & 100/100 \\
+$24\times70$ (1200\,s) & 30/30 & 30/30 & 23--25/30 & 29/30 & \textbf{30/30} & \textbf{30/30} \\
+$28\times80$ (1200\,s) & 23/30 & 30/30 & 4/30 & 8/30 & \textbf{18/30} & 17/30 \\
+\midrule
+\multicolumn{7}{l}{\emph{(b) median wall-clock time}} \\
+$18\times50$ & 0.05\,s & 0.39\,s & 2.4\,s & 1.8\,s & \textbf{0.5\,s} & 1.5\,s \\
+$21\times60$, 100 inst. & 0.8\,s & 2.6\,s & 41\,s & 16.5\,s & \textbf{7.6\,s} & 10.7\,s \\
+$24\times70$ & 16\,s & 12\,s & 537--644\,s & 358--457\,s & \textbf{125--185\,s} & 135--165\,s \\
+$28\times80$ & 270\,s & 112\,s & $>$1200\,s & $>$1200\,s & 720\,s & 852\,s \\
+\midrule
+\multicolumn{7}{l}{\emph{(c) median nodes to a solution (seed-invariant)}} \\
+$18\times50$ & --- & --- & 4{,}224 & 1{,}085 & \textbf{424} & 1{,}147 \\
+$21\times60$, 100 inst. & --- & --- & 79{,}609 & 13{,}386 & \textbf{5{,}495} & 7{,}796 \\
+$24\times70$ & --- & --- & 980{,}743 & 260{,}114 & \textbf{90{,}054} & 95{,}818 \\
+$28\times80$ & --- & --- & 1{,}929{,}041 & 803{,}535 & \textbf{470{,}606} & 560{,}077 \\
+\bottomrule
+\end{tabular}}
+\caption{Size transfer of both stages, lattice off, $30$ instances per size ($100$ at $21\times60$). $18\times50$, $21\times60$ and $24\times70$ are three seeds (ranges over seeds); $28\times80$ is one seed. Solution multiplicity is matched at $n\le60$ and unverifiable at $n\ge70$, where $m$ is chosen for the constraint density of $21\times60$ ($m/n\approx0.35$). Training sizes in parentheses (Table~\ref{tab:arms}).}
 \label{tab:transfer}
 \end{table*}
 
-Table~\ref{tab:transfer} evaluates every learned arm at sizes other than the one it was trained at. Stage~1, trained only at $10\times25$, keeps a node advantage over the LP rule at every size ($3.9\times$, $5.5\times$, $3.8\times$, $2.4\times$) and, with $|\SOL|$ matched, is not worse at $21\times60$ than a network trained at $18\times50$ ($8{,}657$ against $14{,}742$ nodes, n.s.); its root accuracy holds its margin over rounding up to $40\times100$. But the time advantage of Stage~1 alone shrinks as the tree grows: at $24\times70$ it solves $29/30$ against the LP rule's $23$--$25/30$, yet on the instances both solve it is no faster ($0.7$--$1.1\times$), because a $260{,}000$-node tree pays for $260{,}000$ forward passes. Stage~2 restores the advantage and carries it upward. The policy fine-tuned at $18\times50$ is $2.0\times$ better than Stage~1 in nodes at $21\times60$ ($69/100$, $p<0.001$; $1.7$--$1.9\times$ in time); both fine-tuned policies solve $30/30$ at $24\times70$ in every seed, $2.3$--$3.3\times$ ($22$--$23/30$, $p\le0.016$) and $2.1$--$2.7\times$ ($19$--$21/30$) faster than Stage~1 with $2.7\times$ and $2.2\times$ fewer nodes, at $1.2$--$1.4\times$ their training size. At $28\times80$ the window closes for every arm we run: the LP rule and Stage~1 solve $4$ and $8$ of $30$ within $1{,}200$\,s, the fine-tuned policies $18$ and $17$, and SCIP $30/30$ in a median of $112$\,s. A policy fine-tuned on $45$--$60$ free variables therefore doubles the solve rate at a size it never saw, but does not extend the method to where a complete solver is not needed. Two remarks. First, the fine-tuned policies gain nothing at their own training size when the tree is small ($18\times50$: $1{,}147$ against $1{,}085$ nodes for the $18\times50$-trained policy), consistent with Figure~\ref{fig:results}c: what is learned matters on large, weakly constrained states, and those exist only in large trees. Second, at $n\ge70$ SCIP overtakes CP-SAT, and both remain far ahead of us.
+\begin{table}[t]
+\centering
+\fitc{\begin{tabular}{llrrr}
+\toprule
+trained $\to$ tested & vs. & nodes & time & wins \\
+\midrule
+\textsc{stage 1}: $25\to50$ & \textsc{lp} & $3.9\times$ & $1.3$--$1.4\times$ & 18/30 \\
+\textsc{stage 1}: $25\to60$ & \textsc{lp} & $5.5\times$ & $2.0$--$2.3\times$ & 70--71/100 \\
+\textsc{stage 1}: $25\to70$ & \textsc{lp} & $3.8\times$ & $0.7$--$1.1\times$ & 16--17/30 \\
+\textsc{stage 2}: $60\to50$ (down) & \textsc{stage 1} & $2.6\times$ & $1.8$--$2.2\times$ & 22--24/30 \\
+\textsc{stage 2}: $50\to60$ (up) & \textsc{stage 1} & $2.0\times$ & $1.7$--$1.9\times$ & 63--66/100 \\
+\textsc{stage 2}: $60\to70$ (up) & \textsc{stage 1} & $2.7\times$ & $2.3$--$3.3\times$ & 22--23/30 \\
+\textsc{stage 2}: $50\to70$ (up) & \textsc{stage 1} & $2.2\times$ & $2.1$--$2.7\times$ & 19--21/30 \\
+\textsc{stage 2}: $50\to50$ (same) & \textsc{stage 1} & $0.9\times$ & $1.1$--$1.4\times$ & 16--18/30 \\
+\bottomrule
+\end{tabular}}
+\caption{The same results read by transfer direction: ratio of median nodes and of per-instance median time (range over seeds), and the number of instances on which the transferred arm is faster. At $24\times70$ the supervised rule keeps its node advantage over \textsc{lp} but not its time advantage; the fine-tuned policies keep both.}
+\label{tab:transferdir}
+\end{table}
+
+
+Tables~\ref{tab:arms}--\ref{tab:transferdir} evaluate every learned arm at sizes other than the one it was trained at; Table~\ref{tab:arms} restates what each arm is, Table~\ref{tab:transfer} gives solve counts, times and nodes by size, and Table~\ref{tab:transferdir} reads the same numbers by transfer direction. Stage~1, trained only at $10\times25$, keeps a node advantage over the LP rule at every size ($3.9\times$, $5.5\times$, $3.8\times$, $2.4\times$) and, with $|\SOL|$ matched, is not worse at $21\times60$ than a network trained at $18\times50$ ($8{,}657$ against $14{,}742$ nodes, n.s.); its root accuracy holds its margin over rounding up to $40\times100$. But the time advantage of Stage~1 alone shrinks as the tree grows: at $24\times70$ it solves $29/30$ against the LP rule's $23$--$25/30$, yet on the instances both solve it is no faster ($0.7$--$1.1\times$), because a $260{,}000$-node tree pays for $260{,}000$ forward passes. Stage~2 restores the advantage and carries it upward. The policy fine-tuned at $18\times50$ is $2.0\times$ better than Stage~1 in nodes at $21\times60$ ($69/100$, $p<0.001$; $1.7$--$1.9\times$ in time); both fine-tuned policies solve $30/30$ at $24\times70$ in every seed, $2.3$--$3.3\times$ ($22$--$23/30$, $p\le0.016$) and $2.1$--$2.7\times$ ($19$--$21/30$) faster than Stage~1 with $2.7\times$ and $2.2\times$ fewer nodes, at $1.2$--$1.4\times$ their training size. At $28\times80$ the window closes for every arm we run: the LP rule and Stage~1 solve $4$ and $8$ of $30$ within $1{,}200$\,s, the fine-tuned policies $18$ and $17$, and SCIP $30/30$ in a median of $112$\,s. A policy fine-tuned on $45$--$60$ free variables therefore doubles the solve rate at a size it never saw, but does not extend the method to where a complete solver is not needed. Two remarks. First, the fine-tuned policies gain nothing at their own training size when the tree is small ($18\times50$: $1{,}147$ against $1{,}085$ nodes for the $18\times50$-trained policy), consistent with Figure~\ref{fig:results}c: what is learned matters on large, weakly constrained states, and those exist only in large trees. Second, at $n\ge70$ SCIP overtakes CP-SAT, and both remain far ahead of us.
 
 \subsection{What the supervised target misses}
 \label{sec:exp-residual}
