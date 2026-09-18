@@ -21,3 +21,4 @@ v24_pv_root_diag.py       root 결정 격리: rule 선택 vs PV 선택(둘 다 �
 make_260917_figures.py    260917 논문(영·국문)용 그림 4종: framework, reduction, training, results — PDF·PNG 동시 생성
 run_v24_up.sh             상향 전이 검증: 18×50에서만 fine-tune한 PV50을 21×60(30·100)·18×50에서 평가 + 24×70 probe(lp/M0/PV60/PV50)
 run_v24_big.sh            60 너머 전이: 24×70·28×80 각 30개(m/n≈0.35, |S| 미검증) lp/M0/PV60/PV50, 1200 s, seed 0 (UP 종료 후 자동 시작)
+run_v24_big_seeds.sh      24×70 seed 1·2 반복 (lp/M0/PV60/PV50)
