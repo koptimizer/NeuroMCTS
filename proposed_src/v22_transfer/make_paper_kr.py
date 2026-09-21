@@ -434,7 +434,8 @@ P('인스턴스는 GenHard(<i>m</i>,<i>n</i>,<i>K</i>) 절차로 생성한다: �
   '<i>K</i>=20개의 후보 해를 심어 각각 <b>b</b>를 계산한 뒤, <b>vertex spread</b>(무작위 objective 방향에서 얻은 '
   'relaxation vertex들의 평균 쌍거리)가 최대인 것을 채택한다. vertex spread 최대화는 '
   '<i>S</i><sub>LP</sub>를 직접 키우며, market-split 인스턴스를 relaxation 기반 방법에 어렵게 만드는 '
-  '메커니즘이다(§2.1). 심어진 해의 유일성은 강제하지 않는다.', body_s)
+  '메커니즘이다(§2.1). 심어진 해의 유일성은 강제하지 않는다. 모든 instance는 구성상 실현 가능하다: planting으로 <i>S</i>≠∅가 보장되며 '
+  'infeasibility 판별은 본 논문의 범위 밖이다(§4.14).', body_s)
 P('<b>왜 크기 간 |<i>S</i>|를 통제해야 하는가.</b> solution multiplicity는 예측 과제의 난이도만이 아니라 '
   '<b>성격</b>을 바꾼다. |<i>S</i>|=1이면 모든 자유 변수가 DET이고 잘 예측하는 것이 곧 푸는 것이지만, '
   '|<i>S</i>|가 크면 대부분이 OPEN이고 과제는 퍼진 posterior를 추정하는 것이 된다. 따라서 |<i>S</i>|를 '
@@ -881,6 +882,10 @@ P('<b>fine-tuning 결과는 하나의 학습 풀과 적은 학습 seed에 기대
 P('<b>지도 network의 하이퍼파라미터는 튜닝되지 않았고 validation split이 없다.</b> §4.2 참조. 이 설정은 첫 시도로서 방어 가능하고 test set에 '
   '오염되지 않았으며, 적어도 depth 범위는 한 크기 안에서 중요하지 않음이 뒤에 확인됐다(§4.10). fine-tuning 단계는 held-out 상태에서 epoch를 선택하는데, '
   '그 상태는 학습 풀에서 나오며 모든 평가 instance와 분리되어 있다.', body_s)
+P('<b>모든 instance가 실현 가능하며, infeasibility 판별은 범위 밖이다.</b> conditional marginal은 해집합이 비어 있으면 정의되지 않으므로 Stage 1의 지도는 '
+  '<i>S</i>≠∅를 요구하고, 우리가 학습·평가한 모든 instance는 심어진 해를 갖는다. 해를 빨리 찾는 것과 infeasible을 빨리 반증하는 것은 서로 다른 목적이며 후자는 '
+  'clause learning이 지배하는 영역이다. 반면 Stage 2의 신호는 어느 쪽이든 정의된다 — 결정의 비용은 그 subtree가 해를 포함하든 소진되든 그 크기다 — 따라서 '
+  'infeasible instance로의 확장은 자연스럽게 Stage 2의 문제이며, 미검증이다.', body_s)
 P('<b>단일 instance 계열.</b> 모든 결과가 하나의 응용에서 나온 하나의 생성기에 관한 것이다. amortization 논변이 '
   '다른 constraint 계열로 전이되는지는 미검증이다.', body_s)
 

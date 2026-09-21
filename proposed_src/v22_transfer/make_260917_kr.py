@@ -183,7 +183,7 @@ P('자유 변수 <i>n<sub>c</sub></i>개인 node에서 network는 relaxation 하
 H1('4. 실험')
 H2('4.1 Instance와 프로토콜')
 P('instance는 무작위 <i>n</i>/2-of-<i>n</i> 해를 심고 <i>A</i>마다 후보 planting 20개 중 relaxation vertex spread가 가장 큰 것을 택하는 market-split 생성기에서 나온다; '
-  '유일성은 강제하지 않는다. solution multiplicity는 과제를 바꾸므로 — |<i>S</i>|=1이면 모든 변수가 FORCED — 크기마다 <i>m</i>을 골라 맞춘다: 10×25(|<i>S</i>| 중앙값 23), '
+  '유일성은 강제하지 않는다. 모든 instance는 구성상 실현 가능하다: planting으로 <i>S</i>≠∅가 보장되며, infeasibility 판별은 본 논문의 범위 밖이다(§5). solution multiplicity는 과제를 바꾸므로 — |<i>S</i>|=1이면 모든 변수가 FORCED — 크기마다 <i>m</i>을 골라 맞춘다: 10×25(|<i>S</i>| 중앙값 23), '
   '18×50(19), 21×60(10; 27/30 검증). <i>n</i>=100에서는 constraint solver가 20초 안에 해를 하나도 못 찾아 모든 전략에서 탐색이 실패하므로 <i>n</i>=60에서 멈춘다. '
   'Stage 1은 10×25 instance 1,760개의 in-tree 상태 10,000개로 학습한다(Adam, 10<sup>−3</sup>, 20 epoch, batch 1, gradient clipping 1.0; CPU 1코어 20분); '
   'hyperparameter는 튜닝하지 않았고 validation split이 없다. 평가는 크기당 30개 instance에 더해, 30개 결과가 알려진 뒤 만든 21×60 100개 세트(생성기 seed 700000~700099, '
@@ -341,7 +341,10 @@ P('<b>정확한 지도가 방법을 제한한다.</b> marginal은 <i>S</i>의 �
   '표본이었다; 우리가 지지하는 추정치는 100개 세트이고 크기 간 결과는 크기당 30개에 기댄다. <b>Stage 2는 학습 풀 둘과 seed 둘에 기댄다.</b> 학습 seed 둘이 21×60에서 일치하고 이득은 '
   '18×50·24×70으로, 해결율로는 28×80으로 전이되지만 <i>n</i>=60 위에서 학습한 policy는 없다. entropy가 4 epoch 안에 '
   '붕괴하고 epoch는 중단 규칙이 아니라 monitor로 고르며 이용하는 특징의 이름이 없다. 어느 단계의 hyperparameter도 튜닝하지 않았다; Stage 1의 depth 범위는 뒤에 한 크기 안에서 '
-  '중요하지 않음이 확인됐다. <b>단일 instance 계열.</b> 어느 신호든 다른 constraint 계열로 전이되는지는 미검증이다. <b>무엇이 새롭고 무엇이 아닌가.</b> 지도 target으로서의 정확한 marginal(NSNet)과 결정별 '
+  '중요하지 않음이 확인됐다. <b>모든 instance가 실현 가능하며 infeasibility 판별은 범위 밖이다.</b> conditional marginal은 해집합이 비면 정의되지 않으므로 Stage 1의 지도는 <i>S</i>≠∅를 '
+  '요구하고, 학습·평가한 모든 instance는 심어진 해를 갖는다. 해를 빨리 찾는 것과 infeasible을 빨리 반증하는 것은 다른 목적이며 후자는 clause learning의 영역이다. '
+  '반면 Stage 2의 신호는 어느 쪽이든 정의되므로(결정의 비용은 subtree가 해를 포함하든 소진되든 그 크기다) infeasible로의 확장은 Stage 2의 문제이며 미검증이다. '
+  '<b>단일 instance 계열.</b> 어느 신호든 다른 constraint 계열로 전이되는지는 미검증이다. <b>무엇이 새롭고 무엇이 아닌가.</b> 지도 target으로서의 정확한 marginal(NSNet)과 결정별 '
   'return으로서의 subtree 크기(FMSTS, tree MDP)는 모두 기존 것이다; 방법의 novelty는 전자를 complete search 안에서 conditional·guidance 전용으로 쓴 것과, posterior에서 유도한 '
   '동결 출발점에서 후자로 branching 순서만 fine-tuning한 것에 있다. 두 신호가 다른 것을 잡는다는 실증 주장은 본 논문의 것이며 하나의 instance 계열에 기댄다.', body_s)
 H1('6. 결론')

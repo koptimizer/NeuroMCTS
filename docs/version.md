@@ -1430,3 +1430,8 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - PV60 30/30 (3 seed 모두), 시간 중앙 125/127/185 s; M0 29/30, 358/457/425 s; lp 25/23/23, 537/550/644 s; PV50 30/30, 135/135/165 s.
 - PV60 vs M0: 2.7/3.3/2.3×(23/23/22 of 30, p≤0.016), node 2.75×; PV50 vs M0 2.2/2.7/2.1×(19/21/19). **M0 vs lp 시간: 1.13/0.69/0.84×(n.s.)** — 70에서 Stage 1만으로는 시간 이득이 없고 fine-tuning이 되살림.
 - 논문(260917 EN): §4.6을 "Size transfer of both stages"(표: 50/60/70/80 × CP-SAT/SCIP/lp/Stage1/PV60/PV50)로 교체, 초록·기여(2)·표 3·한계·결론 갱신.
+
+### 연구 범위 확정 (2026-09-21): 실현 가능 인스턴스만 (S ≠ ∅)
+- 사용자 결정으로 문제 범위를 **feasible 전용**으로 공식화. `CLAUDE.md`에 "연구 범위" 절 신설: S ≠ ∅ 가정, 이유(Stage 1의 conditional marginal이 S = ∅에서 미정의; "해 찾기"와 "infeasible 반증"은 다른 목적), 범위 밖 항목, 향후 복귀 경로(Stage 2 신호는 소진 시에도 정의됨 → 복귀는 Stage 2 쪽; legacy `gen_hard_infeasible`, 판별력은 MCC로만).
+- 사실 확인: 현재 평가셋 전부 `feasible: true`(10×25·18×50·21×60 각 30, 21×60 100개, 24×70·28×80 각 30). 현 파이프라인의 생성기는 `gen_hard_feasible`만 호출.
+- 논문 4개 판본에 반영: 인스턴스 절에 "모든 instance는 구성상 실현 가능" 한 문장, 한계 절에 "Every instance is feasible; deciding infeasibility is out of scope" 단락(Stage 2 신호는 소진 시에도 정의되므로 확장은 Stage 2 문제라는 향후 연구 포함).

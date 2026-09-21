@@ -19,8 +19,13 @@ $$
 ### 구조적 정의 (Structural Definitions)
 * **제약 조건 집합:** 본 시스템은 $m$개의 선형 방정식으로 구성되며, 각 행 $i$는 제약 조건 $\sum_{j=1}^{n} a_{ij}x_j = b_i$를 나타냅니다.
 * **허용 가능 해 집합 (Feasible Set):** $\mathcal{S} = \{ \mathbf{x} \in \{0, 1\}^n \mid A\mathbf{x} = \mathbf{b} \}$
-    * $\mathcal{S} \neq \emptyset$ 인 경우 시스템은 일관성(Consistent)이 있습니다. $|\mathcal{S}|$는 1일 수도, 여러 개일 수도 있습니다 — **$\mathbf{x}^*$의 유일성은 가정하지 않습니다**(2026-08 실측: 인스턴스 생성 시 유일성을 검증하지 않으면 $|\mathcal{S}|>1$인 경우가 흔함, 특히 소규모 인스턴스). 목표는 $\mathcal{S}$에 속하는 해 하나를 찾는 것이며, 심어놓은 특정 해와 일치할 필요는 없습니다.
-    * $\mathcal{S} = \emptyset$ 인 경우, 만족하는 이진 해가 존재하지 않습니다. 먼지 등의 노이즈로 $\mathbf{b}$가 실제 스캔 결과와 어긋나면 이 경우가 발생합니다.
+    * $|\mathcal{S}|$는 1일 수도, 여러 개일 수도 있습니다 — **$\mathbf{x}^*$의 유일성은 가정하지 않습니다**(2026-08 실측: 인스턴스 생성 시 유일성을 검증하지 않으면 $|\mathcal{S}|>1$인 경우가 흔함, 특히 소규모 인스턴스). 목표는 $\mathcal{S}$에 속하는 해 하나를 찾는 것이며, 심어놓은 특정 해와 일치할 필요는 없습니다.
+
+### 연구 범위: 실현 가능 인스턴스만 다룬다 (2026-09-21 확정)
+* **$\mathcal{S} \neq \emptyset$을 가정합니다.** 본 연구의 모든 학습·평가 인스턴스는 해를 심어(planted) 생성하므로 반드시 해가 존재합니다. 평가셋 전수 확인 완료(`v22test_*`, `v24test_*` 전부 `feasible: true`).
+* **이유**: 제안 방법의 Stage 1 학습 신호인 conditional marginal $p_j = |\{\mathbf{x} \in \mathcal{S}(F,\mathbf{v}) : x_j=1\}| / |\mathcal{S}(F,\mathbf{v})|$ 은 $\mathcal{S} = \emptyset$ 에서 정의되지 않습니다. 또한 "해를 빨리 찾기"와 "infeasible을 빨리 증명하기"는 서로 다른 목적이며, 후자는 clause learning의 영역입니다.
+* **$\mathcal{S} = \emptyset$ 인 경우**(먼지 등 노이즈로 $\mathbf{b}$가 실제 스캔과 어긋날 때)는 **현재 범위 밖**입니다. v6~v12 사이클에서 feasibility 판별 학습을 여러 차례 시도했으나 모두 부정 결과였고(AUC 0.59 → 0.500, BKZ GS 프로파일의 $\mathbf{b}$ 불변성), 이번 사이클부터 문제를 "탐색 안내"로 좁혔습니다.
+* **향후 복귀 경로**: Stage 2의 학습 신호(결정별 subtree 비용)는 subtree를 소진하는 경우에도 정의되므로, infeasible 인스턴스로의 확장은 Stage 2 쪽이 자연스럽습니다. 복귀 시 legacy 생성기 `generate_hard_instances.py`의 `gen_hard_infeasible`(FEASIBLE_RATIO 0.8)을 사용하고, 판별력은 MCC 단일 지표로만 보고합니다.
 
 ---
 
@@ -50,7 +55,7 @@ $$
 
 ## 3. 계산적 시사점 (Computational Implications)
 
-* **일관성 검증:** 임의의 이진 행렬 $A$에 대해 $\mathcal{S} = \emptyset$ 여부를 판별하는 것은 NP-Complete 문제입니다.
+* **일관성 검증:** 임의의 이진 행렬 $A$에 대해 $\mathcal{S} = \emptyset$ 여부를 판별하는 것은 NP-Complete 문제입니다(문제의 난이도 근거이며, 위 연구 범위에 따라 판별 자체는 현재 다루지 않습니다).
 * **탐색 전략:** 신경-기호(Neuro-symbolic) 프레임워크에서 영공간 기저 $\{\mathbf{v}_j\}$는 탐색을 위한 구조적 방향성을 제공합니다. MCTS 에이전트는 잔차(Residual) $\|A\mathbf{x} - \mathbf{b}\|_2^2$의 기울기를 활용하여 하이퍼큐브의 정점들을 허용 가능 해 집합 $\mathcal{S}$ 방향으로 탐색할 수 있습니다.
 * **제약 만족:** 연속적인 해 공간 $\tilde{\mathcal{S}}$와 이산적인 격자 $\{0, 1\}^n$ 사이의 불일치는 '정수성 간극(Integrality Gap)'으로 정의되며, 이는 해당 BLS 인스턴스의 난이도를 결정합니다.
 
