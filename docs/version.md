@@ -1435,3 +1435,17 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 사용자 결정으로 문제 범위를 **feasible 전용**으로 공식화. `CLAUDE.md`에 "연구 범위" 절 신설: S ≠ ∅ 가정, 이유(Stage 1의 conditional marginal이 S = ∅에서 미정의; "해 찾기"와 "infeasible 반증"은 다른 목적), 범위 밖 항목, 향후 복귀 경로(Stage 2 신호는 소진 시에도 정의됨 → 복귀는 Stage 2 쪽; legacy `gen_hard_infeasible`, 판별력은 MCC로만).
 - 사실 확인: 현재 평가셋 전부 `feasible: true`(10×25·18×50·21×60 각 30, 21×60 100개, 24×70·28×80 각 30). 현 파이프라인의 생성기는 `gen_hard_feasible`만 호출.
 - 논문 4개 판본에 반영: 인스턴스 절에 "모든 instance는 구성상 실현 가능" 한 문장, 한계 절에 "Every instance is feasible; deciding infeasibility is out of scope" 단락(Stage 2 신호는 소진 시에도 정의되므로 확장은 Stage 2 문제라는 향후 연구 포함).
+
+### 260923 개정: cascade 서술 정정 (v9 구성 → 실제 평가 시스템) + 날짜 스냅샷 규칙
+**발견한 오류**: 논문 그림 1과 §3.1의 "propagation → LP infeasibility rule → kernel pump → AHL/BKZ → guided DFS" 5단계는 **v9 프로덕션 파이프라인**(`LPneuroBLS_v9_infer.py`)의 구성이며, v23/v24에서 평가한 시스템이 아니다. `v23_cascade_warm.py::_worker`가 실제로 부르는 것은 `ahl_stage` → `search` **둘뿐**이고, propagation과 LP infeasibility 판정은 전처리가 아니라 **DFS의 매 node 안**에서 돌며, **kernel pump는 돌지 않는다**.
+
+**정정 내용** (4개 판본):
+- 배포 시스템 = **2단계**: AHL/BKZ lattice reduction(무작위 열 순열 10회, 검증 후 반환 → 건전) → guided DFS.
+- node 내부 순서 명시: bound 검사 → propagation(0/1 행에서 "미배정 u_i개 중 정확히 r_i개", r_i=0 또는 r_i=u_i일 때 확정) → warm start relaxation의 infeasibility 판정(행들의 선형결합을 보므로 propagation보다 강함) → **그 뒤에** network가 분기 변수·첫 값 선택.
+- 시간 비중 실측 추가: lattice가 10×25에서 100%(0.03s, 30/30 닫음), 18×50에서 9.2%, 21×60에서 **1.0%**(3.9s/390.9s, 16/30 닫음); lattice 1회 비용 성공 0.088s / 실패 0.16s. node당 비용은 forward 1.88ms(>90%), LP warm 0.08ms(~4%), propagation+bound <0.1ms.
+
+**날짜 스냅샷 규칙 (사용자 지시)**: tex 수정이 발생하면 **복사 후 수정**하고 파일명에 당일 날짜를 붙인다.
+- `260917_paper.tex` → **`260923_paper.tex`** (10쪽), `make_260917_kr.py` → **`make_260923_kr.py`** → `260923_paper_kr.pdf`
+- 그림도 분리: `make_260923_figures.py` → `docs/tex/fig/260923/` (그림 1 전면 재작성: 2단계 + node 내부 순서)
+- 이전 스냅샷(`260917_*`, `fig/`)은 그대로 보존.
+- 상세판(`LPneuroBLS_paper_els.tex`, `make_paper_kr.py`, SWEVO 2종)은 이름 유지하고 제자리 수정(SWEVO는 preprint에서 파생되므로 체인 유지).

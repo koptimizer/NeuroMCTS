@@ -277,13 +277,15 @@ EQ('<i>p<sub>j</sub></i>(<i>F</i>,<b>v</b>) = |{<b>x</b>∈<i>S</i>(<i>F</i>,<b>
    '<i>x<sub>j</sub></i>=1}| / |<i>S</i>(<i>F</i>,<b>v</b>)|  &nbsp;&nbsp;(2)')
 
 H2('3.2 시스템 개요')
-P('실제 solver는 lattice 단계와 guided complete search의 cascade다:', body_s)
-EQ('propagation → LP infeasibility rule → kernel pump → AHL/BKZ → <b>guided backtracking search</b>')
-P('앞의 세 단계는 값싸고 건전하다. AHL/BKZ는 크기 의존적 block 파라미터로 certificate를 생산하는 '
-  'lattice reduction을 시도하며, 성공하면 검증된 해를 바로 반환한다. <b>학습 컴포넌트는 마지막 단계에만, '
-  '그것도 branching 결정에만 나타난다.</b> 이 배치는 평가에서 중요하다: lattice 단계가 branching heuristic과 '
-  '무관하므로 비교 대상인 모든 heuristic이 <b>정확히 같은 잔여 instance 집합</b>을 받으며, 따라서 그 잔여 위에서 '
-  '조건부로 보는 것은 유리한 사례를 고르는 것이 아니라 알고리즘을 기술하는 것이다.', body_s)
+P('배포 solver는 두 단계다:', body_s)
+EQ('AHL/BKZ lattice reduction → <b>guided backtracking search</b>')
+P('lattice 단계는 크기 의존적 block 파라미터로 무작위 열 순열 최대 10회로 certificate를 생산하는 축약을 시도한다. 성공하면 <i>A</i><b>x</b>=<b>b</b>로 직접 검증한 '
+  '0/1 vector를 반환하므로 <b>건전</b>하다. 비용은 instance당 0.09~0.16초로 21×60 종단 시간의 1%이며, 10×25에서 30/30, 18×50에서 24~28/30, 21×60에서 10~16/30을 닫는다. '
+  '여기서 닫히지 않은 것이 탐색으로 간다.', body_s)
+P('그 탐색의 한 node 안에서는 학습 컴포넌트가 개입하기 전에 건전한 세 단계가 먼저 돈다: 축소된 우변에 대한 bound 검사, unit propagation, 그리고 부모 basis에서 '
+  'warm start한 node relaxation의 infeasibility 판정. 변수를 확정하고 가지를 치는 것은 이 셋이다. 학습 컴포넌트는 그 뒤에 호출되어 <b>어느 자유 변수로 분기하고 '
+  '어느 값을 먼저 시도할지만</b> 고르므로, 잘못된 예측의 대가는 backtracking뿐이다. 이 배치가 평가에서 중요하다: lattice 단계가 branching heuristic과 무관하므로 '
+  '비교 대상인 모든 heuristic이 <b>정확히 같은 잔여 집합</b>을 받는다.', body_s)
 
 H2('3.3 Conditioning은 reduction이다')
 P('<b>명제 1.</b> <i>A<sub>F</sub></i>와 <i>A<sub>K</sub></i>를 각각 <i>F</i>, <i>K</i>로 인덱싱된 열 부분행렬이라 하자. 그러면<br/>'
