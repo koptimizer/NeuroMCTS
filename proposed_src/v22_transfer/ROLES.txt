@@ -67,3 +67,5 @@ v22_split.py                full_{10x25,18x50}.json을 seed 0으로 셔플해 80
                             대화 기록에서 복구, 저장 파일과 바이트 단위로 동일함을 검증). v22test_10x25/18x50은 test split의 앞 30개.
 make_swevo_en.py            LPneuroBLS_paper_els.tex(영문 원천)에서 SWEVO_EN_v22.tex(2단)를 파생 — 포맷만 바꿈, SWEVO 파일은 손으로 편집하지 않음
 make_260917_kr.py           260917 국문판(2단계 ML+RL 논문, 간결판) 생성 — reportlab + 공용 그림 PNG → docs/tex/legacy/260917/260917_paper_kr.pdf
+make_260930_kr.py           260930 국문판(두괄식 재작성) 생성 — reportlab + fig/260930 PNG, 모든 텍스트 검정 → docs/tex/260930_paper_kr.pdf
+make_261001_kr.py           261001 국문판 생성 — reportlab + fig/261001 PNG, NotoSansKR Medium/Bold 정적 instance(가변 폰트 기본값 Thin 문제 해결), 모든 텍스트 검정 → docs/tex/261001_paper_kr.pdf

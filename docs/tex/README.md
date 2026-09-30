@@ -2,9 +2,11 @@
 
 | 위치 | 내용 | 생성/수정 방법 |
 |---|---|---|
-| `260923_paper.tex/.pdf` | **현재 논문** (간결판, elsarticle 2단, 10쪽). 수정 시 복사 후 오늘 날짜 이름으로 새 파일을 만든다 | `pdflatex` (elsarticle.cls·.bst 동봉) |
-| `260923_paper_kr.pdf` | 현재 논문의 국문판 | `proposed_src/v22_transfer/make_260923_kr.py` |
-| `fig/260923/` | 현재 논문 그림 4종 (pdf·png) | `proposed_src/v24_deploy_range/make_260923_figures.py` |
+| `261001_paper.tex/.pdf` | **현재 논문** (elsarticle 2단 authoryear, 13쪽, 그림 9종, Experiments 통합·표 분리판). 수정 시 복사 후 오늘 날짜 이름으로 새 파일을 만든다 | `pdflatex → bibtex → pdflatex ×2` (elsarticle.cls·.bst 동봉) |
+| `261001_refs.bib` | 현재 논문의 BibTeX 참고문헌 (32건) | — |
+| `261001_paper_kr.pdf` | 현재 논문의 국문판 (텍스트 검정, NotoSansKR Medium/Bold) | `proposed_src/v22_transfer/make_261001_kr.py` |
+| `fig/261001/` | 현재 논문 그림 9종 (pdf·png) | `proposed_src/v24_deploy_range/make_261001_figures.py` |
+| `260930_*`, `fig/260930/` / `260923_*`, `fig/260923/` | 이전 판 (동결 스냅샷) | `make_260930_*`, `make_260923_*` |
 | `detailed/` | 상세판 편집본 (유지 중, 부록/보충 후보): `LPneuroBLS_paper_els` 42쪽 영문 원천, `LPneuroBLS_paper_kr.pdf`, `SWEVO_EN_v22`(파생, 손 편집 금지), `SWEVO_KR_v22.tex`(로컬 컴파일 불가) | `make_paper_kr.py`, `make_swevo_en.py`, `make_swevo_kr.py`; 그림은 `../../../figures/` |
 | `legacy/` | 이전 사이클 보고서 v5–v11, v22, 초기 논문 `LPneuroBLS_paper`, `instance_hardness_and_kernel_pump` | 수정하지 않음 |
 | `legacy/260917/` | 260917 동결 스냅샷 (tex·pdf·국문 pdf·그림) | `make_260917_kr.py`, `make_260917_figures.py` (경로 갱신됨) |

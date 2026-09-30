@@ -13,3 +13,5 @@ v23_ctrl_data.sh      표 4b(tab:ctrl): 동일 풀·라벨·1,760 상태로 root
 v23_lattice_only.py   (260930) lattice 단계 단독 성공률: 21x60 100개·24x70·28x80 × 3 seed, cascade와 같은 프로토콜 → runs/revision/lattice_only_60_70_80.json
 v23_mlp_ablation_xgt.py (260930) v23_mlp_baseline의 재채점판: 다수결 일치와 참조 해 x 일치 두 지표를 함께 출력 → runs/revision/mlp_ablation_xgt.log
 v23_forced_compare.py (260930) 10x25 in-tree 테스트에서 5개 예측기의 전체/FORCED 정확도(all depths, depth 8) → runs/revision/forced_compare_10x25.log
+v23_depth_curves.py   (260930) 10x25 in-tree 테스트에서 depth별 FORCED 비중·|S|·5-way 정확도(전체/FORCED) → runs/revision/depth_curves.json (260930 논문 그림 prediction)
+v23_lattice_mech.py   (260930) 크기별 AHL 축약 기저의 해 행 존재 여부·kernel 행 수·가장 짧은 kernel 길이² → runs/revision/lattice_mech.json (260930 논문 그림 lattice)

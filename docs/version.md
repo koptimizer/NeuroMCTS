@@ -1490,3 +1490,25 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 현재 판(260923 tex/pdf/kr, fig/260923)만 최상위에 두고, 상세판 4종은 `docs/tex/detailed/`, 이전 보고서·초기 논문·260917 동결 스냅샷(그림 포함)은 `docs/tex/legacy/`로 `git mv`. `docs/tex/README.md`에 구성표.
 - 부수 변경: `detailed/*.tex`의 `\graphicspath`를 `../../../figures/`로(한 단계 깊어짐, 내용 변경 없음); 생성 스크립트 6종의 출력 경로 갱신(`make_260917_kr/figures`, `make_v22_kr_pdf`, `make_paper_kr`, `make_swevo_en/kr`); `.gitignore`에 `.spl .bbl .blg` 추가; 추적되지 않던 빌드 산출물 삭제.
 - 260917_paper.tex 초록 앞에 들어가 있던 미확인 문자열("eunki choi yayaya")과 재컴파일된 pdf는 HEAD로 되돌린 뒤 이동 (동결 스냅샷 유지).
+
+## 260930 논문 재작성: `docs/tex/260930_paper.tex` (EN) + `260930_paper_kr.pdf` (KR)
+- 사용자 요청: 발표자료 `docs/260930_Mnet_고광종_3.pdf`의 정리(문제 분석 → 선행연구 → 제안 프레임워크 → 4질문 실험)를 뼈대로, legacy 흔적·장황함을 걷어낸 두괄식 공학 논문으로 새로 작성. 기존 서식(elsarticle 5p twocolumn, 저자 블록) 유지, 그림 적극 추가, KR 폰트 검정, 참고문헌 BibTeX.
+- 구조: 1 서론(문제·세 가지 난점·두 신호·기여 4개·구성) / 2 선행연구 / 3 문제 정의와 준비(instance·범위, 명제 1, node의 모습과 상한) / 4 제안 방법(개요, lattice 단계+실패 메커니즘, guided DFS 알고리즘 1, Stage 1, Stage 2, node당 비용) / 5 실험 설정 / 6 결과: Q1 고전 branching 대비, Q2 크기 전이, Q3 complete solver, Q4 ablation(Stage 1 신호, 불교환성, Stage 2가 중요한 곳, lattice cascade) / 7 한계 / 8 결론.
+- 그림 8종 (`docs/tex/fig/260930/`, `proposed_src/v24_deploy_range/make_260930_figures.py`): framework·reduction·training(기존 도식 계승), **prediction**(depth별 FORCED 비중·|S|, 전체/FORCED 정확도 5-way; `v23_depth_curves.py`), **lattice**(크기별 coverage + kernel vector vs 해 길이 메커니즘; `v23_lattice_mech.py`), **scaling**(크기별 시간·node), results(4패널), **signals**(M0/M1/M2 정확도 vs node, fine-tuning 진단).
+- 수치 갱신: graph ablation은 참조 해 일치 기준으로 재채점한 값(MLP 77.0 vs GAT 79.5, L1 0.225 vs 0.151)과 FORCED 5-way 표(표 7)를 사용; root FORCED 비중은 in-tree 테스트 파일 기준 7.5%(이전 판의 6.3%는 400개 root 풀). lattice 메커니즘 수치: 해 행 존재(순열 1개) 30/30, 10/30, 2/30, 0/30, 0/30; 가장 짧은 kernel 길이² 중앙값 16, 32, 40, 52, 68 vs n+1 = 26, 51, 61, 71, 81.
+- 참고문헌: `docs/tex/260930_refs.bib` (32건), `elsarticle-harv` + `authoryear`. 컴파일: pdflatex → bibtex → pdflatex ×2, 13쪽, overfull 0.
+- KR: `proposed_src/v22_transfer/make_260930_kr.py` (reportlab, NotoSansKR, 모든 텍스트 검정, glyph 커버리지 검사 통과), 15쪽.
+- 260923판은 그대로 두었고(동결), 상세판·이전 판 반영은 하지 않았다.
+
+## 261001 논문 개정: `docs/tex/261001_paper.tex` (EN 13쪽) + `261001_paper_kr.pdf` (KR)
+- 규칙대로 260930판을 복사해 오늘 날짜 이름으로 만든 뒤 수정 (260930판·그림·bib는 동결). 사용자 지시 15건 반영:
+  - market-split 언급을 초록·서론 앞부분에서 제거하고 선행연구(Cornuéjols–Dawande 정의, AHL 격자 재정식화, 우리 문제와의 관계)·3.1절·5.1절에서만 사용; 초록의 CP-SAT/SCIP 비교 문장 삭제.
+  - 서론을 "타겟 문제 → 기존 방법이 어려운 이유 → 제안 개요 → 기여 → 구성"으로 축약, 구체 수치 제거.
+  - 선행연구 마지막 문단 신설: 기존 접근의 한계 4가지와 BLS에 필요한 보완(조건부 marginal·완전성 유지, 결정별 정확 비용·posterior 초기화, 격자와 탐색의 결합, 판정 요구 금지).
+  - Figure 1 재설계(박스 넘침 제거, 문구 축약, 단계 1–6 번호), **network 구조 그림 신설**(입력 bipartite graph → trunk → 3 head) 및 4.4·4.5절에서 참조.
+  - 5·6절을 "Experiments"로 통합(5.1 setup, 5.2–5.4 Q1–Q3, 5.5 ablation). 표를 인사이트 하나당 하나로 분리: search(3), solved(4), nodes(5), transferdir(6), classical(7), throughput(8), pred(FORCED만, 9), where(10), coverage(11), residual(12).
+  - 다중 패널 그림의 패널 제목을 패널 아래로 이동(전 그림), signals 그림 (c)를 2행 배치로 확대.
+  - 지표 용어를 "nodes"(subtree node count c(u), c(root)=해까지의 node 수)로 통일하고 4.5절과 5.1절에 정의.
+  - 7절(Limitations)·Reproducibility 삭제; 결론에 요약 + 한계 2개(exact supervision bounds Stage 1, complete solver와 비경쟁) + future work.
+  - KR: 가변 폰트 NotoSansKR.ttf의 기본 instance가 Thin(wght 100)이었음을 확인 → fontTools로 Regular/Medium/SemiBold/Bold 정적 instance 생성(`~/.fonts/NotoSansKR-*.ttf`), 본문 Medium·굵게 Bold 적용. 17쪽.
+- 산출물: `docs/tex/261001_paper.tex/.pdf`, `261001_refs.bib`, `261001_paper_kr.pdf`, `fig/261001/` (9종), `proposed_src/v24_deploy_range/make_261001_figures.py`, `proposed_src/v22_transfer/make_261001_kr.py`. 컴파일 overfull 0, 미정의 참조 0.

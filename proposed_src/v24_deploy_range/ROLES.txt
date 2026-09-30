@@ -22,3 +22,5 @@ make_260917_figures.py    260917 논문(영·국문)용 그림 4종: framework, 
 run_v24_up.sh             상향 전이 검증: 18×50에서만 fine-tune한 PV50을 21×60(30·100)·18×50에서 평가 + 24×70 probe(lp/M0/PV60/PV50)
 run_v24_big.sh            60 너머 전이: 24×70·28×80 각 30개(m/n≈0.35, |S| 미검증) lp/M0/PV60/PV50, 1200 s, seed 0 (UP 종료 후 자동 시작)
 run_v24_big_seeds.sh      24×70 seed 1·2 반복 (lp/M0/PV60/PV50)
+make_260930_figures.py    260930 논문(영·국문)용 그림 8종: framework, reduction, training, prediction, lattice, scaling, results, signals — PDF·PNG 동시 생성 (docs/tex/fig/260930)
+make_261001_figures.py    261001 논문(영·국문)용 그림 9종: framework(재설계), reduction, network(신설), training, prediction, lattice, scaling, results, signals — 패널 제목을 아래에 배치 (docs/tex/fig/261001)
