@@ -1449,3 +1449,39 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 그림도 분리: `make_260923_figures.py` → `docs/tex/fig/260923/` (그림 1 전면 재작성: 2단계 + node 내부 순서)
 - 이전 스냅샷(`260917_*`, `fig/`)은 그대로 보존.
 - 상세판(`LPneuroBLS_paper_els.tex`, `make_paper_kr.py`, SWEVO 2종)은 이름 유지하고 제자리 수정(SWEVO는 preprint에서 파생되므로 체인 유지).
+
+## 260929 lattice 단계 단독 성공률 (크기별, 3 seed)
+- 질문: 각 크기에서 AHL/BKZ가 단독으로 푸는 비율. 10x25/18x50/21x60(30개)는 v23·v24 cascade 기록의 `solved_by=='ahl'`로 집계, 21x60 100개·24x70·28x80은 lattice-on 기록이 없어 같은 프로토콜(block 12, tries 10, 인스턴스 crc32 seed + seed_off·1_000_003)로 lattice 단계만 실행 (`runs/revision/lattice_only_60_70_80.json`, 스크립트 `proposed_src/v23_ablation/v23_lattice_only.py`).
+- 결과 (seed 0/1/2): 10x25 30/30 ×3 (0.001 s); 18x50 27/28/24 (0.02–0.03 s); 21x60 30개 16/14/10 (0.16 s); 21x60 100개 49/38/45 (0.16 s); 24x70 3/4/2 (0.30 s); 28x80 0/1/0 (0.54 s).
+- 해석: 21x60 100개 세트는 30개 세트(33–53%)보다 lattice 성공률이 약간 높음(38–49%). 24x70부터 10% 내외, 28x80은 사실상 0. 실패 비용은 인스턴스당 0.3–0.55 s로 DFS 시간(125 s 이상) 대비 무시 가능.
+- 논문 tab:cascade에는 21x60 30개까지만 있음. 70/80 행 추가 여부는 사용자 결정 대기.
+
+## 260930 graph ablation 채점 기준 불일치 발견 (미수정, 사용자 보고)
+- 발견: `v23_mlp_baseline.py`의 정확도는 **다수결 일치**(1[p̂≥½] == 1[p_true≥½])로 채점하는데, 표 tab:pred/tab:depth(v17)의 정확도는 **참조 해 x와의 일치**(1[p̂≥½] == x_gt)로 채점한다. 두 지표는 다르며, 다수결 지표의 Bayes ceiling은 100%이므로 tab:ablation의 "Bayes ceiling 87.3%" 행과 "ceiling까지 남은 격차의 60% 회수" 문장은 지표가 섞인 것이다. 260923 논문의 "79.4% vs 84.1% on a matched split"은 MLP–GNN 비교 자체는 같은 지표라 유효하나, 표 1의 80.0%와 나란히 놓으면 오해.
+- 재채점 (같은 split 2,000/800, seed 0, `runs/revision/mlp_ablation_xgt.log`, 스크립트 `v23_ablation/v23_mlp_ablation_xgt.py`): 
+
+| 모델 | 다수결 일치 | x 일치 (표 1 기준) | L1 |
+|---|---|---|---|
+| linear (3) | 78.1 | 76.4 | 0.2527 |
+| MLP (3) | 78.0 | 76.3 | 0.2529 |
+| MLP + 제약 집계 (9) | 79.3 | 77.0 | 0.2248 |
+| MarginalNet | 84.1 | **79.5** | 0.1514 |
+| ceiling | 100 | 87.3 | 0 |
+
+- 해석: 표 1 기준으로는 graph 이득이 +4.7점이 아니라 **+2.5점**(77.0→79.5). L1 36% 감소는 지표 무관하게 유효. MarginalNet 79.5%는 표 1의 80.0%와 일치(split만 다름).
+- 조치 필요(사용자 결정 대기): 상세판 tab:ablation·본문, 260923 §4.2 문장, KR/SWEVO 판, 발표자료 20쪽. tex는 복사 후 날짜 이름으로 수정하는 규칙 적용.
+
+## 260930 10x25 FORCED 정확도 5-way 비교 (사용자 요청, `runs/revision/forced_compare_10x25.log`, 스크립트 `v23_ablation/v23_forced_compare.py`)
+- 테스트: `runs/v22/cond_10x25_test.json` 2,640 상태(표 1과 동일; all-vars 수치가 표 1과 일치해 검증됨). 정답 = 참조 해 x. FORCED = p_true ∈ {0,1}.
+- MLP+agg는 GAT in-tree와 같은 학습 파일 전체(10,560 상태)로 20 epoch 학습(ablation의 2,000보다 많음). GAT root 통제는 `runs/revision/ctrl_root/conditional.pt`.
+
+| | all depths: 전체 / FORCED | depth 8: 전체 / FORCED |
+|---|---|---|
+| Bayes ceiling | 87.2 / 100 | 94.4 / 100 |
+| GAT + in-tree | 80.0 / 93.2 | 84.3 / 89.4 |
+| GAT + root 통제 | 75.5 / 88.0 | 77.5 / 81.9 |
+| LP rounding | 76.5 / 87.9 | 80.9 / 85.3 |
+| MLP+agg + in-tree | 77.3 / 89.5 | 81.4 / 86.2 |
+
+- FORCED share: all depths 57.2%, depth 8 87.9%. FORCED에서 ceiling은 정의상 100%.
+- 해석: FORCED 기준 in-tree GAT가 LP rounding 대비 +5.3(all) / +4.1(depth 8), MLP 대비 +3.7 / +3.2, root 통제 대비 +5.2 / +7.5. root 통제는 FORCED에서 LP와 동급(88.0 vs 87.9) 또는 이하(depth 8).

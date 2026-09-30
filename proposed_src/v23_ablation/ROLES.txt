@@ -10,3 +10,6 @@ v23_where_analysis.py 표 11(tab:where): 21×60 in-tree 상태를 자유변수 �
 v23_query_range.py    "질의의 80.2%가 학습 n_c 범위 밖" 계측: 배포 탐색이 network에 질의하는 상태의 자유변수 수 분포 (v20 SCIP loop, 8 instance × 60 s)
 v23_ctrl_data.sh      표 4b(tab:ctrl): 동일 풀·라벨·1,760 상태로 root-only vs in-tree 학습 데이터 생성 + 두 학습 실행
                       (위 셋은 2026-09-15 대화 기록에서 복구해 저장 — 감사 시 저장소에 없던 것을 발견)
+v23_lattice_only.py   (260930) lattice 단계 단독 성공률: 21x60 100개·24x70·28x80 × 3 seed, cascade와 같은 프로토콜 → runs/revision/lattice_only_60_70_80.json
+v23_mlp_ablation_xgt.py (260930) v23_mlp_baseline의 재채점판: 다수결 일치와 참조 해 x 일치 두 지표를 함께 출력 → runs/revision/mlp_ablation_xgt.log
+v23_forced_compare.py (260930) 10x25 in-tree 테스트에서 5개 예측기의 전체/FORCED 정확도(all depths, depth 8) → runs/revision/forced_compare_10x25.log
