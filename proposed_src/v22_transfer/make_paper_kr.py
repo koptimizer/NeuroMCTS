@@ -22,7 +22,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib import colors
 
 pdfmetrics.registerFont(TTFont('NotoKR', '/home/kopt/.fonts/NotoSansKR.ttf'))
-OUT = '/home/kopt/neuroMCTS/docs/tex/LPneuroBLS_paper_kr.pdf'
+OUT = '/home/kopt/neuroMCTS/docs/tex/detailed/LPneuroBLS_paper_kr.pdf'
 
 title_s = ParagraphStyle('T', fontName='NotoKR', fontSize=15, leading=21, alignment=TA_CENTER, spaceAfter=4)
 meta_s  = ParagraphStyle('M', fontName='NotoKR', fontSize=9.5, leading=13, alignment=TA_CENTER, spaceAfter=14, textColor=colors.grey)

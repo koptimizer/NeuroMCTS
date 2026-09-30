@@ -13,7 +13,7 @@ import io, re, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'make_paper_kr.py')
-OUT = os.path.join(HERE, '../../docs/tex/SWEVO_KR_v22.tex')
+OUT = os.path.join(HERE, '../../docs/tex/detailed/SWEVO_KR_v22.tex')
 
 src = io.open(SRC, encoding='utf-8').read()
 body = src[src.index('# ═══════════════════════ 표지'):src.index('\ndoc = SimpleDocTemplate')]

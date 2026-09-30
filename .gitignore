@@ -37,3 +37,6 @@ texput.log
 docs/tex/*.bbl
 docs/tex/*.blg
 docs/tex/*.spl
+*.spl
+*.bbl
+*.blg

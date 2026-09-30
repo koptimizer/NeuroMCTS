@@ -10,8 +10,8 @@ Edit the preprint, then run this; never edit the SWEVO file by hand.
 import io, os, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, '../../docs/tex/LPneuroBLS_paper_els.tex')
-OUT = os.path.join(HERE, '../../docs/tex/SWEVO_EN_v22.tex')
+SRC = os.path.join(HERE, '../../docs/tex/detailed/LPneuroBLS_paper_els.tex')
+OUT = os.path.join(HERE, '../../docs/tex/detailed/SWEVO_EN_v22.tex')
 
 s = io.open(SRC, encoding='utf-8').read()
 s = s.replace("\\documentclass[preprint,12pt]{elsarticle}", "\\documentclass[final,5p,times,twocolumn]{elsarticle}", 1)

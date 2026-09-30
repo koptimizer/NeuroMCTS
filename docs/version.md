@@ -1485,3 +1485,8 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 
 - FORCED share: all depths 57.2%, depth 8 87.9%. FORCED에서 ceiling은 정의상 100%.
 - 해석: FORCED 기준 in-tree GAT가 LP rounding 대비 +5.3(all) / +4.1(depth 8), MLP 대비 +3.7 / +3.2, root 통제 대비 +5.2 / +7.5. root 통제는 FORCED에서 LP와 동급(88.0 vs 87.9) 또는 이하(depth 8).
+
+## 260930 docs/tex 정리
+- 현재 판(260923 tex/pdf/kr, fig/260923)만 최상위에 두고, 상세판 4종은 `docs/tex/detailed/`, 이전 보고서·초기 논문·260917 동결 스냅샷(그림 포함)은 `docs/tex/legacy/`로 `git mv`. `docs/tex/README.md`에 구성표.
+- 부수 변경: `detailed/*.tex`의 `\graphicspath`를 `../../../figures/`로(한 단계 깊어짐, 내용 변경 없음); 생성 스크립트 6종의 출력 경로 갱신(`make_260917_kr/figures`, `make_v22_kr_pdf`, `make_paper_kr`, `make_swevo_en/kr`); `.gitignore`에 `.spl .bbl .blg` 추가; 추적되지 않던 빌드 산출물 삭제.
+- 260917_paper.tex 초록 앞에 들어가 있던 미확인 문자열("eunki choi yayaya")과 재컴파일된 pdf는 HEAD로 되돌린 뒤 이동 (동결 스냅샷 유지).

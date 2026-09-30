@@ -7,7 +7,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
-OUT = '../../docs/tex/fig'; R = '../../runs/v24'
+OUT = '../../docs/tex/legacy/260917/fig'; R = '../../runs/v24'
 os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({'font.size': 8, 'font.family': 'DejaVu Sans', 'axes.linewidth': 0.6})
 C = dict(lp='#7f7f7f', m0='#1f77b4', ft='#d62728', box='#f2f2f2', learn='#e8f0fb', rl='#fbe9e7', edge='#333333')

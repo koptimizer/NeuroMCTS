@@ -15,8 +15,8 @@ import os
 
 pdfmetrics.registerFont(TTFont('NotoKR', '/home/kopt/.fonts/NotoSansKR.ttf'))
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, '../../docs/tex/260917_paper_kr.pdf')
-FIG = os.path.join(HERE, '../../docs/tex/fig')
+OUT = os.path.join(HERE, '../../docs/tex/legacy/260917/260917_paper_kr.pdf')
+FIG = os.path.join(HERE, '../../docs/tex/legacy/260917/fig')
 
 title_s = ParagraphStyle('T', fontName='NotoKR', fontSize=15, leading=21, alignment=TA_CENTER, spaceAfter=4)
 meta_s = ParagraphStyle('M', fontName='NotoKR', fontSize=9.5, leading=13, alignment=TA_CENTER, spaceAfter=12, textColor=colors.grey)
