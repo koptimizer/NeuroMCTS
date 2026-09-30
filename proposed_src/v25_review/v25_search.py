@@ -50,6 +50,11 @@ def _lp(warm, fixed, alive):
 
 
 def _marginal(model, A, b, x, device):
+	if getattr(model, 'dense', False):               # v25_dense.DenseNet (or its TorchScript): (p_hat, g)
+		from v25_dense import dense_features
+		with torch.no_grad():
+			p, g = model(*dense_features(A, b, x))
+		return p.numpy(), (g.numpy() if g.numel() else None)
 	with torch.no_grad():
 		out = model(*features(A, b, x, device))
 	if isinstance(out, tuple):                       # policy/value net: (m_logit, pol_logit, V)

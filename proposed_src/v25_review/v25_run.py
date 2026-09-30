@@ -21,13 +21,17 @@ import gurobipy as gp
 torch.set_num_threads(1)
 
 
-def _worker(arm, inst_path, out_path, ckpt_s1, ckpt_pv, time_limit, seed_off, enum_limit):
+def _worker(arm, inst_path, out_path, ckpt_s1, ckpt_pv, time_limit, seed_off, enum_limit, fast=False):
 	from v25_search import GUIDES, NEEDS, search
 	from v15_train_marginal import MarginalNet
 	from v24_rl_core import load_pv
 	device = torch.device('cpu')
 	model = None
-	if NEEDS.get(arm) == 's1':
+	if fast and NEEDS.get(arm) in ('s1', 'pv'):      # A1: dense TorchScript inference path, identical weights
+		from v25_dense import load_dense
+		model = load_dense(ckpt_s1, None, script=True) if NEEDS[arm] == 's1' else load_dense(*ckpt_pv.split(','), script=True)
+		model.dense = True
+	elif NEEDS.get(arm) == 's1':
 		model = MarginalNet(); model.load_state_dict(torch.load(ckpt_s1, map_location=device, weights_only=False)['model_state_dict']); model.eval()
 	elif NEEDS.get(arm) == 'pv':
 		p1, p2 = ckpt_pv.split(','); model = load_pv(p1, p2)
@@ -40,14 +44,14 @@ def _worker(arm, inst_path, out_path, ckpt_s1, ckpt_pv, time_limit, seed_off, en
 	json.dump(r, open(out_path, 'w'))
 
 
-def run_arm(arm, data_dir, out_dir, ckpt_s1, ckpt_pv, time_limit, jobs, seed_off, enum_limit):
+def run_arm(arm, data_dir, out_dir, ckpt_s1, ckpt_pv, time_limit, jobs, seed_off, enum_limit, fast=False):
 	os.makedirs(out_dir, exist_ok=True)
 	files = sorted(Path(data_dir).glob('*.json')); todo = [f for f in files if not (Path(out_dir) / (f.stem + '.json')).exists()]
 	running = []; t0 = time.time()
 	while todo or running:
 		while todo and len(running) < jobs:
 			f = todo.pop(0); op = Path(out_dir) / (f.stem + '.json')
-			p = Process(target=_worker, args=(arm, str(f), str(op), ckpt_s1, ckpt_pv, time_limit, seed_off, enum_limit)); p.start()
+			p = Process(target=_worker, args=(arm, str(f), str(op), ckpt_s1, ckpt_pv, time_limit, seed_off, enum_limit, fast)); p.start()
 			running.append((p, f, op, time.time()))
 		time.sleep(0.5)
 		still = []
@@ -84,13 +88,15 @@ def main():
 	ap.add_argument('--seed_offset', type=int, default=0)
 	ap.add_argument('--enum_limit', type=float, default=60.0)
 	ap.add_argument('--out_root', default='../../runs/v25')
+	ap.add_argument('--fast', action='store_true', help='dense TorchScript inference for the network arms (A1)')
 	a = ap.parse_args()
 	os.makedirs(a.out_root, exist_ok=True)
 	sp = f"{a.out_root}/summary_{a.tag}.json"
 	res = json.load(open(sp)) if os.path.exists(sp) else {}
 	for arm in a.arms:
-		print(f"=== {a.tag} {arm} (budget {a.time_limit}s, seed {a.seed_offset}) ===", flush=True)
-		res[arm] = run_arm(arm, a.data_dir, f"{a.out_root}/{a.tag}_{arm}", a.ckpt_s1, a.ckpt_pv, a.time_limit, a.jobs, a.seed_offset, a.enum_limit)
+		key = arm + ('_fast' if a.fast else '')
+		print(f"=== {a.tag} {key} (budget {a.time_limit}s, seed {a.seed_offset}) ===", flush=True)
+		res[key] = run_arm(arm, a.data_dir, f"{a.out_root}/{a.tag}_{key}", a.ckpt_s1, a.ckpt_pv, a.time_limit, a.jobs, a.seed_offset, a.enum_limit, a.fast)
 		json.dump(res, open(sp, 'w'), indent=1)
 
 

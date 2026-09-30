@@ -1518,3 +1518,5 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 코드: `proposed_src/v25_review/` — `v25_search.py`(재귀 DFS, v23 루프와 node 수 동일 확인; arm 12종: lp/model/pv, 교차 3종, maxsd/domwdeg/impact/lp_probe, oracle, random; 해 경로 vs 반증 subtree 추적), `v25_run.py`, `v25_lattice_strong.py`(block 12–40, 순열 10/30, BKZ 후 fpylll 열거 300초 캡), `v25_gen_variants.py`(밀도 0.3/0.7, planting 0.3, 선택 없음), `v25_gurobi_baseline.py`, `v25_profile.py`.
 - 사전 프로파일(18×50 1개): LP rule 0.42 ms/node(LP 89%), Stage 1 1.25 ms/node(forward 61%, LP 33%), Stage 1+2 1.15 ms/node(forward 65%). 논문의 "forward 90%"는 root 기준으로 과장 → 수정 예정(A2).
 - Phase 2 연쇄 `run_v25_p2.sh` 시작 (로그 `runs/v25/p2.log`, 단계 A~I, Monitor 걸어 둠).
+- A1 준비: `v25_dense.py` — PyG GATConv와 동일한 dense-tensor 구현(검증: marginal 최대 차 2e-6, policy logit 1.4e-3은 log|p̂−½| 증폭 탓, 39 상태에서 argmax 불일치 0). forward 시간(1 thread): 21×60에서 PyG 2.28 ms → dense 0.83 ms → TorchScript 0.45 ms(5.0×), 18×50 1.74→0.46, 10×25 1.61→0.34. `v25_run.py --fast`로 탐색에 연결.
+- B2 준비: `v25_r2_variants.py` — policy 출발점 posterior/lp/random 선택, --unfreeze 지원(스모크 테스트 통과).
