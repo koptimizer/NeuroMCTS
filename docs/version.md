@@ -1512,3 +1512,9 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
   - 7절(Limitations)·Reproducibility 삭제; 결론에 요약 + 한계 2개(exact supervision bounds Stage 1, complete solver와 비경쟁) + future work.
   - KR: 가변 폰트 NotoSansKR.ttf의 기본 instance가 Thin(wght 100)이었음을 확인 → fontTools로 Regular/Medium/SemiBold/Bold 정적 instance 생성(`~/.fonts/NotoSansKR-*.ttf`), 본문 Medium·굵게 Bold 적용. 17쪽.
 - 산출물: `docs/tex/261001_paper.tex/.pdf`, `261001_refs.bib`, `261001_paper_kr.pdf`, `fig/261001/` (9종), `proposed_src/v24_deploy_range/make_261001_figures.py`, `proposed_src/v22_transfer/make_261001_kr.py`. 컴파일 overfull 0, 미정의 참조 0.
+
+## v25 사이클 시작 (2026-10-01, 비평 대응; 계획 `docs/review_plan_261001.md`)
+- Phase 0 완료: v24 사이클 commit·push(d66eab5); 논문 데이터 아카이브 `archive/261001_paper_data.tar.gz`(7,411 파일, 344 MB → 40.8 MB, git 제외) + manifest `docs/data_manifest_261001.json`(sha256, `proposed_src/util/archive_paper_data.py`).
+- 코드: `proposed_src/v25_review/` — `v25_search.py`(재귀 DFS, v23 루프와 node 수 동일 확인; arm 12종: lp/model/pv, 교차 3종, maxsd/domwdeg/impact/lp_probe, oracle, random; 해 경로 vs 반증 subtree 추적), `v25_run.py`, `v25_lattice_strong.py`(block 12–40, 순열 10/30, BKZ 후 fpylll 열거 300초 캡), `v25_gen_variants.py`(밀도 0.3/0.7, planting 0.3, 선택 없음), `v25_gurobi_baseline.py`, `v25_profile.py`.
+- 사전 프로파일(18×50 1개): LP rule 0.42 ms/node(LP 89%), Stage 1 1.25 ms/node(forward 61%, LP 33%), Stage 1+2 1.15 ms/node(forward 65%). 논문의 "forward 90%"는 root 기준으로 과장 → 수정 예정(A2).
+- Phase 2 연쇄 `run_v25_p2.sh` 시작 (로그 `runs/v25/p2.log`, 단계 A~I, Monitor 걸어 둠).

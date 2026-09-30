@@ -1,0 +1,1 @@
+v25_review: 261001 비평 대응 사이클 (docs/review_plan_261001.md). 모든 실험은 run_v25_*.sh 연쇄 스크립트로 묶고 결과는 runs/v25/에 둔다.
