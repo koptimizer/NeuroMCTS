@@ -9,7 +9,8 @@ import sys as _sys
 from pathlib import Path as _Path
 _sys.path[:0] = ['proposed_src/util', 'proposed_src/v23_ablation', 'proposed_src']
 import argparse, glob, json, time, zlib
-from multiprocessing import Pool, Process, Queue
+from multiprocessing import Process, Queue
+from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from fpylll import IntegerMatrix, LLL, BKZ, GSO, Enumeration, EnumerationError
 from v13_pipeline import ahl_try_with_perm
@@ -98,8 +99,8 @@ def main():
 		for k, st in enumerate(a.settings):
 			block, tries = map(int, st.split('x'))
 			cap = a.enum_cap if k == len(a.settings) - 1 else 0.0
-			with Pool(a.jobs) as pool:
-				rs = pool.map(one, [(f, block, tries, cap, 0) for f in fs])
+			with ProcessPoolExecutor(a.jobs) as ex:
+				rs = list(ex.map(one, [(f, block, tries, cap, 0) for f in fs]))
 			out[f'{s}|{st}'] = rs
 			by = {}
 			for r in rs: by[r['how']] = by.get(r['how'], 0) + 1

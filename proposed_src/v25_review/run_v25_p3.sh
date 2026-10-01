@@ -13,7 +13,7 @@ R=../../runs/v25; mkdir -p $R
 S() { date '+%y-%m-%d %H:%M:%S'; }
 stage() { echo "[$(S)] ===== $1 ====="; }
 run() { "$@" || echo "[$(S)] !!! FAILED: $*"; }
-until grep -q "V25 P2 DONE" $R/p2.log 2>/dev/null; do sleep 120; done
+until grep -q "V25 P2W DONE" $R/p2w.log 2>/dev/null; do sleep 120; done
 
 best_epoch() { $PY -c "
 import json; L=json.load(open('$1/log.json')); L=[r for r in L if r.get('sum_ratio') is not None]; b=min(L,key=lambda r:r['sum_ratio']); print(b['epoch'])"; }
