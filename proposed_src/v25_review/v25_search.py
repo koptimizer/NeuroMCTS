@@ -20,6 +20,7 @@ Arm = (variable rule, value rule):
   lp_probe      LP probing fixes what it can,  then the lp rule
   oracle        exact conditional marginals by enumeration (small instances only), rule of Stage 1
   random        random variable, random value
+  bp            sum-product BP marginals (v25_bp, no learning; the inference baseline behind NSNet), rule of Stage 1
 """
 import sys as _sys
 from pathlib import Path as _Path
@@ -188,6 +189,16 @@ def g_lp_probe(A, b, fixed, alive, warm, model, ctx, rng):
 	return j, int(x[j] >= 0.5), []
 
 
+def g_bp(A, b, fixed, alive, warm, model, ctx, rng):
+	# loopy sum-product marginals of the reduced instance (damped, learning-free), Stage 1 rule
+	from v25_bp import bp_marginals
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	p, _ = bp_marginals(A, b, ctx.get('bp_iters', 100), ctx.get('bp_damp', 0.9), 1e-4)
+	j = int(np.argmax(np.abs(p - 0.5)))
+	return j, int(p[j] >= 0.5), []
+
+
 def g_oracle(A, b, fixed, alive, warm, model, ctx, rng):
 	# exact conditional marginals of the reduced instance by enumeration (the Bayes-optimal value
 	# rule, an upper bound for any learned marginal); used only where enumeration completes.
@@ -205,7 +216,7 @@ def g_oracle(A, b, fixed, alive, warm, model, ctx, rng):
 
 
 GUIDES = dict(random=g_random, lp=g_lp, model=g_model, pv=g_pv, lpvar_s1val=g_lpvar_s1val, s1var_lpval=g_s1var_lpval,
-              pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle)
+              pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle, bp=g_bp)
 NEEDS = dict(model='s1', lpvar_s1val='s1', s1var_lpval='s1', pv='pv', pvvar_lpval='pv', oracle='s1')
 
 

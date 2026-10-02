@@ -34,7 +34,13 @@ def _worker(arm, inst_path, out_path, ckpt_s1, ckpt_pv, time_limit, seed_off, en
 	elif NEEDS.get(arm) == 's1':
 		model = MarginalNet(); model.load_state_dict(torch.load(ckpt_s1, map_location=device, weights_only=False)['model_state_dict']); model.eval()
 	elif NEEDS.get(arm) == 'pv':
-		p1, p2 = ckpt_pv.split(','); model = load_pv(p1, p2)
+		p1, p2 = ckpt_pv.split(',')
+		ck = torch.load(p2, map_location=device, weights_only=False)
+		if ck.get('mode', 'posterior') != 'posterior':          # P3 variant (lp / random policy logit): evaluate with its own formula
+			from v25_r2_variants import build
+			model = build(p1, ck['mode']); model.load_state_dict(ck['model_state_dict']); model.eval()
+		else:
+			model = load_pv(p1, p2)
 	d = json.load(open(inst_path))
 	A = np.array(d['A'], dtype=np.int64); b = np.array(d['b'], dtype=np.int64)
 	seed = (zlib.crc32(Path(inst_path).name.encode()) + seed_off * 1_000_003) % (2 ** 31)
