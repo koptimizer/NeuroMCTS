@@ -21,6 +21,9 @@ Arm = (variable rule, value rule):
   oracle        exact conditional marginals by enumeration (small instances only), rule of Stage 1
   random        random variable, random value (uniform branching)
   lpfrac        most fractional LP value (SCIP's mostinf),      round(x_lp)      (classical B&B rule)
+  lpfracvar_s1val  most fractional LP value,                     1[p_hat>=1/2]    (P7: classical variable, marginal value)
+  pv_frac       argmax g_j among variables with fractional LP value, 1[p_hat>=1/2] (P7: candidate restriction)
+  pv_top5/10    argmax g_j among the 5/10 most fractional variables, 1[p_hat>=1/2] (P7: score fusion)
   bp            sum-product BP marginals (v25_bp, no learning; the inference baseline behind NSNet), rule of Stage 1
 """
 import sys as _sys
@@ -84,6 +87,34 @@ def g_lpfrac(A, b, fixed, alive, warm, model, ctx, rng):
 	if x is None: return None, None, []
 	j = int(np.argmin(np.abs(x - 0.5)))
 	return j, int(x[j] >= 0.5), []
+
+
+def g_lpfracvar_s1val(A, b, fixed, alive, warm, model, ctx, rng):
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	p, _ = _marginal(model, A, b, x, ctx['device'])
+	j = int(np.argmin(np.abs(x - 0.5)))
+	return j, int(p[j] >= 0.5), []
+
+
+def _pv_restricted(A, b, fixed, alive, warm, model, ctx, k):
+	# Stage-1+2 policy restricted to fractional LP variables (k=None) or to the k most fractional ones
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	p, g = _marginal(model, A, b, x, ctx['device'])
+	fr = np.abs(x - 0.5)
+	if k is None:
+		cand = np.flatnonzero(fr < 0.5 - 1e-6)
+		if len(cand) == 0: cand = np.arange(len(x))
+	else:
+		cand = np.argsort(fr)[:min(k, len(x))]
+	j = int(cand[int(np.argmax(g[cand]))])
+	return j, int(p[j] >= 0.5), []
+
+
+def g_pv_frac(A, b, fixed, alive, warm, model, ctx, rng): return _pv_restricted(A, b, fixed, alive, warm, model, ctx, None)
+def g_pv_top5(A, b, fixed, alive, warm, model, ctx, rng): return _pv_restricted(A, b, fixed, alive, warm, model, ctx, 5)
+def g_pv_top10(A, b, fixed, alive, warm, model, ctx, rng): return _pv_restricted(A, b, fixed, alive, warm, model, ctx, 10)
 
 
 def g_model(A, b, fixed, alive, warm, model, ctx, rng):
@@ -225,8 +256,9 @@ def g_oracle(A, b, fixed, alive, warm, model, ctx, rng):
 
 
 GUIDES = dict(random=g_random, lp=g_lp, model=g_model, pv=g_pv, lpvar_s1val=g_lpvar_s1val, s1var_lpval=g_s1var_lpval,
-              pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle, bp=g_bp, lpfrac=g_lpfrac)
-NEEDS = dict(model='s1', lpvar_s1val='s1', s1var_lpval='s1', pv='pv', pvvar_lpval='pv', oracle='s1')
+              pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle, bp=g_bp, lpfrac=g_lpfrac,
+              lpfracvar_s1val=g_lpfracvar_s1val, pv_frac=g_pv_frac, pv_top5=g_pv_top5, pv_top10=g_pv_top10)
+NEEDS = dict(model='s1', lpvar_s1val='s1', s1var_lpval='s1', pv='pv', pvvar_lpval='pv', oracle='s1', lpfracvar_s1val='s1', pv_frac='pv', pv_top5='pv', pv_top10='pv')
 
 
 def search(A0, b0, guide, model, time_limit, seed, env, ctx=None):

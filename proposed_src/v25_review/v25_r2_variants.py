@@ -3,6 +3,7 @@ policy's starting point and in what is trained:
   --mode posterior   g_j = log|p_hat_j - 1/2| + h_phi(h_j), h_phi zero-initialised   (the paper)
   --mode lp          g_j = log|x_lp_j  - 1/2| + h_phi(h_j), h_phi zero-initialised   (starts at the LP rule)
   --mode random      g_j = h_phi(h_j) with a random last layer                        (from scratch, FMSTS-style)
+  --mode mostfrac    g_j = -log|x_lp_j - 1/2| + h_phi(h_j), h_phi zero-initialised  (P7: starts at most-fractional)
   --unfreeze         also train the trunk and marginal head (the value rule may then drift)
 The first value is 1[p_hat >= 1/2] in every mode. The critic is initialised from the R1 value head
 (critic_frozen/pv.pt) in every mode, so only the actor's starting point differs.
@@ -46,6 +47,8 @@ class VariantNet(PolicyValueNet):
 			pol_logit = torch.log(torch.abs(p - 0.5) + 1e-6) + corr
 		elif self.mode == 'lp':
 			pol_logit = torch.log(torch.abs(xv[:, 0] - 0.5) + 1e-6) + corr
+		elif self.mode == 'mostfrac':
+			pol_logit = -torch.log(torch.abs(xv[:, 0] - 0.5) + 1e-6) + corr
 		else:
 			pol_logit = corr
 		g = torch.cat([hv.mean(0), hv.max(0).values, hc.mean(0), hc.max(0).values, torch.tensor([math.log(hv.shape[0]), math.log(hc.shape[0])])])
@@ -100,7 +103,7 @@ def main():
 	ap.add_argument('--test', default='../../runs/v24/cond_21x60_range_test.json')
 	ap.add_argument('--base', default='../../runs/v22/model_n25/conditional.pt')
 	ap.add_argument('--init_pv', default='../../runs/v24/critic_frozen/pv.pt')
-	ap.add_argument('--mode', choices=['posterior', 'lp', 'random'], default='posterior')
+	ap.add_argument('--mode', choices=['posterior', 'lp', 'random', 'mostfrac'], default='posterior')
 	ap.add_argument('--n_free', type=int, nargs='+', default=[45, 50, 55, 60])
 	ap.add_argument('--states_per_epoch', type=int, default=400)
 	ap.add_argument('--n_monitor', type=int, default=150)
