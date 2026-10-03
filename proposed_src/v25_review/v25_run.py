@@ -27,12 +27,18 @@ def _worker(arm, inst_path, out_path, ckpt_s1, ckpt_pv, time_limit, seed_off, en
 	from v24_rl_core import load_pv
 	device = torch.device('cpu')
 	model = None
-	if fast and NEEDS.get(arm) in ('s1', 'pv'):      # A1: dense TorchScript inference path, identical weights
+	if fast and NEEDS.get(arm) in ('s1', 'pv') and torch.load(ckpt_s1, map_location='cpu', weights_only=False).get('arch') is None:      # A1: dense TorchScript inference path, identical weights
 		from v25_dense import load_dense
 		model = load_dense(ckpt_s1, None, script=True) if NEEDS[arm] == 's1' else load_dense(*ckpt_pv.split(','), script=True)
 		model.dense = True
 	elif NEEDS.get(arm) == 's1':
-		model = MarginalNet(); model.load_state_dict(torch.load(ckpt_s1, map_location=device, weights_only=False)['model_state_dict']); model.eval()
+		ck = torch.load(ckpt_s1, map_location=device, weights_only=False)
+		if ck.get('arch') == 'nsnet':                      # v26 E1: NSNet-style marginal network, same interface
+			from v26_nsnet import NSNetMarginal
+			model = NSNetMarginal()
+		else:
+			model = MarginalNet()
+		model.load_state_dict(ck['model_state_dict']); model.eval()
 	elif NEEDS.get(arm) == 'pv':
 		p1, p2 = ckpt_pv.split(',')
 		ck = torch.load(p2, map_location=device, weights_only=False)

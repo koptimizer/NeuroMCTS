@@ -19,7 +19,8 @@ Arm = (variable rule, value rule):
   impact        max propagation impact,        value with the smaller impact (sound fixing when a value propagates to contradiction)
   lp_probe      LP probing fixes what it can,  then the lp rule
   oracle        exact conditional marginals by enumeration (small instances only), rule of Stage 1
-  random        random variable, random value
+  random        random variable, random value (uniform branching)
+  lpfrac        most fractional LP value (SCIP's mostinf),      round(x_lp)      (classical B&B rule)
   bp            sum-product BP marginals (v25_bp, no learning; the inference baseline behind NSNet), rule of Stage 1
 """
 import sys as _sys
@@ -74,6 +75,14 @@ def g_lp(A, b, fixed, alive, warm, model, ctx, rng):
 	x = _lp(warm, fixed, alive)
 	if x is None: return None, None, []
 	j = int(np.argmax(np.abs(x - 0.5)))
+	return j, int(x[j] >= 0.5), []
+
+
+def g_lpfrac(A, b, fixed, alive, warm, model, ctx, rng):
+	# most-fractional branching (SCIP's mostinf): the variable whose LP value is closest to 1/2
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	j = int(np.argmin(np.abs(x - 0.5)))
 	return j, int(x[j] >= 0.5), []
 
 
@@ -216,7 +225,7 @@ def g_oracle(A, b, fixed, alive, warm, model, ctx, rng):
 
 
 GUIDES = dict(random=g_random, lp=g_lp, model=g_model, pv=g_pv, lpvar_s1val=g_lpvar_s1val, s1var_lpval=g_s1var_lpval,
-              pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle, bp=g_bp)
+              pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle, bp=g_bp, lpfrac=g_lpfrac)
 NEEDS = dict(model='s1', lpvar_s1val='s1', s1var_lpval='s1', pv='pv', pvvar_lpval='pv', oracle='s1')
 
 
