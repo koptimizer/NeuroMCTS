@@ -24,6 +24,13 @@ Arm = (variable rule, value rule):
   lpfracvar_s1val  most fractional LP value,                     1[p_hat>=1/2]    (P7: classical variable, marginal value)
   pv_frac       argmax g_j among variables with fractional LP value, 1[p_hat>=1/2] (P7: candidate restriction)
   pv_top5/10    argmax g_j among the 5/10 most fractional variables, 1[p_hat>=1/2] (P7: score fusion)
+  pv_k2/4/8     Stage 1+2 with the network evaluated every k-th node, cached per-variable scores reused
+                in between (v29: reliability-style amortisation of the forward pass)
+  pv_gate50/25  Stage 1+2 while more than 50%/25% of the variables are still free, most fractional LP
+                value below that (v29: depth gating)
+  rpb / rpb20   reliability-style probing (v31): probe only the C most fractional variables, only
+                while a variable's record is still unreliable, stop early after L fruitless probes;
+                variables with a record are scored by their cached fixing rate (pseudocost analogue)
   bp            sum-product BP marginals (v25_bp, no learning; the inference baseline behind NSNet), rule of Stage 1
 """
 import sys as _sys
@@ -239,6 +246,94 @@ def g_bp(A, b, fixed, alive, warm, model, ctx, rng):
 	return j, int(p[j] >= 0.5), []
 
 
+def _pv_cached(A, b, fixed, alive, warm, model, ctx, k):
+	"""Stage 1+2 with the forward pass run every k-th node; in between, the scores cached on the
+	ancestors are reused (the network's analogue of pseudocost reuse in reliability branching).
+	The LP is still solved at every node, so pruning is unchanged."""
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	C = ctx.setdefault('cache', {})
+	ctx['nctr'] = ctx.get('nctr', -1) + 1
+	stale = ctx['nctr'] % k != 0
+	if stale and all(int(v) in C for v in alive):
+		g = np.fromiter((C[int(v)][0] for v in alive), float, len(alive))
+		p = np.fromiter((C[int(v)][1] for v in alive), float, len(alive))
+		ctx['reuse'] = ctx.get('reuse', 0) + 1
+	else:
+		p, g = _marginal(model, A, b, x, ctx['device'])
+		for loc, v in enumerate(alive):
+			C[int(v)] = (float(g[loc]), float(p[loc]))
+		ctx['fwd'] = ctx.get('fwd', 0) + 1
+	j = int(np.argmax(g))
+	return j, int(p[j] >= 0.5), []
+
+
+def _pv_gate(A, b, fixed, alive, warm, model, ctx, frac):
+	"""Stage 1+2 while more than `frac` of the original variables are still free; most fractional LP
+	branching below that, where propagation has already fixed most of what the network would say."""
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	n0 = ctx.setdefault('n0', len(alive) + len(fixed))
+	if len(alive) > frac * n0:
+		p, g = _marginal(model, A, b, x, ctx['device'])
+		ctx['fwd'] = ctx.get('fwd', 0) + 1
+		j = int(np.argmax(g))
+		return j, int(p[j] >= 0.5), []
+	ctx['cheap'] = ctx.get('cheap', 0) + 1
+	j = int(np.argmin(np.abs(x - 0.5)))
+	return j, int(x[j] >= 0.5), []
+
+
+def g_pv_k2(A, b, fixed, alive, warm, model, ctx, rng): return _pv_cached(A, b, fixed, alive, warm, model, ctx, 2)
+def g_pv_k4(A, b, fixed, alive, warm, model, ctx, rng): return _pv_cached(A, b, fixed, alive, warm, model, ctx, 4)
+def g_pv_k8(A, b, fixed, alive, warm, model, ctx, rng): return _pv_cached(A, b, fixed, alive, warm, model, ctx, 8)
+def g_pv_gate50(A, b, fixed, alive, warm, model, ctx, rng): return _pv_gate(A, b, fixed, alive, warm, model, ctx, 0.50)
+def g_pv_gate25(A, b, fixed, alive, warm, model, ctx, rng): return _pv_gate(A, b, fixed, alive, warm, model, ctx, 0.25)
+
+
+def _rpb(A, b, fixed, alive, warm, model, ctx, C, rel=4, L=5):
+	"""Reliability-style probing: the feasibility analogue of SCIP's relpscost. Full probing of every
+	variable at every node (the lp_probe arm) is the analogue of full strong branching and is what
+	makes it slow; here the candidate list is the C most fractional variables, a variable is probed
+	only while its record has fewer than `rel` observations, and the loop stops after L consecutive
+	candidates that fix nothing. Variables with a record are scored by their fixing rate, which plays
+	the part of a pseudocost."""
+	x = _lp(warm, fixed, alive)
+	if x is None: return None, None, []
+	P = ctx.setdefault('pb', {})
+	cand = np.argsort(np.abs(x - 0.5))[:min(C, len(alive))]
+	forced = []; miss = 0
+	for loc in cand:
+		j0 = int(alive[loc]); rec = P.setdefault(j0, [0, 0])
+		if rec[0] >= rel:
+			continue
+		ctx['probes'] = ctx.get('probes', 0) + 1
+		rec[0] += 1
+		if warm.probe_infeasible(j0, 0):
+			forced.append((int(loc), 1)); rec[1] += 1
+		elif warm.probe_infeasible(j0, 1):
+			forced.append((int(loc), 0)); rec[1] += 1
+		else:
+			miss += 1
+			if miss >= L:
+				break
+	if forced:
+		seen = {}
+		for loc, v in forced:
+			if loc in seen and seen[loc] != v:
+				return None, None, []
+			seen[loc] = v
+		return None, None, sorted(seen.items())
+	sc = np.fromiter(((P[int(v)][1] / P[int(v)][0]) if P.get(int(v), [0])[0] else -1.0 for v in alive), float, len(alive))
+	sc = sc - 1e-6 * np.abs(x - 0.5)                       # ties and unprobed variables fall back to most fractional
+	j = int(np.argmax(sc))
+	return j, int(x[j] >= 0.5), []
+
+
+def g_rpb(A, b, fixed, alive, warm, model, ctx, rng): return _rpb(A, b, fixed, alive, warm, model, ctx, 10)
+def g_rpb20(A, b, fixed, alive, warm, model, ctx, rng): return _rpb(A, b, fixed, alive, warm, model, ctx, 20)
+
+
 def g_oracle(A, b, fixed, alive, warm, model, ctx, rng):
 	# exact conditional marginals of the reduced instance by enumeration (the Bayes-optimal value
 	# rule, an upper bound for any learned marginal); used only where enumeration completes.
@@ -257,8 +352,11 @@ def g_oracle(A, b, fixed, alive, warm, model, ctx, rng):
 
 GUIDES = dict(random=g_random, lp=g_lp, model=g_model, pv=g_pv, lpvar_s1val=g_lpvar_s1val, s1var_lpval=g_s1var_lpval,
               pvvar_lpval=g_pvvar_lpval, maxsd=g_maxsd, domwdeg=g_domwdeg, impact=g_impact, lp_probe=g_lp_probe, oracle=g_oracle, bp=g_bp, lpfrac=g_lpfrac,
-              lpfracvar_s1val=g_lpfracvar_s1val, pv_frac=g_pv_frac, pv_top5=g_pv_top5, pv_top10=g_pv_top10)
-NEEDS = dict(model='s1', lpvar_s1val='s1', s1var_lpval='s1', pv='pv', pvvar_lpval='pv', oracle='s1', lpfracvar_s1val='s1', pv_frac='pv', pv_top5='pv', pv_top10='pv')
+              lpfracvar_s1val=g_lpfracvar_s1val, pv_frac=g_pv_frac, pv_top5=g_pv_top5, pv_top10=g_pv_top10,
+              pv_k2=g_pv_k2, pv_k4=g_pv_k4, pv_k8=g_pv_k8, pv_gate50=g_pv_gate50, pv_gate25=g_pv_gate25,
+              rpb=g_rpb, rpb20=g_rpb20)
+NEEDS = dict(model='s1', lpvar_s1val='s1', s1var_lpval='s1', pv='pv', pvvar_lpval='pv', oracle='s1', lpfracvar_s1val='s1', pv_frac='pv', pv_top5='pv', pv_top10='pv',
+             pv_k2='pv', pv_k4='pv', pv_k8='pv', pv_gate50='pv', pv_gate25='pv')
 
 
 def search(A0, b0, guide, model, time_limit, seed, env, ctx=None):

@@ -32,6 +32,7 @@ Usage:
 import argparse
 import json
 import time
+import os
 import numpy as np
 from pathlib import Path
 from multiprocessing import Pool
@@ -75,9 +76,12 @@ def vertex_spread(A, b, rng, k=4):
 	return float(np.mean(dists))
 
 
-def gen_hard_feasible(m, n, rng, K=20, k_dirs=4, max_A_retry=50):
+def gen_hard_feasible(m, n, rng, K=20, k_dirs=4, max_A_retry=50, p=None):
+	# entry probability p: argument, else the BLS_DENSITY environment variable, else 0.5 (v28: density sweep)
+	if p is None:
+		p = float(os.environ.get('BLS_DENSITY', '0.5'))
 	for _ in range(max_A_retry):
-		A = (rng.random((m, n)) < 0.5).astype(np.int8)
+		A = (rng.random((m, n)) < p).astype(np.int8)
 		if A.sum(axis=1).min() < 2 or A.sum(axis=0).min() < 1:
 			continue
 		best_vs = -1.0
