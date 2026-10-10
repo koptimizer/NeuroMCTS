@@ -54,9 +54,15 @@ def profiled_search(A0, b0, arm, model, time_limit, env):
 		else:
 			tf = time.perf_counter()
 			with torch.no_grad():
-				out = model(*features(A, b, x, torch.device('cpu')))
+				if getattr(model, 'dense', False):
+					from v25_dense import dense_features
+					out = model(*dense_features(A, b, x))
+				else:
+					out = model(*features(A, b, x, torch.device('cpu')))
 			tg = time.perf_counter(); T['forward'] += tg - tf; fw.append((int(A.shape[1]), tg - tf))
-			if arm == 'model':
+			if getattr(model, 'dense', False):
+				p = out[0].numpy() if arm != 'model' else out[0].numpy(); j = int(np.argmax(np.abs(p - 0.5))) if arm == 'model' else int(torch.argmax(out[1])); v = int(p[j] >= 0.5)
+			elif arm == 'model':
 				p = torch.sigmoid(out).numpy(); j = int(np.argmax(np.abs(p - 0.5))); v = int(p[j] >= 0.5)
 			else:
 				p = torch.sigmoid(out[0]).numpy(); j = int(torch.argmax(out[1])); v = int(p[j] >= 0.5)
@@ -75,10 +81,16 @@ def main():
 	ap = argparse.ArgumentParser()
 	ap.add_argument('--set', default='v24test_21x60_100'); ap.add_argument('--k', type=int, default=6); ap.add_argument('--time_limit', type=float, default=600)
 	ap.add_argument('--ckpt_s1', default='../../runs/v22/model_n25/conditional.pt'); ap.add_argument('--ckpt_pv', default='../../runs/v24/r2/pv_best.pt')
+	ap.add_argument('--fast', action='store_true', help='dense TorchScript inference path (the deployed one); output file gets a _fast suffix')
 	a = ap.parse_args()
 	env = gp.Env(empty=True); env.setParam('OutputFlag', 0); env.start()
-	s1 = MarginalNet(); s1.load_state_dict(torch.load(a.ckpt_s1, map_location='cpu', weights_only=False)['model_state_dict']); s1.eval()
-	pv = load_pv(a.ckpt_s1, a.ckpt_pv)
+	if a.fast:
+		from v25_dense import load_dense
+		s1 = load_dense(a.ckpt_s1, None, script=True); s1.dense = True
+		pv = load_dense(a.ckpt_s1, a.ckpt_pv, script=True); pv.dense = True
+	else:
+		s1 = MarginalNet(); s1.load_state_dict(torch.load(a.ckpt_s1, map_location='cpu', weights_only=False)['model_state_dict']); s1.eval()
+		pv = load_pv(a.ckpt_s1, a.ckpt_pv)
 	out = {}
 	for f in sorted(Path(f'../../instances/{a.set}').glob('*.json'))[:a.k]:
 		d = json.load(open(f)); A = np.array(d['A'], dtype=np.int64); b = np.array(d['b'], dtype=np.int64)
@@ -90,7 +102,7 @@ def main():
 			r['forward_ms_by_free'] = {str(k): round(1000 * float(np.mean(v)), 3) for k, v in sorted(byk.items())}
 			out[f'{f.stem}|{arm}'] = r
 			print(f"{f.stem} {arm:5s} nodes {r['nodes']:7d}  {r['ms_per_node']:.3f} ms/node  shares {r['shares']}  fwd ms by free {r['forward_ms_by_free']}", flush=True)
-	json.dump(out, open(f'../../runs/v25/profile_{a.set}.json', 'w'), indent=1)
+	json.dump(out, open(f"../../runs/v25/profile_{a.set}{'_fast' if a.fast else ''}.json", 'w'), indent=1)
 
 
 if __name__ == '__main__':

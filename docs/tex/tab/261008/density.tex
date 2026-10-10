@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\caption{Density sweep that fixed $p=0.3$: at each density and size, the strongest single-relaxation classical rule (by median nodes) against the learned rule, median per-instance node ratio with $95\%$ bootstrap interval and sign-test $p$-value. The learned rule was trained at $p=0.5$ for the $p=0.5$ rows and at $p=0.3$ for all others. Sets of $30$ instances are marked; the rest have $100$.}
+\label{tab:density}
+\footnotesize
+\fitc{\begin{tabular}{llrlrrlr}
+\toprule
+$p$ & size & $n$ & strongest classical & its nodes & Stage 1+2 nodes & ratio [CI] & $p$-value \\
+\midrule
+0.2 & $21\times60$ & 100 & dom/wdeg & 40 & 39 & 1.03$\times$ [0.89, 1.14] & $0.84$ \\
+0.2 & $24\times70$ & 30 & dom/wdeg & 112 & 64 & 1.75$\times$ [1.03, 2.45] & $0.10$ \\
+\addlinespace
+0.3 & $21\times60$ & 100 & dom/wdeg & 436 & 325 & 1.52$\times$ [1.08, 1.95] & $0.04$ \\
+0.3 & $24\times70$ & 100 & dom/wdeg & 5,263 & 2,580 & 1.79$\times$ [1.15, 2.42] & $0.04$ \\
+0.3 & $28\times80$ & 100 & maxSD & 141,178 & 58,026 & 3.20$\times$ [2.29, 4.79] & $10^{-9}$ \\
+\addlinespace
+0.4 & $21\times60$ & 100 & dom/wdeg & 4,265 & 1,711 & 2.34$\times$ [1.82, 3.35] & $4\cdot10^{-4}$ \\
+0.4 & $24\times70$ & 100 & maxSD & 55,018 & 24,843 & 2.05$\times$ [1.33, 2.82] & $7\cdot10^{-3}$ \\
+0.4 & $28\times80$ & 100 & maxSD & 578,231 & 327,660 & 2.20$\times$ [1.41, 3.06] & $10^{-5}$ \\
+\addlinespace
+0.5 & $21\times60$ & 100 & most-fractional & 6,010 & 5,495 & 1.28$\times$ [0.92, 1.94] & $0.13$ \\
+0.5 & $24\times70$ & 30 & most-fractional & 64,232 & 90,054 & 0.66$\times$ [0.34, 2.01] & $0.86$ \\
+0.5 & $28\times80$ & 30 & maxSD & 402,570 & 281,760 & 1.76$\times$ [1.03, 4.15] & $0.04$ \\
+\bottomrule
+\end{tabular}}
+\end{table}

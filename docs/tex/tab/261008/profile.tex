@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\caption{Per-node cost on the dense inference path at $p=0.3$: six instances per size, the whole tree of each rule instrumented (median over instances of milliseconds per node and of the share of node time spent in the warm-started relaxation and in the network forward pass; the remainder is reduction, propagation and bookkeeping). One forward pass costs $0.33$--$0.53$\,ms and grows with the number of free variables.}
+\label{tab:profile}
+\footnotesize
+\fitc{\begin{tabular}{llrrr}
+\toprule
+size & rule & ms / node & LP share & forward share \\
+\midrule
+$21\times60$ & LP rule & 0.47 & 90\% & 0\% \\
+$21\times60$ & Stage 1 & 0.67 & 64\% & 27\% \\
+$21\times60$ & Stage 1+2 & 0.70 & 57\% & 32\% \\
+\addlinespace
+$24\times70$ & LP rule & 0.55 & 91\% & 0\% \\
+$24\times70$ & Stage 1 & 0.75 & 69\% & 23\% \\
+$24\times70$ & Stage 1+2 & 0.73 & 62\% & 28\% \\
+\addlinespace
+$28\times80$ & LP rule & 0.61 & 92\% & 0\% \\
+$28\times80$ & Stage 1 & 0.86 & 69\% & 23\% \\
+$28\times80$ & Stage 1+2 & 0.82 & 62\% & 29\% \\
+\bottomrule
+\end{tabular}}
+\end{table}

@@ -1,0 +1,36 @@
+\begin{table}[t]
+\centering
+\caption{The two small sizes ($30$ instances each): same columns as Table~\ref{tab:rq1}. Trees are tens of nodes and no rule separates from the others in time except through the cost of its score.}
+\label{tab:small}
+\footnotesize
+\fitc{\begin{tabular}{lrrrrll}
+\toprule
+rule & solved & med.\ nodes & med.\ s & PAR-2 s & nodes, rule / Stage 1+2 & time, rule / Stage 1+2 \\
+\midrule
+\multicolumn{7}{l}{\emph{10$\times$25 (30), budget 60\,s}} \\
+LP rule (most-integral) & 30/30 & 30 & 0.01 & 0.0 & 1.89$\times$ [1.53, 2.23] $7\cdot10^{-9}$ & 0.23$\times$ [0.20, 0.28] $10^{-9}$ \\
+most-fractional & 30/30 & 16 & 0.01 & 0.0 & 1.03$\times$ [0.83, 1.18] $0.70$ & 0.16$\times$ [0.13, 0.17] $10^{-9}$ \\
+maxSD & 30/30 & 18 & 0.01 & 0.0 & 1.24$\times$ [1.18, 1.46] $10^{-5}$ & 0.27$\times$ [0.20, 0.30] $10^{-9}$ \\
+dom/wdeg & 30/30 & 16 & 0.01 & 0.0 & 1.03$\times$ [0.93, 1.19] $0.85$ & 0.16$\times$ [0.12, 0.18] $10^{-9}$ \\
+impact & 30/30 & 17 & 0.03 & 0.0 & 1.14$\times$ [1.07, 1.28] $0.02$ & 0.75$\times$ [0.67, 0.89] $6\cdot10^{-5}$ \\
+LP probing & 30/30 & 14 & 0.06 & 0.1 & 0.94$\times$ [0.81, 1.07] $0.34$ & 1.43$\times$ [1.28, 1.63] $10^{-4}$ \\
+uniform & 30/30 & 19 & 0.01 & 0.0 & 1.23$\times$ [1.10, 1.41] $10^{-4}$ & 0.19$\times$ [0.15, 0.21] $10^{-9}$ \\
+oracle marginals & 30/30 & 22 & 0.19 & 0.2 & 1.47$\times$ [1.39, 1.63] $10^{-9}$ & 4.52$\times$ [4.14, 5.41] $10^{-9}$ \\
+BP marginals (NSNet-based) & 30/30 & 21 & 0.41 & 0.4 & 1.47$\times$ [1.32, 1.63] $4\cdot10^{-9}$ & 10.06$\times$ [9.01, 11.44] $10^{-9}$ \\
+Stage 1 & 30/30 & 21 & 0.04 & 0.0 & 1.45$\times$ [1.30, 1.55] $4\cdot10^{-9}$ & 1.10$\times$ [1.05, 1.14] $0.02$ \\
+\textbf{Stage 1+2} & 30/30 & \textbf{14} & \textbf{0.04} & 0.0 & --- & --- \\
+\midrule
+\multicolumn{7}{l}{\emph{18$\times$50 (30), budget 300\,s}} \\
+LP rule (most-integral) & 30/30 & 1,066 & 0.64 & 0.9 & 13.89$\times$ [7.69, 42.45] $10^{-9}$ & 4.71$\times$ [3.68, 12.60] $9\cdot10^{-7}$ \\
+most-fractional & 30/30 & 116 & 0.08 & 0.1 & 2.23$\times$ [1.04, 3.83] $0.10$ & 0.82$\times$ [0.62, 1.12] $0.36$ \\
+maxSD & 30/30 & 120 & 0.09 & 0.1 & 2.18$\times$ [1.07, 3.26] $0.04$ & 0.93$\times$ [0.74, 1.33] $0.58$ \\
+dom/wdeg & 30/30 & 130 & 0.09 & 0.1 & 2.39$\times$ [1.27, 4.62] $0.02$ & 0.90$\times$ [0.52, 1.89] $1.00$ \\
+impact & 30/30 & 315 & 0.49 & 0.7 & 4.93$\times$ [3.26, 8.41] $9\cdot10^{-7}$ & 5.36$\times$ [3.57, 8.12] $6\cdot10^{-8}$ \\
+LP probing & 30/30 & 25 & 0.44 & 0.5 & 0.55$\times$ [0.44, 0.70] $6\cdot10^{-5}$ & 5.36$\times$ [4.21, 6.34] $10^{-9}$ \\
+uniform & 30/30 & 228 & 0.14 & 0.3 & 3.86$\times$ [2.12, 8.05] $3\cdot10^{-4}$ & 1.55$\times$ [0.94, 2.72] $0.10$ \\
+BP marginals (NSNet-based) & 30/30 & 118 & 4.12 & 6.1 & 1.85$\times$ [1.12, 3.22] $0.04$ & 50.13$\times$ [34.89, 64.65] $10^{-9}$ \\
+Stage 1 & 30/30 & 116 & 0.14 & 0.2 & 1.88$\times$ [1.01, 2.93] $0.06$ & 1.40$\times$ [1.24, 2.08] $5\cdot10^{-3}$ \\
+\textbf{Stage 1+2} & 30/30 & \textbf{50} & \textbf{0.08} & 0.1 & --- & --- \\
+\bottomrule
+\end{tabular}}
+\end{table}

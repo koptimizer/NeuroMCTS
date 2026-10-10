@@ -1,0 +1,47 @@
+\begin{table*}[t]
+\centering
+\caption{Inside SCIP at $p=0.3$ (presolve, cuts and primal heuristics off, depth-first node selection, first solution stops): SCIP's own rules against the learned rule as a branching plug-in, with conflict analysis off and on. Ratios are rule / plug-in as in Table~\ref{tab:rq1}.}
+\label{tab:scip}
+\footnotesize
+\begin{tabular}{llrrrll}
+\toprule
+conflict & rule & solved & med.\ nodes & med.\ s & nodes, rule / plug-in & time, rule / plug-in \\
+\midrule
+\multicolumn{7}{l}{\emph{$21\times60$ (100)}} \\
+off & RPB (SCIP default) & 100/100 & 828 & 0.06 & 2.14$\times$ [1.57, 3.42] $5\cdot10^{-6}$ & 0.34$\times$ [0.24, 0.51] $6\cdot10^{-7}$ \\
+off & most-fractional (SCIP) & 100/100 & 558 & 0.05 & 1.83$\times$ [1.37, 2.39] $10^{-4}$ & 0.26$\times$ [0.20, 0.39] $10^{-15}$ \\
+off & inference (SCIP) & 100/100 & 767 & 0.06 & 2.41$\times$ [1.77, 3.80] $8\cdot10^{-5}$ & 0.32$\times$ [0.23, 0.45] $6\cdot10^{-11}$ \\
+off & \textbf{Stage 1+2 plug-in} & 100/100 & \textbf{274} & 0.14 & --- & --- \\
+\midrule
+\multicolumn{7}{l}{\emph{$21\times60$ (100)}} \\
+on & RPB (SCIP default) & 100/100 & 705 & 0.06 & 1.86$\times$ [1.46, 2.81] $3\cdot10^{-5}$ & 0.32$\times$ [0.25, 0.46] $10^{-9}$ \\
+on & most-fractional (SCIP) & 100/100 & 528 & 0.04 & 1.69$\times$ [1.33, 2.27] $10^{-4}$ & 0.28$\times$ [0.23, 0.39] $10^{-11}$ \\
+on & inference (SCIP) & 100/100 & 795 & 0.07 & 2.09$\times$ [1.62, 2.84] $10^{-5}$ & 0.33$\times$ [0.24, 0.45] $10^{-12}$ \\
+on & \textbf{Stage 1+2 plug-in} & 100/100 & \textbf{256} & 0.14 & --- & --- \\
+\midrule
+\multicolumn{7}{l}{\emph{$24\times70$ (100)}} \\
+off & RPB (SCIP default) & 100/100 & 7,010 & 0.56 & 3.47$\times$ [2.42, 6.00] $6\cdot10^{-11}$ & 0.83$\times$ [0.58, 1.37] $0.37$ \\
+off & most-fractional (SCIP) & 100/100 & 5,026 & 0.40 & 3.47$\times$ [1.59, 4.23] $3\cdot10^{-5}$ & 0.86$\times$ [0.41, 0.98] $0.04$ \\
+off & inference (SCIP) & 100/100 & 6,694 & 0.50 & 4.00$\times$ [2.48, 6.36] $10^{-9}$ & 0.95$\times$ [0.60, 1.37] $0.48$ \\
+off & \textbf{Stage 1+2 plug-in} & 100/100 & \textbf{1,915} & 0.61 & --- & --- \\
+\midrule
+\multicolumn{7}{l}{\emph{$24\times70$ (100)}} \\
+on & RPB (SCIP default) & 100/100 & 5,496 & 0.49 & 3.06$\times$ [2.57, 4.53] $6\cdot10^{-7}$ & 0.80$\times$ [0.64, 1.05] $0.13$ \\
+on & most-fractional (SCIP) & 100/100 & 5,340 & 0.50 & 2.98$\times$ [1.67, 3.87] $10^{-5}$ & 0.74$\times$ [0.48, 1.03] $0.13$ \\
+on & inference (SCIP) & 100/100 & 5,578 & 0.48 & 3.12$\times$ [2.26, 4.34] $10^{-9}$ & 0.78$\times$ [0.58, 0.97] $0.02$ \\
+on & \textbf{Stage 1+2 plug-in} & 100/100 & \textbf{1,806} & 0.60 & --- & --- \\
+\midrule
+\multicolumn{7}{l}{\emph{$28\times80$ (100)}} \\
+off & RPB (SCIP default) & 100/100 & 224,088 & 25.05 & 3.83$\times$ [2.36, 5.96] $10^{-10}$ & 1.11$\times$ [0.71, 1.73] $0.48$ \\
+off & most-fractional (SCIP) & 100/100 & 136,840 & 15.84 & 2.11$\times$ [1.63, 3.01] $7\cdot10^{-3}$ & 0.66$\times$ [0.49, 0.93] $0.02$ \\
+off & inference (SCIP) & 100/100 & 232,221 & 25.19 & 3.90$\times$ [3.00, 5.70] $10^{-10}$ & 1.14$\times$ [0.84, 1.59] $0.62$ \\
+off & \textbf{Stage 1+2 plug-in} & 100/100 & \textbf{60,174} & 22.42 & --- & --- \\
+\midrule
+\multicolumn{7}{l}{\emph{$28\times80$ (100)}} \\
+on & RPB (SCIP default) & 100/100 & 148,872 & 19.75 & 2.43$\times$ [1.80, 4.76] $3\cdot10^{-5}$ & 0.77$\times$ [0.57, 1.43] $0.37$ \\
+on & most-fractional (SCIP) & 100/100 & 128,310 & 17.10 & 2.08$\times$ [1.30, 2.76] $10^{-3}$ & 0.68$\times$ [0.41, 0.96] $0.06$ \\
+on & inference (SCIP) & 100/100 & 122,144 & 14.62 & 2.36$\times$ [1.52, 3.00] $10^{-4}$ & 0.71$\times$ [0.46, 0.90] $0.01$ \\
+on & \textbf{Stage 1+2 plug-in} & 100/100 & \textbf{58,564} & 24.00 & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table*}

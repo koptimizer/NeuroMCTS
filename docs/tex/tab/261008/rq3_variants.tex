@@ -1,0 +1,27 @@
+\begin{table*}[t]
+\centering
+\caption{Training variants at $p=0.3$: median nodes and median per-instance node ratio to the reference Stage~1+2 rule, per size. Stage-1 variants are run with the confidence rule (no Stage 2); Stage-2 variants share the frozen reference trunk unless stated.}
+\label{tab:variants}
+\scriptsize
+\begin{tabular}{lrlrlrl}
+\toprule
+ & \multicolumn{2}{c}{$21\times60$ (100)} & \multicolumn{2}{c}{$24\times70$ (100)} & \multicolumn{2}{c}{$28\times80$ (100)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+variant & nodes & ratio & nodes & ratio & nodes & ratio \\
+\midrule
+Stage 1 (reference) & 628 & 2.32$\times$ [1.08, 3.25] $0.01$ & 8,174 & 3.17$\times$ [2.32, 4.40] $10^{-6}$ & 212,271 (90/100) & 5.01$\times$ [3.01, 6.62] $9\cdot10^{-11}$ \\
+Stage 1, hard $0/1$ labels & 848 & 2.66$\times$ [1.93, 4.05] $3\cdot10^{-5}$ & 7,644 & 2.73$\times$ [2.03, 3.98] $4\cdot10^{-9}$ & 259,605 (95/100) & 4.18$\times$ [3.26, 6.63] $10^{-12}$ \\
+Stage 1, training seed 1 & 562 & 1.72$\times$ [1.17, 2.49] $4\cdot10^{-3}$ & 7,318 & 2.72$\times$ [1.60, 4.60] $4\cdot10^{-4}$ & 207,117 (91/100) & 4.03$\times$ [2.63, 5.13] $10^{-10}$ \\
+Stage 1, training seed 2 & 553 & 1.65$\times$ [1.10, 2.14] $0.04$ & 6,199 & 2.06$\times$ [1.01, 2.76] $0.09$ & 213,055 (95/100) & 4.37$\times$ [3.09, 6.74] $3\cdot10^{-11}$ \\
+Stage 1, $2{,}771$ states (size ctrl.) & 662 & 2.22$\times$ [1.47, 2.61] $8\cdot10^{-5}$ & 6,897 & 3.89$\times$ [1.96, 6.15] $3\cdot10^{-5}$ & 168,442 (91/100) & 4.12$\times$ [3.08, 6.44] $10^{-9}$ \\
+Stage 1 on $21\times60$ states (M1) & 912 & 2.44$\times$ [1.64, 4.10] $10^{-5}$ & 10,754 & 3.94$\times$ [2.51, 7.91] $10^{-7}$ & 225,182 (85/100) & 5.73$\times$ [2.99, 7.19] $8\cdot10^{-8}$ \\
+Stage 1, NSNet architecture & 892 & 2.75$\times$ [2.02, 4.03] $10^{-7}$ & 12,500 & 5.02$\times$ [3.46, 7.46] $5\cdot10^{-13}$ & 248,556 (70/100) & 4.75$\times$ [3.45, 7.73] $10^{-8}$ \\
+\midrule
+Stage 1+2 (reference) & 325 & --- & 2,580 & --- & 58,026 & --- \\
+Stage 2 from a random head & 333 & 1.04$\times$ [0.74, 1.28] $0.92$ & 1,878 & 0.86$\times$ [0.65, 1.10] $0.27$ & 59,122 (99/100) & 1.03$\times$ [0.94, 1.20] $0.84$ \\
+Stage 2 from the LP rule & 376 & 1.06$\times$ [0.73, 1.31] $0.76$ & 3,024 & 0.86$\times$ [0.62, 1.39] $0.48$ & 72,539 & 1.12$\times$ [0.87, 1.48] $0.37$ \\
+Stage 2, trunk unfrozen & 280 & 0.76$\times$ [0.56, 1.20] $0.37$ & 2,427 & 0.83$\times$ [0.69, 1.12] $0.37$ & 59,692 & 1.06$\times$ [0.70, 1.65] $0.76$ \\
+Stage 1+2 trained at $p=0.5$ & 379 & 1.32$\times$ [1.00, 1.68] $0.09$ & 4,096 & 1.64$\times$ [1.16, 2.35] $7\cdot10^{-3}$ & 80,002 & 1.76$\times$ [1.44, 2.52] $4\cdot10^{-3}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
