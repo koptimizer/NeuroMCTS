@@ -91,7 +91,7 @@ H1('초록')
 P('Binary linear system(BLS)은 0/1 행렬 <i>A</i>에 대해 <i>A</i><b>x</b>=<b>b</b>를 만족하는 vector <b>x</b>∈{0,1}<sup><i>n</i></sup>를 찾는 문제다; 우리는 해가 존재하고 그것을 내놓아야 하는 해 찾기 버전을 다룬다. 목적함수가 없고 linear relaxation은 넓고 무정보하며 '
   'unit propagation은 root 근처에서 작동하지 않으므로, complete depth-first search의 성패는 branching 선택이 결정한다. 학습된 branching은 mixed-integer program과 SAT를 위해 개발됐고, '
   '우리는 그 세 주요 계열이 BLS로 옮겨오면 각각 무언가를 잃음을 보인다: strong branching 모방은 개선할 bound가 없어 LP probing으로 퇴화하고, message-passing marginal은 밀집 factor graph에서 '
-  'node당 forward pass 천 번의 비용이 들며, from-scratch 강화학습은 문제가 정확히 제공하는 값 순서를 스스로 발견해야 한다. 본 논문은 두 개의 정확한 신호로 두 단계에 걸쳐 학습한 branching 규칙을 '
+  'node당 network forward pass의 두 자릿수 배 비용이 들며, from-scratch 강화학습은 문제가 정확히 제공하는 값 순서를 스스로 발견해야 한다. 본 논문은 두 개의 정확한 신호로 두 단계에 걸쳐 학습한 branching 규칙을 '
   '제시한다. <b>Stage 1</b>은 <b>어느 값</b>을 먼저 시도할지 배운다: 열거 가능한 instance에서 각 자유 변수의 conditional marginal은 정확하고, BLS를 partial assignment로 conditioning하는 것은 '
   '축소하는 것과 같으므로 축소 instance로 학습한 graph network 하나가 모든 node에서 예측한다. <b>Stage 2</b>는 <b>어느 변수</b>로 분기할지 배운다: 결정의 subtree가 전개하는 node 수는 탐색이 '
   '정확히 산출하며, Stage 1 규칙에서 출발해 network를 동결한 채 그 비용으로 actor-critic fine-tuning하면 branching 순서만 바뀐다. 고전 규칙 7종(most-integral·most-fractional LP branching, maxSD '
@@ -314,10 +314,11 @@ P('<b>규칙.</b> 표 1이 규칙을 나열한다. LP 규칙 둘은 most-integra
   'BP 규칙은 정확한 cardinality-factor message, damping 0.9, 최대 300회 반복의 sum-product를 돌린다. 2절의 학습 baseline은 다음과 같이 나타난다: LP probing은 strong branching 모방을(expert '
   '그 자체다), BP는 message-passing marginal을, 5.4절에서 무작위 head와 LP 규칙에서 출발한 비용 조정 policy는 from scratch와 고전 규칙에서 출발하는 강화학습을 대표한다.', body_s)
 P('<b>프로토콜과 통계.</b> instance마다 두 지표를 기록한다: 해에 도달하기까지 전개한 node 수(4.4절의 <i>c</i>(root); branching 품질을 재며 탐색이 relaxation vertex가 주어지면 결정적이므로 '
-  'seed 불변)와 단일 thread wall-clock 시간(node당 비용도 반영). 예산은 다섯 크기에 대해 instance당 60, 300, 600, 1,200, 1,200 s이며 프로세스 종료로 강제한다; 20코어 머신에서 instance 6개를 '
-  '동시에 돌리고 GPU는 쓰지 않으며 학습 arm은 4.5절의 dense TorchScript 경로를 쓴다. 비교는 instance별로 짝짓는다: 두 규칙이 모두 푼 instance에서 instance별 비율의 중앙값, 그 중앙값의 '
+  'seed 불변)와 단일 thread wall-clock 시간(node당 비용도 반영). 예산은 다섯 크기에 대해 instance당 60, 300, 600, 1,200, 1,200 s이며 프로세스 종료로 강제한다; 20코어 Intel Core Ultra 7 265KF 머신(메모리 32 GB)에서 instance 6개를 '
+  '동시에 돌리고 GPU는 쓰지 않으며 학습 arm은 4.5절의 dense TorchScript 경로를 쓴다. 루프는 Python 3.10과 NumPy 2.2, relaxation은 LP 엔진으로 쓴 Gurobi 13.0, network는 PyTorch 2.10이고, solver 비교는 '
+  'PySCIPOpt 6.1을 통한 SCIP 10.0, OR-Tools CP-SAT 9.15, Gurobi 13.0, fpylll 0.6을 쓴다. 비교는 instance별로 짝짓는다: 두 규칙이 모두 푼 instance에서 instance별 비율의 중앙값, 그 중앙값의 '
   '95% bootstrap 구간(instance 1,000회 재표집), 각 규칙이 이긴 instance 수, 동률을 제외한 양측 exact sign test를 보고하며, PAR-2(미해결 instance를 예산의 두 배로 센 평균 시간)가 해결률과 시간을 '
-  '함께 요약한다. node·시간 원값의 중앙값은 방향을 보여주기 위한 것이고 검정은 그 위에서 하지 않는다. 학습 arm의 타이밍은 부록 C에서 평가 seed 두 개로 더 반복한다.', body_s)
+  '함께 요약한다. node·시간 원값의 중앙값은 방향을 보여주기 위한 것이고 검정은 그 위에서 하지 않는다. 다중 비교 보정은 하지 않는다; 논문 전체에 짝 검정이 약 60개 있으므로 0.05 근처의 개별 <i>p</i>값은 시사적인 것으로 읽어야 하고 결론은 <i>p</i>&lt;10<sup>−3</sup>인 비교에 기댄다. 학습 arm의 타이밍은 부록 D에서 평가 seed 두 개로 더 반복한다.', body_s)
 
 H2('5.2 RQ1: 고전 branching과 전이된 learned branching 대비')
 TT('rq1_main', ['규칙', '해결', 'node 중앙값', '초 중앙값', 'PAR-2 s', 'node, 규칙 / Stage 1+2', '시간, 규칙 / Stage 1+2'], [3.2*cm, 1.4*cm, 1.8*cm, 1.4*cm, 1.4*cm, 3.9*cm, 3.9*cm],
@@ -331,7 +332,7 @@ P('<b>Tree 크기.</b> 표 2와 그림 6이 주 결과다. 세 크기 각각에�
   '풀며 그 위에서 19배 많은 node를 쓴다(PAR-2 1,688 대 75 s). 이득은 분포적이지 보편적이지 않다: 학습 규칙은 싼 규칙들에 대해 100개 중 61~80개에서 이기고 나머지에서 진다. 더 작은 tree를 만드는 '
   '유일한 규칙은 LP probing으로, 푸는 instance에서 2.7~2.9배이며 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 '
   '많고, node당 relaxation |<i>K</i>|개를 지불한다. Stage 1 단독(비용 조정 순서 없는 marginal 규칙)은 세 크기에서 전체 규칙보다 node를 2.3배, 3.2배, 5.0배 더 쓰고(짝 중앙값), 그 자체로는 '
-  '21×60과 24×70에서 LP rule보다 12배 아래이며, 21×60에서 싼 고전 규칙과 동급이고 24×70부터는 그 뒤이며 28×80 instance 10개를 풀지 못한다: marginal만으로는 경쟁력 있는 값 신호이자 평범한 '
+  '21×60과 24×70 모두에서 LP rule보다 약 12배 아래이며, 21×60에서 싼 고전 규칙과 동급이고 24×70부터는 그 뒤이며 28×80 instance 10개를 풀지 못한다: marginal만으로는 경쟁력 있는 값 신호이자 평범한 '
   '변수 점수이고, 규칙을 앞서게 하는 것은 비용 조정 순서다.', body_s)
 TT('profile', ['크기', '규칙', 'ms / node', 'LP 비중', 'forward 비중'], [1.8*cm, 2.4*cm, 1.8*cm, 1.6*cm, 1.9*cm],
    '표 3. dense 추론 경로의 node당 비용(단일 relaxation 행은 LP rule, 즉 most-integral branching이며 표 1의 모든 단일 relaxation 고전 규칙이 같은 node당 비용을 가진다): 크기당 instance 6개, 각 규칙의 전체 tree를 계측(node당 ms와 warm-start relaxation·network forward pass가 차지하는 node 시간 비중의 instance 간 '
@@ -427,7 +428,7 @@ P('<b>End-to-end.</b> 표 7은 학습 탐색을 기본 설정의 complete solver
 # ═══════════════ 6 ═══════════════
 H1('6. 결론')
 P('branching 결정은 두 질문을 던지며 본 논문은 각각의 정확한 답으로 학습했다: 해를 열거할 수 있는 곳에서 계산 가능하고 reduction 항등식으로 모든 node에 옮겨지는 conditional marginal은 어느 '
-  '값을 시도할지에, 탐색이 backtrack하면서 산출하는 결정 아래 node 수는 어느 변수로 분기할지에 답한다. 고전 규칙 7종과 learned-branching 세 계열의 전이형에 대해, 한 탐색 루프에서, 단일 밀도의 '
+  '값을 시도할지에, 탐색이 backtrack하면서 산출하는 결정 아래 node 수는 어느 변수로 분기할지에 답한다. 고전 규칙 7종과 learned-branching 세 계열의 전이형에 대해, 한 탐색 루프에서, '
   '100개 세트로, 학습 규칙은 모든 크기에서 단일 relaxation 규칙 중 node를 가장 적게 쓰고 28×80에서는 가장 빠르기도 하다; <i>n</i>≤60에서 학습한 그 우위는 줄지 않고 크기와 함께 커진다; 그리고 '
   'node 우위를 SCIP 안으로 가져가 conflict analysis on/off의 reliability branching에 맞선다. ablation은 레시피가 무엇인지 말한다: 변수 선택이 이득을 지니고, 비용 조정 순서는 설계가 아니라 학습된 '
   'fail-first이며, 동결된 marginal trunk는 fine-tuning을 안정하게 유지하는 것이고, 정확한 marginal 값은 변수를 잘 고르고 나면 LP 반올림으로 대체 가능하며 가장 큰 크기에서 '
@@ -456,13 +457,26 @@ P('표 A2는 모든 규칙과 모든 해결 instance에 대해 탐색이 node를
 TT('trace', ['규칙', '<i>n</i>', 'node', '경로', '반증 비중', '첫 자식 실패율', '반증 비용', '깊이 비율'], [2.9*cm, 1.2*cm, 1.9*cm, 1.1*cm, 1.8*cm, 2.2*cm, 1.9*cm, 1.7*cm],
    '표 A2. 규칙별 반증 구조(해결 instance; instance 간 중앙값): node, 해 경로의 결정 수, 반증된 subtree의 node 비중, 첫 값이 반증된 경로 결정의 비율, 그런 반증 한 번의 평균 비용, '
    '반증된 결정의 깊이 중앙값(경로 길이 대비).', font=8.0)
-H1('부록 C. 타이밍 복제')
+H1('부록 C. 고전 규칙의 구현')
+P('모든 규칙은 알고리즘 1을 공유하고 5단계만 다르며, 각 규칙은 축소 instance (<i>A</i>′, <b>b</b>′)와 relaxation vertex <b>x</b><sup>LP</sup>를 받는다. <i>most-integral</i>과 <i>most-fractional</i>은 '
+  'argmax<sub><i>j</i></sub> |<i>x</i><sup>LP</sup><sub><i>j</i></sub>−1/2|와 argmin<sub><i>j</i></sub> |<i>x</i><sup>LP</sup><sub><i>j</i></sub>−1/2|로 분기하고 반올림 값을 먼저 시도한다. <i>maxSD</i>: 자유 변수 '
+  '<i>r<sub>i</sub></i>개와 우변 <i>b</i>′<sub><i>i</i></sub>를 가진 0/1 등식 행에서 <i>x<sub>j</sub></i>=1의 solution density는 그 행의 모든 변수에 대해 <i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>, <i>x<sub>j</sub></i>=0은 '
+  '1−<i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>다; 규칙은 모든 행과 변수에 걸쳐 밀도가 최대인 변수–값 쌍을 취하고, 동률은 그 변수를 포함하는 행들의 밀도 합으로 깬다. <i>dom/wdeg</i>: 모든 자유 변수의 '
+  'domain 크기가 2이므로 규칙은 conflict 가중 차수의 최대로 환원된다; 원래 행마다 가중치(초기 0)가 있어 2~3단계의 bound check나 propagation이 그 행 때문에 node를 버릴 때마다 1씩 늘고, 변수의 점수는 '
+  '그 변수가 나타나는 행들의 (1+가중치) 합이며 반올림 LP 값을 먼저 시도한다. <i>impact</i>: node에서 모든 자유 변수와 두 값에 대해 값을 고정하고 propagation을 돌린다; 쌍의 impact는 1 더하기 '
+  'propagation이 고정하는 변수 수이고, 모순인 쌍은 반증된 것으로 기록해(LP probing처럼) 반대 값을 고정하며, 규칙은 impact 합이 최대인 변수로 분기하고 impact가 작은 값을 먼저 시도한다. <i>LP probing</i>: '
+  '모든 자유 변수와 두 값에 대해 그 값을 고정한 relaxation을 다시 풀고, relaxation이 infeasible한 값은 반증해 반대 값을 고정하며, 반증이 없으면 most-integral 선택으로 돌아간다. <i>uniform</i>: 자유 변수와 '
+  '값을 균등하게 뽑는다. <i>oracle</i>: 모든 node에서 CP-SAT로 <i>S</i>(<i>F</i>,<b>v</b>)를 열거하고 정확한 marginal에 규칙 (5)를 적용한다. <i>BP</i>: 정확한 cardinality-factor message를 prefix–suffix '
+  'convolution으로 계산하는 damped sum-product(damping 0.9, 허용오차 10<sup>−5</sup>, 최대 300회)이며 추정치에 규칙 (5)를 적용한다.', body_s)
+H1('부록 D. 타이밍 복제')
 TT('seeds', ['크기', 'arm', 'seed 0', 'seed 1', 'seed 2'], [1.8*cm, 2.2*cm, 3.0*cm, 3.0*cm, 3.0*cm],
    '표 A3. 평가 seed 셋에 걸친 학습 arm의 타이밍 복제(seed 0이 본문 표에 보고한 것): 해결 instance 수와 wall-clock 중앙값. 탐색은 relaxation vertex가 주어지면 결정적이므로 node 수는 '
    'seed 간에 동일하다.', right_from=2)
 P('node 수는 seed 불변이다; 표 A3은 학습 arm의 wall-clock을 평가 seed 두 개로 더 복제한다. 작은 두 크기의 seed 0 run은 더 가벼운 동시 부하에서 돈 seed 1, 2보다 20~30% 느리며, 본문의 비율은 전부 '
   'seed 0을 쓰므로 학습 arm에 보수적이다. 28×80에서 세 seed는 1% 안에서 일치한다.', body_s)
 
+H1('데이터와 코드 공개')
+P('instance 생성기, 학습·평가 코드, 학습된 network, 모든 표의 instance별 기록은 출판 시 공개 저장소에 공개한다.', body_s)
 H1('참고문헌')
 for r in sorted([
  'Hottung, A., Tanaka, S., and Tierney, K. (2020). Deep learning assisted heuristic tree search for the container pre-marshalling problem. <i>Computers & Operations Research</i>, 113:104781.',
