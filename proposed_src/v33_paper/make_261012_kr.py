@@ -164,7 +164,7 @@ P('<b>Market split, lattice 방법, complete solver.</b> Cornuéjols and Dawande
 P('<b>이 접근들이 BLS에 남겨 둔 것.</b> 우리 설정에 가장 가까운 세 learned-branching 계열은 feasibility 시스템으로 옮겨오면 각각 본질적인 무언가를 잃는다. <i>strong branching 모방</i>(Khalil '
   'et al., 2016; Gasse et al., 2019)은 목적함수를 전제한다: expert는 두 자식의 bound 개선으로 후보를 점수 매기는데 BLS에는 개선할 bound가 없다. feasibility 시스템에서 strong branching이 보유하는 '
   '유일한 정보는 자식의 relaxation이 infeasible한지 여부이므로 expert는 LP probing — 반증할 수 있는 것을 고정하고 LP 값으로 분기하는 규칙 — 으로 퇴화하며 node마다 자유 변수당 relaxation 하나를 '
-  '지불한다; 그것을 모방하면 비용 없이 순위를 물려받겠지만 그 순위가 tree를 최소화하는 순위인지는 열린 질문이고 5.4절이 답한다. <i>message passing에 의한 근사 marginal</i>(Li and Si, 2022; '
+  '지불한다; 그것을 모방하면 node당 비용 없이 순위를 물려받겠지만 학습된 모방이 expert의 tree를 유지하는지는 열어 두는 질문이며(6절), 우리가 시험하는 것은 expert 그 자체다. <i>message passing에 의한 근사 marginal</i>(Li and Si, 2022; '
   'Montanari et al., 2007)은 BLS에서 잘 정의된다: 각 행은 cardinality factor이고 정확한 factor message를 쓰는 sum-product는 구현 가능하다. 두 가지가 잘못된다. factor graph가 밀집해 모든 행이 '
   '변수의 약 3분의 1에 닿으므로 loopy belief propagation은 강한 damping이 필요하고 수렴하는 곳에서도 수백 번 반복한다; 그리고 NSNet식 사용법은 root에서 한 번 marginal을 추정해 incomplete '
   'local search용 배정을 decode하는 반면 complete search는 모든 node에서 partial assignment에 <b>조건부</b>인 marginal이 필요하다. <i>subtree 크기에 대한 from-scratch 강화학습</i>(Etheve et '
