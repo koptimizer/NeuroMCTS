@@ -1686,3 +1686,11 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 논문 갱신 (10/10 08:10): v35 Stage 1 단독·impact 24×70, v36 dense 프로파일(표 `tab:profile` 신설), 반증 구조 전표(전 arm), 그림 재생성(rq1_time 범례 이동, rq3(c)에 Stage 1·LP-probing 추가), BP 비용 문장을 dense forward 기준으로 정정. 17쪽, overfull 0, 남은 %TODO 2곳(impact 28×80). `runs/full_table.md`(v30_fulltable.py) 재생성.
 - KR 판 생성기 `proposed_src/v33_paper/make_261008_kr.py` → `docs/tex/261008_paper_kr.pdf`(23쪽, reportlab + Noto Sans KR). 표는 `tab/261008/*.tex`를 파싱해 자동 변환(`tex_rows`), 그림은 fig/261008 PNG 공유. 관련연구·3.2·4.2~4.4는 261001 KR 판 단락을 p=0.3·lattice 제거·FREE 용어로 수정해 재사용.
 - **v35 완료 (10:51) — 전체 실험 종료.** impact 28×80 100개 (p=0.3): 49/100 해결, 중앙 149,624 node / 357 s, PAR-2 1,428. 공통 49개 짝 비교: node 2.50× [1.69, 4.87] (p=0.0014), 시간 7.21× [4.97, 14.92] (43/49, p=6e-8). probing 비용 때문에 LP-probe와 같은 "시간 최악" 그룹이며 28×80에서는 해결률도 절반. 논문 표·그림·반증 표·KR 판 최종 재생성.
+
+## 261012 개정 (2026-10-12, 사용자 지시): `docs/tex/261012_paper.tex` (EN 18쪽) + `261012_paper_kr.pdf` (KR 22쪽), 이전 판 전부 `docs/tex/legacy/<날짜>/`로 이동
+- 제목 "Generalisable Learned Branching for Binary Linear Systems"(값 학습의 이득이 작다는 결과를 반영해 단순화; 대안은 보고에 제시).
+- 밀도 관련 서술 전부 삭제: 생성기 설명에서 "각 원소가 확률 0.3으로 1"만 남기고, 5.1의 sweep 단락·표(`tab:density`), RQ2의 sweep 문장, RQ3의 p=0.5 학습 policy 행·문장, 결론의 밀도 한계, 모든 표·그림 캡션의 "at p=0.3" 제거. 결론 한계는 "단일 instance 계열(심어진 0/1 market-split 구성)"로 대체.
+- 서론·관련연구에서 제안 방법(Stage 1/2) 언급 제거: 선행 세 계열이 남긴 것 → BLS 적용 시 한계 → 이를 보완하는 프레임워크를 4절에서 제시, 의 구조. 기여는 상위 수준으로만.
+- 표 강조: 기준 arm(Stage 1+2) 셀을 bold+밑줄(`\hl`)로. 생성기 `make_261012_tables.py`, `make_261012_figures.py`, `make_261012_kr.py`.
+- 그림 정리: node 대 시간 산점도(구 그림 7) 삭제, 스케일링 그림의 (c) 삭제, RQ3 그림은 교차 ablation 막대만(구 9a fine-tuning 곡선·9c 반증 산점도 삭제). 반증 구조 표는 `\small`로 확대, 부록 B에 열 정의와 세 가지 읽기 설명 추가. 프로파일 표의 "LP rule" 행을 "single-relaxation rule (LP rule)"로 명시.
+- COR 인용 5건 추가(전부 검증): Mazyavkina et al. 2021 (134:105400), Pryor & Chinneck 2011 (38(8):1143–1152), Hottung et al. 2020 (113:104781), Smit et al. 2025 (176:106914), Yan et al. 2025 (187:107339).

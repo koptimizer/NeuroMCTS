@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\caption{Per-node cost on the dense inference path: six instances per size, the whole tree of each rule instrumented (median over instances of milliseconds per node and of the share of node time spent in the warm-started relaxation and in the network forward pass; the remainder is reduction, propagation and bookkeeping). The single-relaxation row is the LP rule (most-integral branching); every single-relaxation classical rule in Table~\ref{tab:arms} shares its per-node cost because the score is free once the relaxation is solved. One forward pass costs $0.33$--$0.53$\,ms and grows with the number of free variables.}
+\label{tab:profile}
+\footnotesize
+\fitc{\begin{tabular}{llrrr}
+\toprule
+size & rule & ms / node & LP share & forward share \\
+\midrule
+$21\times60$ & single-relaxation rule (LP rule) & 0.47 & 90\% & 0\% \\
+$21\times60$ & Stage 1 & 0.67 & 64\% & 27\% \\
+$21\times60$ & \hl{Stage 1+2} & \hl{0.70} & 57\% & 32\% \\
+\addlinespace
+$24\times70$ & single-relaxation rule (LP rule) & 0.55 & 91\% & 0\% \\
+$24\times70$ & Stage 1 & 0.75 & 69\% & 23\% \\
+$24\times70$ & \hl{Stage 1+2} & \hl{0.73} & 62\% & 28\% \\
+\addlinespace
+$28\times80$ & single-relaxation rule (LP rule) & 0.61 & 92\% & 0\% \\
+$28\times80$ & Stage 1 & 0.86 & 69\% & 23\% \\
+$28\times80$ & \hl{Stage 1+2} & \hl{0.82} & 62\% & 29\% \\
+\bottomrule
+\end{tabular}}
+\end{table}

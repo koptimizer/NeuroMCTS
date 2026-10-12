@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\caption{Value $\times$ variable cross ablation: each arm combines one variable-selection score with one first-value rule; everything else is identical. Columns per size: median nodes and the median per-instance node ratio to Stage~1+2 with bootstrap interval and sign-test $p$-value.}
+\label{tab:cross}
+\scriptsize
+\begin{tabular}{lrlrlrl}
+\toprule
+ & \multicolumn{2}{c}{$21\times60$ (100)} & \multicolumn{2}{c}{$24\times70$ (100)} & \multicolumn{2}{c}{$28\times80$ (100)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+variable, value & nodes & ratio & nodes & ratio & nodes & ratio \\
+\midrule
+LP var., LP value (LP rule) & 7,762 & 23.90$\times$ [15.11, 37.29] $10^{-25}$ & 95,440 & 37.74$\times$ [27.17, 66.01] $8\cdot10^{-27}$ & 1,029,039 & 19.25$\times$ [13.83, 27.87] $10^{-9}$ \\
+LP var., S1 value & 9,810 & 27.87$\times$ [19.53, 36.44] $10^{-21}$ & 69,872 & 39.45$\times$ [20.99, 58.92] $10^{-21}$ & 647,145 & 16.32$\times$ [6.86, 23.92] $9\cdot10^{-5}$ \\
+S1 var., S1 value (Stage 1) & 628 & 2.32$\times$ [1.08, 3.25] $0.01$ & 8,174 & 3.17$\times$ [2.32, 4.40] $10^{-6}$ & 212,271 & 5.01$\times$ [3.01, 6.62] $9\cdot10^{-11}$ \\
+S1 var., LP value & 956 & 2.84$\times$ [1.77, 3.75] $5\cdot10^{-6}$ & 6,998 & 3.28$\times$ [2.56, 4.22] $6\cdot10^{-7}$ & 278,175 & 5.85$\times$ [4.04, 8.77] $5\cdot10^{-12}$ \\
+S2 var., S1 value (Stage 1+2) & 325 & --- & 2,580 & --- & 58,026 & --- \\
+S2 var., LP value & 292 & 0.79$\times$ [0.60, 1.04] $0.09$ & 2,348 & 1.19$\times$ [0.91, 1.66] $0.27$ & 69,665 & 1.41$\times$ [1.03, 1.86] $0.09$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

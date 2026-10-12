@@ -1,0 +1,32 @@
+\begin{table}[t]
+\centering
+\caption{End to end, same instances and budgets, single-threaded: complete solvers with all defaults, lattice reduction with bounded enumeration, and the learned search. Median time over solved instances and PAR-2; node counts are not comparable across engines and are omitted.}
+\label{tab:e2e}
+\footnotesize
+\fitc{\begin{tabular}{lrrr}
+\toprule
+method & solved & med.\ s & PAR-2 s \\
+\midrule
+\multicolumn{4}{l}{\emph{$21\times60$ (100)}} \\
+SCIP (all defaults) & 100/100 & 0.35 & 0.5 \\
+CP-SAT (1 worker) & 100/100 & 0.04 & 0.1 \\
+Gurobi (1 thread) & 100/100 & 0.04 & 0.1 \\
+BKZ-40 $\times$ 30 + enumeration & 100/100 & 0.20 & 0.4 \\
+\textbf{\underline{Stage 1+2 (our loop)}} & 100/100 & \textbf{\underline{0.36}} & 0.6 \\
+\midrule
+\multicolumn{4}{l}{\emph{$24\times70$ (100)}} \\
+SCIP (all defaults) & 100/100 & 2.33 & 2.5 \\
+CP-SAT (1 worker) & 100/100 & 0.36 & 0.6 \\
+Gurobi (1 thread) & 100/100 & 0.31 & 0.4 \\
+BKZ-40 $\times$ 30 + enumeration & 100/100 & 13.20 & 11.5 \\
+\textbf{\underline{Stage 1+2 (our loop)}} & 100/100 & \textbf{\underline{2.39}} & 3.6 \\
+\midrule
+\multicolumn{4}{l}{\emph{$28\times80$ (100)}} \\
+SCIP (all defaults) & 100/100 & 16.47 & 21.1 \\
+CP-SAT (1 worker) & 100/100 & 12.24 & 39.8 \\
+Gurobi (1 thread) & 100/100 & 6.61 & 9.8 \\
+BKZ-40 $\times$ 30 + enumeration & 100/100 & 124.90 & 117.7 \\
+\textbf{\underline{Stage 1+2 (our loop)}} & 100/100 & \textbf{\underline{46.61}} & 74.5 \\
+\bottomrule
+\end{tabular}}
+\end{table}
