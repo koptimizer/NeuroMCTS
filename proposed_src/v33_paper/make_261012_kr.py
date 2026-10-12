@@ -88,7 +88,7 @@ P('Binary Linear System을 위한 일반화 가능한 학습된 branching', titl
 P('Generalisable Learned Branching for Binary Linear Systems<br/>'
   'Gwang-Jong Ko, Taesu Cheong*, In-Chan Choi* · School of Industrial and Management Engineering, Korea University · 2026-10-12 · 한국어판', meta_s)
 H1('초록')
-P('Binary linear system(BLS)은 0/1 행렬 <i>A</i>에 대해 <i>A</i><b>x</b>=<b>b</b>를 만족하는 <b>x</b>∈{0,1}<sup><i>n</i></sup>를 찾는 문제다. 목적함수가 없고 linear relaxation은 넓고 무정보하며 '
+P('Binary linear system(BLS)은 0/1 행렬 <i>A</i>에 대해 <i>A</i><b>x</b>=<b>b</b>를 만족하는 vector <b>x</b>∈{0,1}<sup><i>n</i></sup>를 찾는 문제다; 우리는 해가 존재하고 그것을 내놓아야 하는 해 찾기 버전을 다룬다. 목적함수가 없고 linear relaxation은 넓고 무정보하며 '
   'unit propagation은 root 근처에서 작동하지 않으므로, complete depth-first search의 성패는 branching 선택이 결정한다. 학습된 branching은 mixed-integer program과 SAT를 위해 개발됐고, '
   '우리는 그 세 주요 계열이 BLS로 옮겨오면 각각 무언가를 잃음을 보인다: strong branching 모방은 개선할 bound가 없어 LP probing으로 퇴화하고, message-passing marginal은 밀집 factor graph에서 '
   'node당 forward pass 천 번의 비용이 들며, from-scratch 강화학습은 문제가 정확히 제공하는 값 순서를 스스로 발견해야 한다. 본 논문은 두 개의 정확한 신호로 두 단계에 걸쳐 학습한 branching 규칙을 '
@@ -105,10 +105,10 @@ P('<b>키워드</b>: Binary linear systems · Learning to branch · Exact condit
 
 # ═══════════════ 1 ═══════════════
 H1('1. 서론')
-P('Binary linear system(BLS)은 feasibility 문제', body_s)
+P('Binary linear system(BLS)은 해를 찾는 문제', body_s)
 EQ('find <b>x</b>∈{0,1}<sup><i>n</i></sup> such that <i>A</i><b>x</b>=<b>b</b>, &nbsp;<i>A</i>∈{0,1}<sup><i>m</i>×<i>n</i></sup>, <b>b</b>∈Z<sup><i>m</i></sup><sub>≥0</sub> &nbsp;&nbsp;(1)')
 P('이며 해집합을 <i>S</i>로 쓴다. 레이저 기반 비파괴검사에서 이진 점유 영상이 정수 투영 집합을 정확히 재현해야 하는 복원 과제의 일반형이다: 스캔 대상은 존재하므로 해가 존재하고 '
-  '유일하지 않은 경우가 흔하며, 복원은 생산 라인의 속도를 따라가야 한다. 중요한 instance는 우변이 각 행 범위의 한가운데 근처에 있으며, 크기에 비해 어렵다.', body_s)
+  '유일하지 않은 경우가 흔하며, 복원은 생산 라인의 속도를 따라가야 한다. 본 논문 전체에서 instance에는 항상 해가 있고 과제는 그 해를 내놓는 것이다; 시스템이 infeasible한지 판정하는 것은 범위 밖이다(3.1절). 중요한 instance는 우변이 각 행 범위의 한가운데 근처에 있으며, 크기에 비해 어렵다.', body_s)
 P('이런 instance에서는 세 가지 성질이 표준 도구를 무력하게 만든다. 목적함수가 없으므로 branch-and-bound의 bound 기반 가지치기가 기댈 것이 없다. linear relaxation은 항상 '
   'feasible하지만 정보가 적다: relaxation polytope가 넓고 그 vertex가 {0,1}<sup><i>n</i></sup>에서 멀어, vertex를 반올림해도 root에서 변수 값을 우연보다 조금 나은 정도로만 맞힌다. '
   'constraint solver의 주력인 unit propagation은 행이 포화될 때만 발동하는데 root에서는 결코, 그 근처에서도 거의 일어나지 않는다. 이 계열의 고전적 처방인 enumeration을 갖춘 lattice basis '
@@ -407,8 +407,8 @@ TT('rq4_scip', ['conflict', '규칙', '해결', 'node 중앙값', '초 중앙값
 P('<b>SCIP 안의 branching 규칙으로.</b> 학습 규칙은 축소 instance와 그 relaxation vertex의 함수이므로 MIP solver의 branching 규칙으로 설치할 수 있다. 우리는 PySCIPOpt branching plug-in으로 '
   '구현하고 SCIP(Bestuzheva et al., 2021)를 같은 instance에서 presolve·cutting plane·primal heuristic을 끄고 depth-first node 선택과 첫 해에서의 정지로 돌려, SCIP의 탐색이 우리 루프가 하는 것과 '
   '같되 propagation과 LP만 SCIP의 것이 되게 했다; 우리 루프에 없는 conflict analysis는 끄고 켜서 모두 돌린다. 비교 대상은 reliability pseudocost branching(RPB; SCIP 기본값이자 learning-to-branch '
-  '문헌이 모방하는 규칙, Achterberg et al., 2005), SCIP의 most-fractional 규칙, inference 규칙이다. 표 6은 node 우위가 엔진 교체와 clause learning 추가를 견딤을 보인다: 100개 세트에서 plug-in은 '
-  'conflict analysis off/on 모두 모든 크기에서 RPB보다 node를 1.9~3.8배 적게 쓰고(sign test 전부 <i>p</i>≤3×10<sup>−5</sup>) SCIP의 most-fractional·inference 규칙보다 1.7~4.0배 적게 쓴다. 시간은 RPB와는 '
+  '문헌이 모방하는 규칙, Achterberg et al., 2005), SCIP의 most-fractional 규칙, inference 규칙이다. conflict analysis는 SCIP의 clause learning이다: node가 relaxation이나 propagation으로 infeasible로 판정되면 solver는 dual ray나 propagation 이유에서 함께 성립할 수 없는 bound 변경의 최소 집합을 추출해 전역 conflict constraint로 더하고, 이후 같은 조합에 이르는 모든 subtree는 탐색 없이 잘린다. 우리 루프에는 그런 장치가 없으므로 끄고 켜서 모두 돌린다. 표 6은 node 우위가 엔진 교체와 clause learning 추가를 견딤을 보인다: 100개 세트에서 plug-in은 '
+  'conflict analysis off/on 모두 모든 크기에서 RPB보다 node를 1.9~3.8배 적게 쓰고(sign test 전부 <i>p</i>≤3×10<sup>−5</sup>) SCIP의 most-fractional·inference 규칙보다 1.7~4.0배 적게 쓴다. clause learning은 두 규칙을 불균등하게 돕는다: 켜면 RPB는 24×70에서 22%, 28×80에서 34% 적은 node를 쓰고 plug-in은 6%와 3%만 줄어, RPB 대비 node 비율은 3.5~3.8배에서 1.9~3.1배로 줄되 유의하게 남는다. 틀린 값을 이미 얕고 싸게 반증하는 규칙은 다른 곳에서 재사용할 긴 conflict를 적게 만들고, bound 중심 규칙은 conflict constraint가 잘라낼 것을 더 남긴다는 읽기다. 시간은 RPB와는 '
   '동률, 가장 싼 규칙에는 패배다: forward pass가 branching callback의 60~80%라 tree가 수백 node인 21×60에서 plug-in은 모든 SCIP 규칙보다 3배 느린 반면, 24×70과 28×80에서는 conflict analysis '
   'off/on 모두 중앙 시간이 RPB의 0.8~1.1배 안에 있고(짝 차이 어느 것도 비유의) SCIP most-fractional 규칙에는 0.66~0.86배로 뒤진다(<i>p</i>=0.02~0.06). 따라서 solver 안에서 RQ1의 답은 갈린다: '
   '학습 규칙은 모든 크기에서 tree 크기로는 더 나은 branching 규칙이고, tree가 forward pass를 상각할 만큼 크면 solver 기본 규칙과 시간이 같으며, 가장 싼 규칙을 시간에서 이기지는 못한다.', body_s)
@@ -418,7 +418,7 @@ TT('rq4_e2e', ['방법', '해결', '초 중앙값', 'PAR-2 s'], [5.2*cm, 2.0*cm,
 P('<b>End-to-end.</b> 표 7은 학습 탐색을 기본 설정의 complete solver(thread 하나의 Gurobi, Gurobi Optimization, 2024; worker 하나의 CP-SAT, Perron and Didier, 2023; presolve·cut·heuristic·conflict '
   'analysis·RPB를 갖춘 SCIP)와 bounded enumeration을 갖춘 lattice reduction(BKZ block 40, 열 순열 30개, 300 s 캡의 fpylll enumeration, FPLLL team, 2023) 옆에 같은 instance와 예산으로 놓는다. '
   '모든 방법이 모든 instance를 푼다. Gurobi가 모든 크기에서 가장 빠르고(<i>n</i>=60, 70, 80에서 중앙 0.05, 0.31, 6.6 s) CP-SAT가 그 다음이며(0.04, 0.36, 12.2 s; 28×80에서 꼬리가 무겁다), 기본 설정 '
-  'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). lattice enumeration은 21×60 세트를 instance당 0.2 s에 풀지만 비용이 탐색보다 빠르게 커진다: 24×70에서 '
+  'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). 두 MIP solver 사이의 2.5~8배 격차는 우리 설정 탓이 아니다: 둘 다 thread 하나에서 기본 설정으로 돌며, 차이는 탐색이 빨리 닫히는 instance에서 효과를 보는 Gurobi의 presolve와 simplex에서 온다; 표 6의 plug-in 비교는 presolve와 cut을 끈 SCIP라 다른 측정이다. lattice enumeration은 21×60 세트를 instance당 0.2 s에 풀지만 비용이 탐색보다 빠르게 커진다: 24×70에서 '
   '13.2 s, 28×80에서 125 s로 학습 탐색보다 5.5배와 2.7배 느리다. 두 가지가 동시에 참이다. 학습 탐색은 이 instance를 푸는 가장 빠른 방법이 아니다: 상용 MIP solver와 presolve·clause learning을 '
   '갖춘 CP-SAT solver는 <i>n</i>≤70에서 한두 자릿수, <i>n</i>=80에서 4~7배 앞서고 SCIP는 가장 큰 크기에서 앞선다. 그리고 그것은 branching 질문과 무관하다: branching 결정을 분리하는 비교는 표 2가며, '
   'SCIP 안에서 결정 품질은 그대로 옮겨지고 node당 비용은 그렇지 않다. 정직한 요약은 본 논문이 자기 루프와 SCIP 안에서 branching 규칙을 개선하지만 그 자체로 더 빠른 solver를 만들지는 않는다는 '
