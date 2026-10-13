@@ -444,11 +444,11 @@ H3('End-to-end')
 P('표 7은 학습 탐색을 기본 설정의 complete solver(thread 하나의 Gurobi, Gurobi Optimization, 2024; worker 하나의 CP-SAT, Perron and Didier, 2023; presolve·cut·heuristic·conflict '
   'analysis·RPB를 갖춘 SCIP)와 bounded enumeration을 갖춘 lattice reduction(BKZ block 40, 열 순열 30개, 300 s 캡의 fpylll enumeration, FPLLL team, 2023) 옆에 같은 instance와 예산으로 놓는다. '
   '모든 방법이 모든 instance를 푼다. Gurobi가 모든 크기에서 가장 빠르고(<i>n</i>=60, 70, 80에서 중앙 0.05, 0.31, 6.6 s) CP-SAT가 그 다음이며(0.04, 0.36, 12.2 s; 28×80에서 꼬리가 무겁다), 기본 설정 '
-  'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). 두 MIP solver 사이의 2.5~8배 격차는 우리 설정 탓이 아니다: 둘 다 thread 하나에서 기본 설정으로 돌며, 차이는 탐색이 빨리 닫히는 instance에서 효과를 보는 Gurobi의 presolve와 simplex에서 온다; 표 6의 plug-in 비교는 presolve와 cut을 끈 SCIP라 다른 측정이다. lattice enumeration은 21×60 세트를 instance당 0.2 s에 풀지만 비용이 탐색보다 빠르게 커진다: 24×70에서 '
+  'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). 두 MIP solver 사이의 2.5~8배 격차는 우리 설정 탓이 아니다: 둘 다 thread 하나에서 기본 설정으로 돌며, 차이는 탐색이 빨리 닫히는 instance에서 효과를 보는 LP 엔진과 탐색 구현에서 온다(SCIP 자체 통계에서 presolve와 primal heuristic은 이 instance에서 아무것도 찾지 못한다); 표 6의 plug-in 비교는 presolve와 cut을 끈 SCIP라 다른 측정이다. lattice enumeration은 21×60 세트를 instance당 0.2 s에 풀지만 비용이 탐색보다 빠르게 커진다: 24×70에서 '
   '13.2 s, 28×80에서 125 s로 학습 탐색보다 5.5배와 2.7배 느리다. 두 가지가 동시에 참이다. 학습 탐색은 이 instance를 푸는 가장 빠른 방법이 아니다: 상용 MIP solver와 presolve·clause learning을 '
   '갖춘 CP-SAT solver는 <i>n</i>≤70에서 한두 자릿수, <i>n</i>=80에서 4~7배 앞서고 SCIP는 가장 큰 크기에서 앞선다. 그리고 그것은 branching 질문과 무관하다: branching 결정을 분리하는 비교는 표 2가며, '
   'SCIP 안에서 결정 품질은 그대로 옮겨지고 node당 비용은 그렇지 않다. 정직한 요약은 본 논문이 자기 루프와 SCIP 안에서 branching 규칙을 개선하지만 그 자체로 더 빠른 solver를 만들지는 않는다는 '
-  '것이다; solver와의 격차는 presolve, clause learning, compiled node이고 학습 규칙은 그 어느 것도 다루지 않는다.', body_s)
+  '것이다; solver와의 격차는 clause learning과 compiled node이고 학습 규칙은 그 어느 것도 다루지 않는다.', body_s)
 
 # ═══════════════ 6 ═══════════════
 H1('6. 결론')
