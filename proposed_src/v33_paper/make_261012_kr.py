@@ -92,11 +92,11 @@ P('Binary linear system(BLS)은 0/1 행렬 <i>A</i>에 대해 <i>A</i><b>x</b>=<
   'unit propagation은 root 근처에서 작동하지 않으므로, complete depth-first search의 성패는 branching 선택이 결정한다. 학습된 branching은 mixed-integer program과 SAT를 위해 개발됐고, '
   '우리는 그 세 주요 계열이 BLS로 옮겨오면 각각 무언가를 잃음을 보인다: strong branching 모방은 개선할 bound가 없어 LP probing으로 퇴화하고, message-passing marginal은 밀집 factor graph에서 '
   'node당 network forward pass의 두 자릿수 배 비용이 들며, from-scratch 강화학습은 문제가 정확히 제공하는 값 순서를 스스로 발견해야 한다. 본 논문은 두 개의 정확한 신호로 두 단계에 걸쳐 학습한 branching 규칙을 '
-  '제시한다. <b>Stage 1</b>은 <b>어느 값</b>을 먼저 시도할지 배운다: 열거 가능한 instance에서 각 자유 변수의 conditional marginal은 정확하고, BLS를 partial assignment로 conditioning하는 것은 '
-  '축소하는 것과 같으므로 축소 instance로 학습한 graph network 하나가 모든 node에서 예측한다. <b>Stage 2</b>는 <b>어느 변수</b>로 분기할지 배운다: 결정의 subtree가 전개하는 node 수는 탐색이 '
+  '제시한다. <b>Stage 1</b>은 <b>어느 값</b>을 먼저 시도할지 배운다. 열거 가능한 instance에서 각 자유 변수의 conditional marginal은 정확하고, BLS를 partial assignment로 conditioning하는 것은 '
+  '축소하는 것과 같으므로 축소 instance로 학습한 graph network 하나가 모든 node에서 예측한다. <b>Stage 2</b>는 <b>어느 변수</b>로 분기할지 배운다. 결정의 subtree가 전개하는 node 수는 탐색이 '
   '정확히 산출하며, Stage 1 규칙에서 출발해 network를 동결한 채 그 비용으로 actor-critic fine-tuning하면 branching 순서만 바뀐다. 고전 규칙 7종(most-integral·most-fractional LP branching, maxSD '
   'counting, dom/wdeg, impact, 전수 LP probing, uniform)과 참조 신호 2종(정확한 marginal, belief propagation)을 같은 탐색 루프에서, 세 크기 100개 세트로 평가한다. 학습 규칙은 모든 '
-  '크기에서 단일 relaxation 규칙 전부보다 node를 적게 쓰고(가장 강한 규칙 대비 1.5~3.2배, sign test <i>p</i>≤0.035), 28×80에서는 시간도 전부보다 빠르다(2.0~3.1배, <i>p</i>≤0.002); LP probing만이 '
+  '크기에서 단일 relaxation 규칙 전부보다 node를 적게 쓰고(가장 강한 규칙 대비 1.5~3.2배, sign test <i>p</i>≤0.035), 28×80에서는 시간도 전부보다 빠르다(2.0~3.1배, <i>p</i>≤0.002). LP probing만이 '
   'node를 더 적게 쓰되 5~8배의 시간이 든다. <i>n</i>≤60에서 학습한 규칙은 <i>n</i>=70, 80에서 우위를 유지하고 그 우위는 크기와 함께 커진다. 값×변수 교차 ablation은 이득이 변수 선택에 '
   '있음을 보인다: 비용 조정 변수에 LP 반올림 값을 붙이면 전체 규칙과 같고, LP 변수에 정확한 marginal 값을 붙이면 28배 나쁘다. SCIP에 branching 규칙으로 꽂으면 policy는 conflict analysis '
   'on/off 모두에서 reliability pseudocost branching보다 node를 1.9~3.8배 적게 쓰고 큰 두 크기에서 시간은 동률이며, presolve와 clause learning을 갖춘 complete solver는 end-to-end에서 여전히 '
@@ -344,112 +344,113 @@ TT('rq1_main', ['규칙', '해결', 'node 중앙값', '초 중앙값', 'PAR-2 s'
 IMG('rq1_nodes', W, '그림 6. 세 100개 세트에서 해에 도달하기까지의 node 수, 규칙마다 instance를 따로 정렬; 다른 곡선 아래의 곡선은 모든 분위에서 더 작은 tree다. node마다 자유 변수당 '
     'relaxation 하나를 쓰는 LP probing만이 학습 규칙 아래에 있다.')
 H3('Tree 크기')
-P('표 2와 그림 6이 주 결과다. 세 크기 각각에서 학습 규칙은 단일 relaxation 고전 규칙 전부보다 node를 적게 쓰고 짝 검정은 그 전부에 대해 유의하다: 크기별 최강의 싼 규칙(21×60과 '
-  '24×70에서 dom/wdeg, 28×80에서 maxSD) 대비 instance별 비율 중앙값은 1.52배(<i>p</i>=0.035), 1.79배(<i>p</i>=0.035), 3.20배(<i>p</i>=10<sup>−9</sup>); pseudocost가 없을 때 MIP solver가 쓰는 '
-  'most-fractional branching 대비 2.27배, 3.67배, 3.98배(<i>p</i>≤2×10<sup>−4</sup>); most-integral LP rule 대비 작은 두 크기에서 24배와 38배이고, 28×80에서 그 규칙은 100개 중 40개만 예산 안에 '
-  '풀며 그 위에서 19배 많은 node를 쓴다(PAR-2 1,688 대 75 s). 이득은 분포적이지 보편적이지 않다: 학습 규칙은 싼 규칙들에 대해 100개 중 61~80개에서 이기고 나머지에서 진다. 더 작은 tree를 만드는 '
-  '유일한 규칙은 LP probing으로, 푸는 instance에서 2.7~2.9배이며 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 '
-  '많고, node당 relaxation |<i>K</i>|개를 지불한다. Stage 1 단독(비용 조정 순서 없는 marginal 규칙)은 세 크기에서 전체 규칙보다 node를 2.3배, 3.2배, 5.0배 더 쓰고(짝 중앙값), 그 자체로는 '
-  '21×60과 24×70 모두에서 LP rule보다 약 12배 아래이며, 21×60에서 싼 고전 규칙과 동급이고 24×70부터는 그 뒤이며 28×80 instance 10개를 풀지 못한다: marginal만으로는 경쟁력 있는 값 신호이자 평범한 '
-  '변수 점수이고, 규칙을 앞서게 하는 것은 비용 조정 순서다.', body_s)
-TT('profile', ['크기', '규칙', 'ms / node', 'LP 비중', 'forward 비중'], [1.8*cm, 2.4*cm, 1.8*cm, 1.6*cm, 1.9*cm],
-   '표 3. dense 추론 경로의 node당 비용(단일 relaxation 행은 LP rule, 즉 most-integral branching이며 표 1의 모든 단일 relaxation 고전 규칙이 같은 node당 비용을 가진다): 크기당 instance 6개, 각 규칙의 전체 tree를 계측(node당 ms와 warm-start relaxation·network forward pass가 차지하는 node 시간 비중의 instance 간 '
-   '중앙값; 나머지는 축소·propagation·장부 처리). forward pass 한 번은 0.33~0.53 ms이며 자유 변수 수에 따라 커진다.', right_from=2)
+P('표 2와 그림 6이 주 결과다. 세 크기 각각에서 학습 규칙은 단일 relaxation 고전 규칙 전부보다 node를 적게 쓰고, 짝 검정은 그 전부에 대해 유의하다. 크기별 최강의 싼 규칙(21×60과 '
+  '24×70에서 dom/wdeg, 28×80에서 maxSD) 대비 instance별 비율 중앙값은 1.52배(<i>p</i>=0.035), 1.79배(<i>p</i>=0.035), 3.20배(<i>p</i>=10<sup>−9</sup>)다. pseudocost가 없을 때 MIP solver가 쓰는 '
+  'most-fractional branching 대비로는 2.27배, 3.67배, 3.98배(<i>p</i>≤2×10<sup>−4</sup>)다. most-integral LP rule 대비로는 작은 두 크기에서 24배와 38배이고, 28×80에서 그 규칙은 100개 중 40개만 예산 안에 '
+  '풀며 그 위에서 19배 많은 node를 쓴다(PAR-2 1,688 대 75 s).', body_s)
+P('이득은 분포적이지 보편적이지 않다: 학습 규칙은 싼 규칙들에 대해 100개 중 61~80개에서 이기고 나머지에서 진다. 더 작은 tree를 만드는 유일한 규칙은 LP probing으로, 푸는 instance에서 2.7~2.9배다. '
+  '이것은 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 많고, 그 대가로 node당 relaxation |<i>K</i>|개를 지불한다. Stage 1 '
+  '단독(비용 조정 순서 없는 marginal 규칙)은 세 크기에서 전체 규칙보다 node를 2.3배, 3.2배, 5.0배 더 쓴다(짝 중앙값). 그 자체로는 21×60과 24×70 모두에서 LP rule보다 약 12배 아래이고, 21×60에서 싼 '
+  '고전 규칙과 동급, 24×70부터는 그 뒤이며, 28×80 instance 10개를 풀지 못한다. 따라서 marginal만으로는 경쟁력 있는 값 신호이자 평범한 변수 점수이고, 규칙을 앞서게 하는 것은 비용 조정 순서다.', body_s)
 H3('Wall-clock')
-P('작은 tree는 node당 비용이 허락할 때만 시간을 사며, 표 3이 전체 tree를 계측해 그 비용을 잰다. 단일 relaxation 규칙의 node는 세 크기에서 0.47, 0.55, 0.61 ms이고 그 90%가 '
-  'warm-start relaxation이다; 학습 규칙의 node는 0.71, 0.73, 0.82 ms이며 forward pass가 28~32%, relaxation이 57~62%다. 따라서 overhead 비율은 <i>n</i>=60에서 1.5배, <i>n</i>=70, 80에서 1.3배인데 '
-  'forward pass가 relaxation보다 크기에 따라 느리게 커지기 때문이고, 그동안 node 우위는 1.5배에서 3.2배로 오르며 wall-clock이 그 뒤를 따른다(표 2). 21×60에서 학습 규칙은 most-fractional·'
-  'maxSD branching과 같은 속도이고 dom/wdeg보다 느리다(0.83배, <i>p</i>=0.021); 24×70에서는 most-fractional(2.4배, <i>p</i>=4×10<sup>−4</sup>)과 maxSD(1.5배, <i>p</i>=0.004)보다 빠르고 dom/wdeg와 '
-  '동률이다; 28×80에서는 전부보다 3.1배, 2.4배, 2.0배 빠르고(<i>p</i>≤0.002), most-fractional 99개·uniform 91개 대비 100/100을 풀며 PAR-2가 가장 낮다. LP probing은 node당 relaxation을 자유 변수당 '
-  '하나씩 13~18 ms 지불하여 더 작은 tree에도 세 크기에서 학습 규칙보다 5~8배 느리고, 28×80에서 instance 22개를 풀지 못한다(PAR-2 820 대 75 s). 역시 probing하는 impact-based search는 21×60에서 '
-  '7배, 24×70에서 19배 느리면서 node를 6~9배 쓴다(짝 중앙값). 작은 두 크기(10×25, 18×50; 30개, tree 14~120 node)에서는 모든 규칙이 수백분의 1초 안에 있고 학습 규칙은 10×25에서 가장 느린데 '
-  '14-node tree는 forward pass 14번을 상각할 수 없기 때문이다; 이 크기들은 부록 A에 보고하며 질문이 결정되는 곳이 아니다.', body_s)
+P('작은 tree는 node당 비용이 허락할 때만 시간을 사며, 표 3이 전체 tree를 계측해 그 비용을 잰다. 단일 relaxation 규칙의 node는 세 크기에서 0.47, 0.55, 0.61 ms이고 그 90%가 warm-start '
+  'relaxation이다. 학습 규칙의 node는 0.71, 0.73, 0.82 ms이며 forward pass가 28~32%, relaxation이 57~62%다. 따라서 overhead 비율은 <i>n</i>=60에서 1.5배, <i>n</i>=70, 80에서 1.3배인데 forward pass가 '
+  'relaxation보다 크기에 따라 느리게 커지기 때문이고, 그동안 node 우위는 1.5배에서 3.2배로 오르며 wall-clock이 그 뒤를 따른다(표 2). 21×60에서 학습 규칙은 most-fractional·maxSD branching과 같은 '
+  '속도이고 dom/wdeg보다 느리다(0.83배, <i>p</i>=0.021). 24×70에서는 most-fractional(2.4배, <i>p</i>=4×10<sup>−4</sup>)과 maxSD(1.5배, <i>p</i>=0.004)보다 빠르고 dom/wdeg와 동률이다. 28×80에서는 전부보다 '
+  '3.1배, 2.4배, 2.0배 빠르고(<i>p</i>≤0.002), most-fractional 99개·uniform 91개 대비 100/100을 풀며, PAR-2가 가장 낮다. LP probing은 node당 relaxation을 자유 변수당 하나씩 13~18 ms 지불하여 더 작은 '
+  'tree에도 세 크기에서 학습 규칙보다 5~8배 느리고, 28×80에서 instance 22개를 풀지 못한다(PAR-2 820 대 75 s). 역시 probing하는 impact-based search는 21×60에서 7배, 24×70에서 19배 느리면서 node를 '
+  '6~9배 쓰고(짝 중앙값), 28×80에서는 49/100을 푼다(PAR-2 1,428 s).', body_s)
+P('작은 두 크기(10×25, 18×50; 30개, tree 14~120 node)에서는 모든 규칙이 수백분의 1초 안에 있다. 학습 규칙은 10×25에서 가장 느린데, 14-node tree는 forward pass 14번을 상각할 수 없기 때문이다. 이 '
+  '크기들은 부록 A에 보고하며 질문이 결정되는 곳이 아니다.', body_s)
 H3('참조 신호')
-P('표 1의 두 규칙은 배포 불가능하며 값 신호가 할 수 있는 것의 상한이다. 모든 node에서 <i>S</i>(<i>F</i>,<b>v</b>)를 열거하고 가장 확신하는 정확한 marginal로 분기하는 '
-  'oracle은 10×25에서 node 22개를 쓰며 Stage 1 network 21개, 비용 조정 규칙 14개, dom/wdeg 15.5개와 비교된다: 확신도 규칙 아래의 정확한 값 신호는 학습된 근사보다 나을 것이 없고 고전적 변수 '
-  '점수보다 나쁘므로, 남은 여지는 Stage 2가 다루는 변수 선택에 있다. NSNet 전이형인 belief-propagation marginal은 18×50에서 Stage 1과 같은 크기의 tree(118 대 116 node)를 추정 한 번에 35 ms, '
-  'dense forward pass 0.3~0.5 ms의 비용으로 만들어 학습 규칙 wall-clock의 50배다; marginal network는 이 신호를 훨씬 싼 값에, 그리고 이 비용의 message passing으로는 불가능한 node당 한 번씩 '
-  '돌리는 것이다. NSNet 자체의 marginal 사용법, 즉 root 추정 하나를 incomplete local search의 초기 배정으로 decode하는 방식도 돌렸다: 잔차 ||<i>A</i><b>x</b>−<b>b</b>||<sub>1</sub>에 대한 '
-  'WalkSAT식 탐색은 21×60의 100개를 전부 1.2~1.5 s에 풀어 학습 탐색의 3~4배 시간이 들며, 초기 배정이 marginal network·LP 반올림·균등 추출 어느 것에서 오든 같은 시간이 걸리므로 이 크기에서 '
-  'marginal은 local search에 아무것도 사 주지 않고 비교는 신호의 두 사용법이 아니라 두 탐색 사이의 것이다.', body_s)
-
+P('표 1의 두 규칙은 배포 불가능하며 값 신호가 할 수 있는 것의 상한이다. oracle은 모든 node에서 <i>S</i>(<i>F</i>,<b>v</b>)를 열거하고 가장 확신하는 정확한 marginal로 분기한다. 10×25에서 node '
+  '22개를 쓰며, Stage 1 network 21개, 비용 조정 규칙 14개, dom/wdeg 15.5개와 비교된다. 따라서 확신도 규칙 아래의 정확한 값 신호는 학습된 근사보다 나을 것이 없고 고전적 변수 점수보다 나쁘므로, 남은 '
+  '여지는 Stage 2가 다루는 변수 선택에 있다. NSNet 전이형인 belief-propagation marginal은 18×50에서 Stage 1과 같은 크기의 tree(118 대 116 node)를 만들지만, 추정 한 번이 35 ms로 dense forward pass '
+  '0.3~0.5 ms에 비해 비싸서 wall-clock으로는 학습 규칙의 50배다. marginal network는 이 신호를 훨씬 싼 값에 node당 한 번씩 돌리는 것이고, 이 비용의 message passing으로는 그렇게 할 수 없다. NSNet '
+  '자체의 marginal 사용법, 즉 root 추정 하나를 incomplete local search의 초기 배정으로 decode하는 방식도 돌렸다. 잔차 ||<i>A</i><b>x</b>−<b>b</b>||<sub>1</sub>에 대한 WalkSAT식 탐색은 21×60의 100개를 '
+  '전부 1.2~1.5 s에 풀어 학습 탐색의 3~4배 시간이 든다. 초기 배정이 marginal network·LP 반올림·균등 추출 어느 것에서 오든 같은 시간이 걸린다. 이 크기에서 marginal은 local search에 아무것도 사 주지 '
+  '않고, 비교는 신호의 두 사용법이 아니라 두 탐색 사이의 것이다.', body_s)
 H2('5.3 RQ2: 더 큰 instance로의 일반화')
 IMG('rq2_scaling', 0.72 * W, '그림 7. 크기에 따른 스케일링. (a) 규칙별 node 중앙값과 (b) wall-clock 중앙값(<i>n</i>=25, 50은 30개; <i>n</i>=60, 70, 80은 100개). Stage 1은 <i>n</i>=25, Stage 2는 '
     '<i>n</i>=60에서 학습했으므로 <i>n</i>=70, 80은 외삽이다.')
-P('두 단계 모두 중요한 크기 아래에서 학습했다: marginal network는 10×25 상태, branching 순서는 21×60 상태이며, architecture는 크기와 무관하고(축소 instance 위의 graph network) 학습 신호는 '
+P('두 단계 모두 중요한 크기 아래에서 학습했다: marginal network는 10×25 상태, branching 순서는 21×60 상태다. architecture는 크기와 무관하고(축소 instance 위의 graph network) 학습 신호는 '
   '어느 크기에서도 정의된다. 작은 instance에서 탐색 heuristic을 학습해 더 큰 instance에 배포하는 것은 operations research의 학습 탐색에서 통상적인 체제이며(Hottung et al., 2020; Yan et al., 2025), '
-  '질문은 그 우위가 외삽을 견디는가이다. 그림 7과 표 2가 두 부분으로 답한다. 첫째, 규칙은 전이된다: 어느 단계도 본 적 없는 24×70과 28×80에서 모든 instance를 예산 안에 풀고 단일 relaxation 규칙 전부에 '
-  '대해 유의한 node 우위를 유지한다. 둘째, 우위는 줄지 않고 크기와 함께 커진다: 최강의 싼 규칙 대비 node 비율은 <i>n</i>=60의 1.5배에서 70의 1.8배, 80의 3.2배로, most-fractional branching 대비 '
-  '2.3배에서 3.7배, 4.0배로 오르고, dom/wdeg 대비 wall-clock 비율은 <i>n</i>=60(0.83배)과 70(1.09배) 사이에서 1을 넘어 80에서 2.0배에 이른다. 기제는 표 3의 것이다: forward pass의 node당 '
-  'premium은 고정인데 relaxation과 tree는 커지므로 상수 배의 node 우위는 tree가 충분히 크면 시간 우위가 되고, node 우위 자체도 탐색이 긴 곳에서 더 크며 5.4절은 이를 비용 조정 순서가 틀린 값을 '
-  '반증하는 방식으로 추적한다. 전이는 단계 사이에도 고르지 않다: Stage 1 단독은 모든 크기에서 LP rule 대비 node 우위를 유지하지만 24×70부터 시간에서, 28×80에서 '
-  '해결률에서(90/100) 싼 고전 규칙에 뒤지므로 유용하게 전이되는 것은 조합이며 Stage 2의 Stage 1 대비 이득은 <i>n</i>=60의 2.3배에서 <i>n</i>=80의 5.0배로 커진다. 전이가 하지 못하는 것은 유용한 '
-  '창을 넓히는 일이다: <i>n</i>=100에서는 어떤 규칙도 예산 안에 instance를 풀지 못하며 다음 크기에는 더 싼 node나 clause learning이 필요하다.', body_s)
-
+  '질문은 그 우위가 외삽을 견디는가이다. 그림 7과 표 2가 두 부분으로 답한다. 첫째, 규칙은 전이된다: 어느 단계도 본 적 없는 24×70과 28×80에서 모든 instance를 예산 안에 풀고 단일 relaxation 규칙 '
+  '전부에 대해 유의한 node 우위를 유지한다. 둘째, 우위는 줄지 않고 크기와 함께 커진다. 최강의 싼 규칙 대비 node 비율은 <i>n</i>=60의 1.5배에서 70의 1.8배, 80의 3.2배로, most-fractional branching 대비 '
+  '2.3배에서 3.7배, 4.0배로 오른다. dom/wdeg 대비 wall-clock 비율은 <i>n</i>=60(0.83배)과 70(1.09배) 사이에서 1을 넘어 80에서 2.0배에 이른다. 기제는 표 3의 것이다: forward pass의 node당 premium은 '
+  '고정인데 relaxation과 tree는 커지므로 상수 배의 node 우위는 tree가 충분히 크면 시간 우위가 된다. node 우위 자체도 탐색이 긴 곳에서 더 크며, 5.4절은 이를 비용 조정 순서가 틀린 값을 반증하는 '
+  '방식으로 추적한다. 전이는 단계 사이에 고르지 않다. Stage 1 단독은 모든 크기에서 LP rule 대비 node 우위를 유지하지만 24×70부터 시간에서, 28×80에서 해결률에서(90/100) 싼 고전 규칙에 뒤진다. '
+  '유용하게 전이되는 것은 조합이며, Stage 2의 Stage 1 대비 이득은 <i>n</i>=60의 2.3배에서 <i>n</i>=80의 5.0배로 커진다. 전이가 하지 못하는 것은 유용한 창을 넓히는 일이다: <i>n</i>=100에서는 어떤 '
+  '규칙도 예산 안에 instance를 풀지 못하며 다음 크기에는 더 싼 node나 clause learning이 필요하다.', body_s)
 H2('5.4 RQ3: 두 신호는 대체 가능한가, 각 단계는 필요한가?')
 TT('rq3_cross', ['변수, 값', 'node (21×60)', '비율', 'node (24×70)', '비율', 'node (28×80)', '비율'], [3.6*cm, 1.5*cm, 3.3*cm, 1.5*cm, 3.3*cm, 1.5*cm, 2.3*cm],
    '표 4. 값×변수 교차 ablation: 각 arm은 변수 선택 점수 하나와 첫 값 규칙 하나를 결합하고 나머지는 동일하다. 크기별 열: node 중앙값과 Stage 1+2 대비 instance별 node 비율 '
    '중앙값(bootstrap 구간, sign test <i>p</i>값).', font=6.6)
 IMG('rq3', 0.6 * W, '그림 8. 표 4의 교차 ablation을 Stage 1+2 대비 instance별 node 비율 중앙값으로(log 눈금, 95% bootstrap 구간), 세 크기.')
 H3('값과 변수는 분리 가능하며 이득은 변수가 지닌다')
-P('표 4와 그림 8은 변수 선택 점수 셋(LP most-integral, Stage 1 확신도, Stage 2 비용 조정)과 첫 값 규칙 둘(LP 반올림, Stage 1 marginal)을 '
-  '각각 결합한다. 표를 열로 읽으면 변수 점수가 결정적이다: Stage 1 값을 고정한 채 변수 점수를 LP에서 Stage 1, Stage 2로 옮기면 21×60에서 tree가 12배, 다시 2.3배 줄고, 정확히 학습한 marginal '
-  '값을 붙인 LP 변수는 전체 규칙보다 28배, 24×70에서 37배 나쁘며 전체 규칙이 전부 푸는 28×80에서 100개 중 26개를 푼다. 행으로 읽으면 값 규칙은 그렇지 않다: Stage 2 변수를 고정한 채 marginal '
-  '값을 LP 반올림으로 바꾸면 tree는 21×60에서 0.79배(<i>p</i>=0.09), 24×70에서 1.19배(<i>p</i>=0.27), 28×80에서 1.41배(<i>p</i>=0.09)로 어느 것도 5% 수준에서 유의하지 않되 tree가 커질수록 방향은 '
-  'marginal 값 쪽으로 기울며, Stage 1 변수를 고정하면 LP 값이 작은 두 크기에서 1.5배와 1.3배 더 많은 node를 들이고 그 arm은 크기와 함께 전체 규칙에서 더 멀어지는데(2.8배, 3.3배, 5.9배) 이것이 '
-  'tree와 함께 커지는 Stage 2의 이득이다. 두 결론이 따르며 하나는 4절의 설계에 반한다. 신호는 중요한 의미에서 대체 불가능하다: marginal로 학습한 network는 trunk와 Stage 2가 출발하는 확신도 '
-  '점수를 통해 좋은 변수 점수를 가능하게 하는 것이고, 어떤 값 정확도도 LP 변수 선택을 구제하지 못한다. 그러나 정확한 marginal <b>값</b>은 대체 가능하다: 비용 조정 점수로 변수를 '
-  '고르고 나면 relaxation을 반올림해도 어느 크기에서도 유의하게 다르지 않은, 28×80에서 기껏 1.4배 큰 tree가 나오며, 이는 확신도 규칙 아래의 정확한 marginal조차 고전적 변수 점수를 이기지 못한다는 '
-  '5.2절의 oracle 결과와 일치한다. 이 방법에서 값 신호의 역할은 값을 고르는 것이 아니라 표현을 학습시키는 것이다.', body_s)
+P('표 4와 그림 8은 변수 선택 점수 셋(LP most-integral, Stage 1 확신도, Stage 2 비용 조정)과 첫 값 규칙 둘(LP 반올림, Stage 1 marginal)을 각각 결합한다. 열로 읽으면 변수 점수가 결정적이다. '
+  'Stage 1 값을 고정한 채 변수 점수를 LP에서 Stage 1, Stage 2로 옮기면 21×60에서 tree가 12배, 다시 2.3배 줄어든다. 정확히 학습한 marginal 값을 붙인 LP 변수는 21×60에서 전체 규칙보다 28배, 24×70에서 '
+  '37배 나쁘고, 전체 규칙이 전부 푸는 28×80에서 100개 중 26개를 푼다. 행으로 읽으면 값 규칙은 결정적이지 않다. Stage 2 변수를 고정한 채 marginal 값을 LP 반올림으로 바꾸면 tree는 21×60에서 '
+  '0.79배(<i>p</i>=0.09), 24×70에서 1.19배(<i>p</i>=0.27), 28×80에서 1.41배(<i>p</i>=0.09)로 어느 것도 5% 수준에서 유의하지 않되, tree가 커질수록 방향은 marginal 값 쪽으로 기운다. Stage 1 변수를 고정하면 LP '
+  '값이 작은 두 크기에서 1.5배와 1.3배 더 많은 node를 들이고, 그 arm은 크기와 함께 전체 규칙에서 더 멀어지는데(2.8배, 3.3배, 5.9배) 이것이 tree와 함께 커지는 Stage 2의 이득이다.', body_s)
+P('두 결론이 따르며 하나는 4절의 설계에 반한다. 신호는 중요한 의미에서 대체 불가능하다: marginal로 학습한 network는 trunk와 Stage 2가 출발하는 확신도 점수를 통해 좋은 변수 점수를 가능하게 하는 '
+  '것이고, 어떤 값 정확도도 LP 변수 선택을 구제하지 못한다. 그러나 정확한 marginal <b>값</b>은 대체 가능하다. 비용 조정 점수로 변수를 고르고 나면 relaxation을 반올림해도 어느 크기에서도 유의하게 다르지 '
+  '않은, 28×80에서 기껏 1.4배 큰 tree가 나온다. 이는 확신도 규칙 아래의 정확한 marginal조차 고전적 변수 점수를 이기지 못한다는 5.2절의 oracle 결과와 일치한다. 이 방법에서 값 신호의 역할은 값을 '
+  '고르는 것이 아니라 표현을 학습시키는 것이다.', body_s)
 H3('Stage 2가 배운 것')
-P('fine-tuning은 instance별 기록이 드러내는 방식으로 탐색을 바꾼다(부록 B의 표 A2). 모든 규칙에 대해 해 경로에서 첫 번째로 시도한 값이 반증된(그 아래 '
-  'subtree가 소진된) 빈도와 그 반증 한 번의 비용을 기록한다. Stage 1 확신도 규칙은 가장 드물게 틀리고(21×60에서 결정의 6%) 실수당 가장 많이 지불한다(246 node); 비용 조정 규칙은 세 배 자주 '
-  '틀리고(19%) 실수당 4분의 1을 지불하며(65 node) 고르는 변수가 더 많은 propagation과 relaxation 고정을 촉발하므로 해 경로가 더 짧다(결정 46개 대 28개). 24×70의 고전 규칙에 대해서도 같다: '
-  'dom/wdeg, maxSD, most-fractional branching은 결정의 14~16%에서 각 835~911 node로 반증되고 학습 규칙은 21%에서 387 node다. 이는 설계가 아니라 비용 신호에서 학습된 fail-first(Haralick '
-  'and Elliott, 1980)다: policy는 가장 확신하는 변수에서 벗어나 틀린 값이 싸게 소진되는 변수로 옮겨 가며, Stage 2 변수에 LP 값을 붙인 arm도 같은 양상(16%, 63 node)이므로 구조는 변수 선택에서 '
-  '온다.', body_s)
+P('fine-tuning은 instance별 기록이 드러내는 방식으로 탐색을 바꾼다(부록 B의 표 A2). 모든 규칙에 대해 해 경로에서 첫 번째로 시도한 값이 반증된(그 아래 subtree가 소진된) 빈도와 그 반증 한 번의 '
+  '비용을 기록한다. Stage 1 확신도 규칙은 가장 드물게 틀리고(21×60에서 결정의 6%) 실수당 가장 많이 지불한다(246 node). 비용 조정 규칙은 세 배 자주 틀리고(19%) 실수당 4분의 1을 지불하며(65 node), '
+  '고르는 변수가 더 많은 propagation과 relaxation 고정을 촉발하므로 해 경로가 더 짧다(결정 46개 대 28개). 24×70의 고전 규칙에 대해서도 같다: dom/wdeg, maxSD, most-fractional branching은 결정의 '
+  '14~16%에서 각 835~911 node로 반증되고 학습 규칙은 21%에서 387 node다. 이는 설계가 아니라 비용 신호에서 학습된 fail-first(Haralick and Elliott, 1980)다: policy는 가장 확신하는 변수에서 벗어나 틀린 '
+  '값이 싸게 소진되는 변수로 옮겨 간다. Stage 2 변수에 LP 값을 붙인 arm도 같은 양상(16%, 63 node)이므로 구조는 변수 선택에서 온다.', body_s)
 TT('rq3_variants', ['변형', 'node (21×60)', '비율', 'node (24×70)', '비율', 'node (28×80)', '비율'], [3.9*cm, 1.5*cm, 3.2*cm, 1.5*cm, 3.2*cm, 1.7*cm, 2.0*cm],
    '표 5. 학습 변형: 기준 Stage 1+2 규칙 대비 node 중앙값과 instance별 node 비율 중앙값, 크기별. Stage 1 변형은 확신도 규칙으로 돌린다(Stage 2 없음); Stage 2 변형은 따로 '
    '명시하지 않는 한 동결된 기준 trunk를 공유한다.', font=6.4)
 H3('각 단계는 필요한가, 레시피의 어느 부분이 중요한가?')
-P('표 5는 나머지를 고정한 채 각 단계의 학습을 바꾼다. Stage 1에서는 레시피의 어느 것도 값 정확도를 움직이지 않는다: 라벨 형태(심어진 '
-  '0/1 해 대 soft marginal), 학습 seed, 학습 상태 수(10,000 대 2,771)는 FORCED 변수의 테스트 정확도를 기껏 0.2 point 바꾸고(상한 83.3% 대비 79.0~79.2%), 같은 상태로 학습한 NSNet architecture '
-  '(Li and Si, 2022)의 network는 80.4%에 이르며, 10×25 대신 21×60 상태로 학습하면(M1) 21×60 상태의 정확도가 2.4 point 오른다. tree는 다른 이야기를 한다. 기준 레시피의 학습 seed 둘은 21×60에서 '
-  '기준의 628 대비 553과 562 node를 쓰므로 Stage 1 규칙에는 약 ±10%의 seed 분산이 있고 어떤 라벨·architecture 선택도 올바른 방향으로 그것을 넘지 못한다; 값 정확도가 <b>더 높은</b> 두 '
-  'network인 M1과 NSNet architecture가 <b>가장 큰</b> tree를 쓰며(21×60에서 912와 892; 24×70에서 기준 레시피의 6,199~8,175 대비 10,754와 12,500) 28×80에서는 예산 안에 가장 적게 푼다(100개 중 '
-  '85와 70; 다른 Stage 1 변형 91~95, 전체 규칙 100); 모든 Stage 1 변형이 거기서 전체 규칙의 4.0~5.7배 node를 쓴다. 따라서 값 정확도와 tree 크기는 같은 양이 아니며 이는 표 4를 반대편에서 본 '
-  '요점이고, Stage 1 레시피가 필요한 것은 이 network들 중 어느 것이든 Stage 2가 2~3배 개선하는 trunk와 확신도 점수를 공급한다는 의미에서만이다. Stage 2에서는 레시피가 우리가 설계한 것보다 '
-  '덜 중요하다. policy head를 무작위로 시작하면 — 이 trunk로 from-scratch 강화학습이 할 일 — 초기 policy는 marginal 규칙의 7배 root 비용에서 출발하지만 6 epoch 뒤에는 기준과 동급이고(세 '
-  '크기에서 1.04배, 0.86배, 1.03배, 모두 비유의), LP 규칙에서 시작해도 같은 곳에 이른다(1.06배, 0.86배, 1.12배). trunk를 풀면 held-out node 수가 셋째 epoch부터 발산하지만(Stage 1 규칙의 '
-  '2.7~5.4배) epoch 선택이 남기는 첫 epoch의 checkpoint는 동결된 것만큼 좋다(0.76배, 0.83배, 1.06배, 비유의). 따라서 동결된 trunk는 fine-tuning을 계속할 수 있을 만큼 '
-  '안정하게 유지하고 이득을 순서에 귀속시키는 것이지 tree 크기의 원천이 아니며, 우리는 그렇게 주장하지 않는다.', body_s)
-
+P('표 5는 나머지를 고정한 채 각 단계의 학습을 바꾼다. Stage 1에서는 레시피의 어느 것도 값 정확도를 움직이지 않는다. 라벨 형태(심어진 0/1 해 대 soft marginal), 학습 seed, 학습 상태 수(10,000 대 '
+  '2,771)는 FORCED 변수의 테스트 정확도를 기껏 0.2 point 바꾼다(상한 83.3% 대비 79.0~79.2%). 같은 상태로 학습한 NSNet architecture(Li and Si, 2022)의 network는 80.4%에 이르고, 10×25 대신 21×60 '
+  '상태로 학습하면(M1) 21×60 상태의 정확도가 2.4 point 오른다. tree는 다른 이야기를 한다. 기준 레시피의 학습 seed 둘은 21×60에서 기준의 628 대비 553과 562 node를 쓰므로 Stage 1 규칙에는 약 ±10%의 '
+  'seed 분산이 있고, 어떤 라벨·architecture 선택도 올바른 방향으로 그것을 넘지 못한다. 값 정확도가 <b>더 높은</b> 두 network인 M1과 NSNet architecture가 <b>가장 큰</b> tree를 쓴다: 21×60에서 912와 '
+  '892, 24×70에서 기준 레시피의 6,199~8,175 대비 10,754와 12,500이다. 28×80에서는 예산 안에 가장 적게 푸는데(100개 중 85와 70; 다른 Stage 1 변형 91~95, 전체 규칙 100), 모든 Stage 1 변형이 거기서 '
+  '전체 규칙의 4.0~5.7배 node를 쓴다.', body_s)
+P('따라서 값 정확도와 tree 크기는 같은 양이 아니며, 이는 표 4를 반대편에서 본 요점이다. Stage 1 레시피가 필요한 것은 이 network들 중 어느 것이든 Stage 2가 2~3배 개선하는 trunk와 확신도 점수를 '
+  '공급한다는 의미에서만이다.', body_s)
+P('Stage 2에서는 레시피가 우리가 설계한 것보다 덜 중요하다. policy head를 무작위로 시작하면 — 이 trunk로 from-scratch 강화학습이 할 일 — 초기 policy는 marginal 규칙의 7배 root 비용에서 출발하지만, '
+  '6 epoch 뒤에는 기준과 동급이다(세 크기에서 1.04배, 0.86배, 1.03배, 모두 비유의). LP 규칙에서 시작해도 같은 곳에 이른다(1.06배, 0.86배, 1.12배). trunk를 풀면 held-out node 수가 셋째 epoch부터 '
+  'Stage 1 규칙의 2.7~5.4배로 발산하지만, epoch 선택이 남기는 첫 epoch의 checkpoint는 동결된 것만큼 좋다(0.76배, 0.83배, 1.06배, 비유의). 따라서 동결된 trunk는 fine-tuning을 계속할 수 있을 만큼 '
+  '안정하게 유지하고 이득을 순서에 귀속시키는 것이다. tree 크기의 원천은 아니며, 우리는 그렇게 주장하지 않는다.', body_s)
 H2('5.5 RQ4: Complete solver와의 경합')
 TT('rq4_scip', ['conflict', '규칙', '해결', 'node 중앙값', '초 중앙값', 'node, 규칙 / plug-in', '시간, 규칙 / plug-in'], [1.3*cm, 3.4*cm, 1.4*cm, 1.8*cm, 1.4*cm, 3.9*cm, 3.9*cm],
    '표 6. SCIP 안(presolve·cut·primal heuristic 끔, depth-first node 선택, 첫 해에서 정지): SCIP 자체 규칙 대 branching plug-in으로 꽂은 학습 규칙, conflict analysis off/on. 비율은 '
    '표 2와 같이 규칙 / plug-in.', font=6.6, right_from=2)
 H3('SCIP 안의 branching 규칙으로')
-P('학습 규칙은 축소 instance와 그 relaxation vertex의 함수이므로 MIP solver의 branching 규칙으로 설치할 수 있다. 우리는 PySCIPOpt branching plug-in으로 '
-  '구현하고 SCIP(Bestuzheva et al., 2021)를 같은 instance에서 presolve·cutting plane·primal heuristic을 끄고 depth-first node 선택과 첫 해에서의 정지로 돌려, SCIP의 탐색이 우리 루프가 하는 것과 '
-  '같되 propagation과 LP만 SCIP의 것이 되게 했다; 우리 루프에 없는 conflict analysis는 끄고 켜서 모두 돌린다. 비교 대상은 reliability pseudocost branching(RPB; SCIP 기본값이자 learning-to-branch '
-  '문헌이 모방하는 규칙, Achterberg et al., 2005), SCIP의 most-fractional 규칙, inference 규칙이다. conflict analysis는 SCIP의 clause learning이다: node가 relaxation이나 propagation으로 infeasible로 판정되면 solver는 dual ray나 propagation 이유에서 함께 성립할 수 없는 bound 변경의 최소 집합을 추출해 전역 conflict constraint로 더하고, 이후 같은 조합에 이르는 모든 subtree는 탐색 없이 잘린다. 우리 루프에는 그런 장치가 없으므로 끄고 켜서 모두 돌린다. 표 6은 node 우위가 엔진 교체와 clause learning 추가를 견딤을 보인다: 100개 세트에서 plug-in은 '
-  'conflict analysis off/on 모두 모든 크기에서 RPB보다 node를 1.9~3.8배 적게 쓰고(sign test 전부 <i>p</i>≤3×10<sup>−5</sup>) SCIP의 most-fractional·inference 규칙보다 1.7~4.0배 적게 쓴다. clause learning은 두 규칙을 불균등하게 돕는다: 켜면 RPB는 24×70에서 22%, 28×80에서 34% 적은 node를 쓰고 plug-in은 6%와 3%만 줄어, RPB 대비 node 비율은 3.5~3.8배에서 1.9~3.1배로 줄되 유의하게 남는다. 틀린 값을 이미 얕고 싸게 반증하는 규칙은 다른 곳에서 재사용할 긴 conflict를 적게 만들고, bound 중심 규칙은 conflict constraint가 잘라낼 것을 더 남긴다는 읽기다. 시간은 RPB와는 '
-  '동률, 가장 싼 규칙에는 패배다: forward pass가 branching callback의 60~80%라 tree가 수백 node인 21×60에서 plug-in은 모든 SCIP 규칙보다 3배 느린 반면, 24×70과 28×80에서는 conflict analysis '
-  'off/on 모두 중앙 시간이 RPB의 0.8~1.1배 안에 있고(짝 차이 어느 것도 비유의) SCIP most-fractional 규칙에는 0.66~0.86배로 뒤진다(<i>p</i>=0.02~0.06). 따라서 solver 안에서 RQ1의 답은 갈린다: '
-  '학습 규칙은 모든 크기에서 tree 크기로는 더 나은 branching 규칙이고, tree가 forward pass를 상각할 만큼 크면 solver 기본 규칙과 시간이 같으며, 가장 싼 규칙을 시간에서 이기지는 못한다.', body_s)
+P('학습 규칙은 축소 instance와 그 relaxation vertex의 함수이므로 MIP solver의 branching 규칙으로 설치할 수 있다. 우리는 PySCIPOpt branching plug-in으로 구현하고 SCIP(Bestuzheva et al., 2021)를 '
+  '같은 instance에서 presolve·cutting plane·primal heuristic을 끄고 depth-first node 선택과 첫 해에서의 정지로 돌렸다. 그러면 SCIP의 탐색은 우리 루프가 하는 것과 같되 propagation과 LP만 SCIP의 것이 '
+  '된다. 비교 대상은 reliability pseudocost branching(RPB; SCIP 기본값이자 learning-to-branch 문헌이 모방하는 규칙, Achterberg et al., 2005), SCIP의 most-fractional 규칙, inference 규칙이다. '
+  'conflict analysis는 SCIP의 clause learning이다. node가 relaxation이나 propagation으로 infeasible로 판정되면 solver는 dual ray나 propagation 이유에서 함께 성립할 수 없는 bound 변경의 최소 집합을 '
+  '추출해 전역 conflict constraint로 더하고, 이후 같은 조합에 이르는 모든 subtree는 탐색 없이 잘린다. 우리 루프에는 그런 장치가 없으므로 끄고 켜서 모두 돌린다.', body_s)
+P('표 6은 node 우위가 엔진 교체와 clause learning 추가를 견딤을 보인다. 100개 세트에서 plug-in은 conflict analysis off/on 모두 모든 크기에서 RPB보다 node를 1.9~3.8배 적게 쓰고(sign test 전부 '
+  '<i>p</i>≤3×10<sup>−5</sup>) SCIP의 most-fractional·inference 규칙보다 1.7~4.0배 적게 쓴다. clause learning은 두 규칙을 불균등하게 돕는다. 켜면 RPB는 24×70에서 22%, 28×80에서 34% 적은 node를 쓰고 '
+  'plug-in은 6%와 3%만 줄어, RPB 대비 node 비율은 3.5~3.8배에서 1.9~3.1배로 줄되 유의하게 남는다. 틀린 값을 이미 얕고 싸게 반증하는 규칙은 다른 곳에서 재사용할 긴 conflict를 적게 만들고, bound 중심 '
+  '규칙은 conflict constraint가 잘라낼 것을 더 남긴다는 읽기다. 시간은 RPB와는 동률, 가장 싼 규칙에는 패배다. forward pass가 branching callback의 60~80%라 tree가 수백 node인 21×60에서 plug-in은 모든 '
+  'SCIP 규칙보다 3배 느리다. 24×70과 28×80에서는 conflict analysis off/on 모두 중앙 시간이 RPB의 0.8~1.1배 안에 있고(짝 차이 어느 것도 비유의) SCIP most-fractional 규칙에는 0.66~0.86배로 '
+  '뒤진다(<i>p</i>=0.02~0.06). 따라서 solver 안에서 RQ1의 답은 갈린다: 학습 규칙은 모든 크기에서 tree 크기로는 더 나은 branching 규칙이고, tree가 forward pass를 상각할 만큼 크면 solver 기본 규칙과 '
+  '시간이 같으며, 가장 싼 규칙을 시간에서 이기지는 못한다.', body_s)
 TT('rq4_e2e', ['방법', '해결', '초 중앙값', 'PAR-2 s'], [5.2*cm, 2.0*cm, 2.0*cm, 2.0*cm],
    '표 7. end-to-end, 같은 instance·예산, 단일 thread: 기본 설정의 complete solver, bounded enumeration을 갖춘 lattice reduction, 학습 탐색. 해결 instance의 시간 중앙값과 PAR-2; node 수는 '
    '엔진 간 비교 불가라 생략한다.', font=7.2)
 H3('End-to-end')
 P('표 7은 학습 탐색을 기본 설정의 complete solver(thread 하나의 Gurobi, Gurobi Optimization, 2024; worker 하나의 CP-SAT, Perron and Didier, 2023; presolve·cut·heuristic·conflict '
   'analysis·RPB를 갖춘 SCIP)와 bounded enumeration을 갖춘 lattice reduction(BKZ block 40, 열 순열 30개, 300 s 캡의 fpylll enumeration, FPLLL team, 2023) 옆에 같은 instance와 예산으로 놓는다. '
-  '모든 방법이 모든 instance를 푼다. Gurobi가 모든 크기에서 가장 빠르고(<i>n</i>=60, 70, 80에서 중앙 0.05, 0.31, 6.6 s) CP-SAT가 그 다음이며(0.04, 0.36, 12.2 s; 28×80에서 꼬리가 무겁다), 기본 설정 '
-  'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). 두 MIP solver 사이의 2.5~8배 격차는 우리 설정 탓이 아니다: 둘 다 thread 하나에서 기본 설정으로 돌며, 차이는 탐색이 빨리 닫히는 instance에서 효과를 보는 LP 엔진과 탐색 구현에서 온다(SCIP 자체 통계에서 presolve와 primal heuristic은 이 instance에서 아무것도 찾지 못한다); 표 6의 plug-in 비교는 presolve와 cut을 끈 SCIP라 다른 측정이다. lattice enumeration은 21×60 세트를 instance당 0.2 s에 풀지만 비용이 탐색보다 빠르게 커진다: 24×70에서 '
-  '13.2 s, 28×80에서 125 s로 학습 탐색보다 5.5배와 2.7배 느리다. 두 가지가 동시에 참이다. 학습 탐색은 이 instance를 푸는 가장 빠른 방법이 아니다: 상용 MIP solver와 presolve·clause learning을 '
-  '갖춘 CP-SAT solver는 <i>n</i>≤70에서 한두 자릿수, <i>n</i>=80에서 4~7배 앞서고 SCIP는 가장 큰 크기에서 앞선다. 그리고 그것은 branching 질문과 무관하다: branching 결정을 분리하는 비교는 표 2가며, '
-  'SCIP 안에서 결정 품질은 그대로 옮겨지고 node당 비용은 그렇지 않다. 정직한 요약은 본 논문이 자기 루프와 SCIP 안에서 branching 규칙을 개선하지만 그 자체로 더 빠른 solver를 만들지는 않는다는 '
-  '것이다; solver와의 격차는 clause learning과 compiled node이고 학습 규칙은 그 어느 것도 다루지 않는다.', body_s)
-
+  '모든 방법이 모든 instance를 푼다. Gurobi가 모든 크기에서 가장 빠르고(<i>n</i>=60, 70, 80에서 중앙 0.05, 0.31, 6.6 s) CP-SAT가 그 다음이다(0.04, 0.36, 12.2 s; 28×80에서 꼬리가 무겁다). 기본 설정 '
+  'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). 두 MIP solver 사이의 2.5~8배 격차는 우리 설정 탓이 아니다. 둘 다 thread 하나에서 기본 설정으로 돌며, '
+  '차이는 탐색이 빨리 닫히는 instance에서 효과를 보는 LP 엔진과 탐색 구현에서 온다(SCIP 자체 통계에서 presolve와 primal heuristic은 이 instance에서 아무것도 찾지 못한다). 표 6의 plug-in 비교는 '
+  'presolve와 cut을 끈 SCIP라 다른 측정이다. lattice enumeration은 21×60 세트를 instance당 0.2 s에 풀지만 비용이 탐색보다 빠르게 커진다: 24×70에서 13.2 s, 28×80에서 125 s로 학습 탐색보다 5.5배와 '
+  '2.7배 느리다.', body_s)
+P('두 가지가 동시에 참이다. 학습 탐색은 이 instance를 푸는 가장 빠른 방법이 아니다: 상용 MIP solver와 presolve·clause learning을 갖춘 CP-SAT solver는 <i>n</i>≤70에서 한두 자릿수, <i>n</i>=80에서 '
+  '4~7배 앞서고 SCIP는 가장 큰 크기에서 앞선다. 그리고 그것은 branching 질문과 무관하다. branching 결정을 분리하는 비교는 표 2이며, SCIP 안에서 결정 품질은 그대로 옮겨지고 node당 비용은 그렇지 않다. '
+  '정직한 요약은 본 논문이 자기 루프와 SCIP 안에서 branching 규칙을 개선하지만 그 자체로 더 빠른 solver를 만들지는 않는다는 것이다. solver와의 격차는 clause learning과 compiled node이고 학습 규칙은 그 '
+  '어느 것도 다루지 않는다.', body_s)
 # ═══════════════ 6 ═══════════════
 H1('6. 결론')
 P('branching 결정은 두 질문을 던지며 본 논문은 각각의 정확한 답으로 학습했다: 해를 열거할 수 있는 곳에서 계산 가능하고 reduction 항등식으로 모든 node에 옮겨지는 conditional marginal은 어느 '
