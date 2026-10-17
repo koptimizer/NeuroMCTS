@@ -357,9 +357,9 @@ P('이득은 분포적이지 보편적이지 않다: 학습 규칙은 싼 규칙
   '이것은 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 많고, 그 대가로 node당 relaxation |<i>K</i>|개를 지불한다. Stage 1 '
   '단독(비용 조정 순서 없는 marginal 규칙)은 세 크기에서 전체 규칙보다 node를 2.3배, 3.2배, 5.0배 더 쓴다(짝 중앙값). 그 자체로는 21×60과 24×70 모두에서 LP rule보다 약 12배 아래이고, 21×60에서 싼 '
   '고전 규칙과 동급, 24×70부터는 그 뒤이며, 28×80 instance 10개를 풀지 못한다. 따라서 marginal만으로는 경쟁력 있는 값 신호이자 평범한 변수 점수이고, 규칙을 앞서게 하는 것은 비용 조정 순서다.', body_s)
-TT('profile', ['크기', '규칙', 'ms / node', 'LP 비중', 'forward 비중'], [1.8*cm, 4.6*cm, 1.8*cm, 1.6*cm, 1.9*cm],
+TT('profile', ['크기', '규칙', 'ms / node', 'LP 비중', 'forward 비중', '비용 비율'], [1.6*cm, 4.4*cm, 1.7*cm, 1.5*cm, 1.8*cm, 1.7*cm],
    '표 3. dense 추론 경로의 node당 비용(단일 relaxation 행은 LP rule, 즉 most-integral branching이며 표 1의 모든 단일 relaxation 고전 규칙이 같은 node당 비용을 가진다): 크기당 instance 6개, 각 규칙의 전체 tree를 '
-   '계측(node당 ms와 warm-start relaxation·network forward pass가 차지하는 node 시간 비중의 instance 간 중앙값; 나머지는 축소·propagation·장부 처리). forward pass 한 번은 0.33~0.53 ms이며 자유 변수 수에 따라 커진다.', right_from=2)
+   '계측(node당 ms와 warm-start relaxation·network forward pass가 차지하는 node 시간 비중의 instance 간 중앙값; 나머지는 축소·propagation·장부 처리). 마지막 열은 그 행 대비 규칙의 node당 비용이다. forward pass 한 번은 0.33~0.53 ms이며 자유 변수 수에 따라 커진다.', right_from=2)
 H3('Wall-clock')
 P('작은 tree는 node당 비용이 허락할 때만 시간을 사며, 표 3이 전체 tree를 계측해 그 비용을 잰다. 단일 relaxation 규칙의 node는 세 크기에서 0.47, 0.55, 0.61 ms이고 그 90%가 warm-start '
   'relaxation이다. 학습 규칙의 node는 0.71, 0.73, 0.82 ms이며 forward pass가 28~32%, relaxation이 57~62%다. 따라서 overhead 비율은 <i>n</i>=60에서 1.5배, <i>n</i>=70, 80에서 1.3배인데 forward pass가 '
@@ -385,9 +385,13 @@ P('두 단계 모두 중요한 크기 아래에서 학습했다: marginal networ
   '어느 크기에서도 정의된다. 작은 instance에서 탐색 heuristic을 학습해 더 큰 instance에 배포하는 것은 operations research의 학습 탐색에서 통상적인 체제이며(Hottung et al., 2020; Yan et al., 2025), '
   '질문은 그 우위가 외삽을 견디는가이다. 그림 7과 표 2가 두 부분으로 답한다. 첫째, 규칙은 전이된다: 어느 단계도 본 적 없는 24×70과 28×80에서 모든 instance를 예산 안에 풀고 단일 relaxation 규칙 '
   '전부에 대해 유의한 node 우위를 유지한다. 둘째, 우위는 줄지 않고 크기와 함께 커진다. 최강의 싼 규칙 대비 node 비율은 <i>n</i>=60의 1.5배에서 70의 1.8배, 80의 3.2배로, most-fractional branching 대비 '
-  '2.3배에서 3.7배, 4.0배로 오른다. dom/wdeg 대비 wall-clock 비율은 <i>n</i>=60(0.83배)과 70(1.09배) 사이에서 1을 넘어 80에서 2.0배에 이른다. 기제는 표 3의 것이다: forward pass의 node당 premium은 '
-  '약 0.2 ms(세 크기에서 0.24, 0.18, 0.21 ms)에 머무는데 relaxation은 0.47에서 0.61 ms로 커지므로 overhead 비율은 1.5배에서 1.3배로 줄고, 크기에 따라 유지되거나 커지는 node 우위는 tree가 충분히 크면 시간 우위가 된다. node 우위 자체도 탐색이 긴 곳에서 더 크며, 5.4절은 이를 비용 조정 순서가 틀린 값을 반증하는 '
-  '방식으로 추적한다. 전이는 단계 사이에 고르지 않다. Stage 1 단독은 모든 크기에서 LP rule 대비 node 우위를 유지하지만 24×70부터 시간에서, 28×80에서 해결률에서(90/100) 싼 고전 규칙에 뒤진다. '
+  '2.3배에서 3.7배, 4.0배로 오른다. dom/wdeg 대비 wall-clock 비율은 <i>n</i>=60(0.83배)과 70(1.09배) 사이에서 1을 넘어 80에서 2.0배에 이른다. 기제는 두 표의 곱이다. 어떤 규칙 R에 대해', body_s)
+EQ('time(R) / time(ours) = [nodes(R) / nodes(ours)] × [ms/node(R) / ms/node(ours)] &nbsp;&nbsp;(8)')
+P('이며 첫째 인자는 표 2의 node 비율, 둘째 인자는 표 3의 비용 비율의 역수다. 둘째 인자는 학습 규칙이 node마다 약 0.2 ms(세 크기에서 0.24, 0.18, 0.21 ms)의 forward pass를 지니므로 '
+  '항상 치르는 벌점이지만, relaxation은 0.47에서 0.61 ms로 커지는데 forward pass는 그렇지 않아 벌점은 0.66, 0.75, 0.74에 머물고 크기에 따라 커지지 않는다. 최강의 싼 규칙 대비 node 비율 1.52, '
+  '1.79, 3.20에 이 벌점을 곱하면 1.0, 1.3, 2.4가 되고, 이것이 비율의 중앙값과 중앙값의 비율 차이를 감안하면 표 2의 시간 비율(실측 0.83, 1.09, 1.96)이다. 따라서 시간 우위의 성장은 node 우위의 '
+  '성장이 유계인 벌점을 통과한 것이다; forward pass가 relaxation보다 빨리 커졌다면 커지는 node 우위가 커지는 벌점에 잠식될 수 있었는데, 표 3은 그렇지 않음을 보인다. node 우위 자체도 탐색이 긴 곳에서 '
+  '더 크며, 5.4절은 이를 비용 조정 순서가 틀린 값을 반증하는 방식으로 추적한다. 전이는 단계 사이에 고르지 않다. Stage 1 단독은 모든 크기에서 LP rule 대비 node 우위를 유지하지만 24×70부터 시간에서, 28×80에서 해결률에서(90/100) 싼 고전 규칙에 뒤진다. '
   '유용하게 전이되는 것은 조합이며, Stage 2의 Stage 1 대비 이득은 <i>n</i>=60의 2.3배에서 <i>n</i>=80의 5.0배로 커진다. 전이가 하지 못하는 것은 유용한 창을 넓히는 일이다: <i>n</i>=100에서는 어떤 '
   '규칙도 예산 안에 instance를 풀지 못하며 다음 크기에는 더 싼 node나 clause learning이 필요하다.', body_s)
 H2('5.4 RQ3: 두 신호는 대체 가능한가, 각 단계는 필요한가?')
