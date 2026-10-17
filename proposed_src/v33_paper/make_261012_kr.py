@@ -96,8 +96,8 @@ P('Binary linear system(BLS)은 0/1 행렬 <i>A</i>에 대해 <i>A</i><b>x</b>=<
   '축소하는 것과 같으므로 축소 instance로 학습한 graph network 하나가 모든 node에서 예측한다. <b>Stage 2</b>는 <b>어느 변수</b>로 분기할지 배운다. 결정의 subtree가 전개하는 node 수는 탐색이 '
   '정확히 산출하며, Stage 1 규칙에서 출발해 network를 동결한 채 그 비용으로 actor-critic fine-tuning하면 branching 순서만 바뀐다. 고전 규칙 7종(most-integral·most-fractional LP branching, maxSD '
   'counting, dom/wdeg, impact, 전수 LP probing, uniform)과 참조 신호 2종(정확한 marginal, belief propagation)을 같은 탐색 루프에서, 세 크기 100개 세트로 평가한다. 학습 규칙은 모든 '
-  '크기에서 단일 relaxation 규칙 전부보다 node를 적게 쓰고(가장 강한 규칙 대비 1.5~3.2배, sign test <i>p</i>≤0.035), 28×80에서는 시간도 전부보다 빠르다(2.0~3.1배, <i>p</i>≤0.002). LP probing만이 '
-  'node를 더 적게 쓰되 5~8배의 시간이 든다. <i>n</i>≤60에서 학습한 규칙은 <i>n</i>=70, 80에서 우위를 유지하고 그 우위는 크기와 함께 커진다. 값×변수 교차 ablation은 이득이 변수 선택에 '
+  '크기에서 node당 relaxation을 하나만 푸는 규칙(단일 relaxation 규칙) 전부보다 node를 적게 쓰고(가장 강한 규칙 대비 1.5~3.2배, sign test <i>p</i>≤0.035), 28×80에서는 시간도 전부보다 빠르다(2.0~3.1배, '
+  '<i>p</i>≤0.002). 모든 node에서 자유 변수당 relaxation을 하나씩 푸는 LP probing만이 node를 더 적게 쓰되 5~8배의 시간이 든다. <i>n</i>≤60에서 학습한 규칙은 <i>n</i>=70, 80에서 우위를 유지하고 그 우위는 크기와 함께 커진다. 값×변수 교차 ablation은 이득이 변수 선택에 '
   '있음을 보인다: 비용 조정 변수에 LP 반올림 값을 붙이면 전체 규칙과 같고, LP 변수에 정확한 marginal 값을 붙이면 28배 나쁘다. SCIP에 branching 규칙으로 꽂으면 policy는 conflict analysis '
   'on/off 모두에서 reliability pseudocost branching보다 node를 1.9~3.8배 적게 쓰고 큰 두 크기에서 시간은 동률이며, presolve와 clause learning을 갖춘 complete solver는 end-to-end에서 여전히 '
   '더 빠르다; 격차는 tree 크기가 아니라 node당 비용에 있다.', abs_s)
@@ -326,7 +326,7 @@ TBL([['그룹', '규칙', '분기 변수', '첫 값'],
     '표 1. 비교하는 branching 규칙. 모두 같은 depth-first 루프(알고리즘 1: node당 warm-start relaxation 하나, 같은 propagation, 같은 예산)에서 돌고 5단계만 다르다. 단일 relaxation 고전 규칙은 '
     'node당 relaxation 하나, LP probing은 자유 변수당 하나를 지불한다; 참조 신호는 배포 불가능하며 값 신호가 할 수 있는 것의 상한이다.', right_from=9, font=7.4)
 H3('규칙')
-P('표 1이 규칙을 나열한다. LP 규칙 둘은 most-integral과 most-fractional vertex 규칙이다; maxSD는 counting-based search로 0/1 행의 solution density가 정확히 '
+P('표 1이 규칙을 나열한다. node당 relaxation을 하나만 푸는 규칙을 <i>단일 relaxation</i> 규칙이라 부른다; 표의 고전 규칙은 모든 node에서 자유 변수당 한 번씩 relaxation을 다시 푸는 LP probing을 빼고 전부 여기에 든다. LP 규칙 둘은 most-integral과 most-fractional vertex 규칙이다; maxSD는 counting-based search로 0/1 행의 solution density가 정확히 '
   '<i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>라 계산 비용이 없다; dom/wdeg와 impact는 constraint programming의 표준 적응형 규칙 둘로 우리 루프의 실패·축소 통계로 구현했다; LP probing은 '
   '목적함수 없는 strong branching이 환원되는 것이다; uniform 규칙은 instance가 어렵다는 점검이다. oracle은 모든 node에서 <i>S</i>(<i>F</i>,<b>v</b>)를 열거하며 감당 가능한 곳에서만 돌린다; '
   'BP 규칙은 정확한 cardinality-factor message, damping 0.9, 최대 300회 반복의 sum-product를 돌린다. 2절의 학습 baseline은 다음과 같이 나타난다: LP probing은 strong branching 모방을(expert '
