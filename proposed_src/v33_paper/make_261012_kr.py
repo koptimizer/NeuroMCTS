@@ -354,6 +354,9 @@ P('이득은 분포적이지 보편적이지 않다: 학습 규칙은 싼 규칙
   '이것은 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 많고, 그 대가로 node당 relaxation |<i>K</i>|개를 지불한다. Stage 1 '
   '단독(비용 조정 순서 없는 marginal 규칙)은 세 크기에서 전체 규칙보다 node를 2.3배, 3.2배, 5.0배 더 쓴다(짝 중앙값). 그 자체로는 21×60과 24×70 모두에서 LP rule보다 약 12배 아래이고, 21×60에서 싼 '
   '고전 규칙과 동급, 24×70부터는 그 뒤이며, 28×80 instance 10개를 풀지 못한다. 따라서 marginal만으로는 경쟁력 있는 값 신호이자 평범한 변수 점수이고, 규칙을 앞서게 하는 것은 비용 조정 순서다.', body_s)
+TT('profile', ['크기', '규칙', 'ms / node', 'LP 비중', 'forward 비중'], [1.8*cm, 4.6*cm, 1.8*cm, 1.6*cm, 1.9*cm],
+   '표 3. dense 추론 경로의 node당 비용(단일 relaxation 행은 LP rule, 즉 most-integral branching이며 표 1의 모든 단일 relaxation 고전 규칙이 같은 node당 비용을 가진다): 크기당 instance 6개, 각 규칙의 전체 tree를 '
+   '계측(node당 ms와 warm-start relaxation·network forward pass가 차지하는 node 시간 비중의 instance 간 중앙값; 나머지는 축소·propagation·장부 처리). forward pass 한 번은 0.33~0.53 ms이며 자유 변수 수에 따라 커진다.', right_from=2)
 H3('Wall-clock')
 P('작은 tree는 node당 비용이 허락할 때만 시간을 사며, 표 3이 전체 tree를 계측해 그 비용을 잰다. 단일 relaxation 규칙의 node는 세 크기에서 0.47, 0.55, 0.61 ms이고 그 90%가 warm-start '
   'relaxation이다. 학습 규칙의 node는 0.71, 0.73, 0.82 ms이며 forward pass가 28~32%, relaxation이 57~62%다. 따라서 overhead 비율은 <i>n</i>=60에서 1.5배, <i>n</i>=70, 80에서 1.3배인데 forward pass가 '
