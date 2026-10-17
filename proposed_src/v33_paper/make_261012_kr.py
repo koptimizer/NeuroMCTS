@@ -68,6 +68,7 @@ def tex_rows(name):
 		if hdr:
 			if l.startswith('\\midrule'): hdr = False
 			continue
+		if l.startswith('\\addlinespace'): out.append(['__gap__']); continue
 		if l.startswith('\\multicolumn'):
 			m = re.search(r'\\emph\{(.*)\}\}', l); out.append([clean(m.group(1))]); continue
 		if ' & ' not in l or (l.startswith('\\') and not l.startswith('\\textbf')): continue
@@ -75,6 +76,7 @@ def tex_rows(name):
 	return out
 def clean(c):
 	c = re.sub(r'\\textbf\{\\underline\{([^}]*)\}\}', r'<b><u>\1</u></b>', c.strip())
+	c = re.sub(r'\\hl\{([^}]*)\}', r'<b><u>\1</u></b>', c)
 	c = c.replace('\\textbf{', '<b>').replace('\\emph{', '<i>')
 	c = c.replace('$\\times$', '×').replace('\\times', '×').replace('\\,', ' ').replace('\\%', '%').replace('\\cdot', '·').replace('---', '—')
 	c = re.sub(r'\$([^$]*)\$', r'\1', c); c = re.sub(r'10\^\{(-?\d+)\}', r'10<sup>\1</sup>', c); c = re.sub(r'\{,\}', ',', c)
@@ -294,6 +296,7 @@ def TT(name, header, widths, caption, font=7.2, right_from=1):
 	"""Korean table from a generated LaTeX table: Korean header row, group-label rows spanning the first cell."""
 	n = len(header); rows = [header]
 	for r in tex_rows(name):
+		if r == ['__gap__']: rows.append([''] * n); continue
 		rows.append(([r[0]] + [''] * (n - 1)) if len(r) == 1 else (r + [''] * (n - len(r)))[:n])
 	TBL(rows, widths, caption, right_from=right_from, font=font)
 

@@ -1702,3 +1702,4 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 261012: 서론의 relaxation 무정보 문장을 실측으로 교체(polytope 차원 n−rank A≈0.65n, vertex 분수 좌표 ≤m, root 반올림 일치율 59% vs 우연 50%·상한 69%; 28×80 30개에서 root vertex 분수 좌표 비율 35%=m/n 확인). EN·KR.
 - 261012: 'single-relaxation rule'을 초록 첫 언급과 5.1.3에서 정의(node당 relaxation 하나; LP probing은 자유 변수당 하나라 제외). EN·KR.
 - 261012 KR: 문장 분할 동기화 때 누락된 표 3(node당 비용) 복원.
+- 261012 KR: 표 변환기에 \\hl 매크로(bold+밑줄) 처리와 \\addlinespace(크기 그룹 사이 빈 줄) 반영 — 표 3·A2의 'hl{' 잔재 제거, 크기별 여백 추가.
