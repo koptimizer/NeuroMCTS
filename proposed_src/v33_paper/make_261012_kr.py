@@ -431,7 +431,9 @@ P('따라서 값 정확도와 tree 크기는 같은 양이 아니며, 이는 표
 P('Stage 2에서는 레시피가 우리가 설계한 것보다 덜 중요하다. policy head를 무작위로 시작하면 — 이 trunk로 from-scratch 강화학습이 할 일 — 초기 policy는 marginal 규칙의 7배 root 비용에서 출발하지만, '
   '6 epoch 뒤에는 기준과 동급이다(세 크기에서 1.04배, 0.86배, 1.03배, 모두 비유의). LP 규칙에서 시작해도 같은 곳에 이른다(1.06배, 0.86배, 1.12배). trunk를 풀면 held-out node 수가 셋째 epoch부터 '
   'Stage 1 규칙의 2.7~5.4배로 발산하지만, epoch 선택이 남기는 첫 epoch의 checkpoint는 동결된 것만큼 좋다(0.76배, 0.83배, 1.06배, 비유의). 따라서 동결된 trunk는 fine-tuning을 계속할 수 있을 만큼 '
-  '안정하게 유지하고 이득을 순서에 귀속시키는 것이다. tree 크기의 원천은 아니며, 우리는 그렇게 주장하지 않는다.', body_s)
+  '안정하게 유지하고 이득을 순서에 귀속시키는 것이다. tree 크기의 원천은 아니며 우리는 그렇게 주장하지 않는다; 동결을 유지하는 이유는 tree와 무관한 셋이다. 비동결 학습은 셋째 epoch부터 '
+  '발산하므로 이른 중단을 통해서만 쓸 수 있다. 동결은 p^과 FORCED/FREE 분할을 건드리지 않으므로 교차 ablation과 반증 분석을 순서에 대한 진술로 해석할 수 있게 한다. 그리고 Stage 1 표현은 모든 '
+  'depth의 상태로 학습됐는데 Stage 2는 자유 변수 45~60개인 21×60 상태만 보므로, 비동결 trunk는 그 좁은 분포 쪽으로 끌려가며 발산이 바로 그 증상이다.', body_s)
 H2('5.5 RQ4: Complete solver와의 경합')
 TT('rq4_scip', ['conflict', '규칙', '해결', 'node 중앙값', '초 중앙값', 'node, 규칙 / plug-in', '시간, 규칙 / plug-in'], [1.3*cm, 3.4*cm, 1.4*cm, 1.8*cm, 1.4*cm, 3.9*cm, 3.9*cm],
    '표 6. SCIP 안(presolve·cut·primal heuristic 끔, depth-first node 선택, 첫 해에서 정지): SCIP 자체 규칙 대 branching plug-in으로 꽂은 학습 규칙, conflict analysis off/on. 비율은 '
