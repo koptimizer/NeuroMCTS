@@ -110,7 +110,9 @@ EQ('find <b>x</b>∈{0,1}<sup><i>n</i></sup> such that <i>A</i><b>x</b>=<b>b</b>
 P('이며 해집합을 <i>S</i>로 쓴다. 레이저 기반 비파괴검사에서 이진 점유 영상이 정수 투영 집합을 정확히 재현해야 하는 복원 과제의 일반형이다: 스캔 대상은 존재하므로 해가 존재하고 '
   '유일하지 않은 경우가 흔하며, 복원은 생산 라인의 속도를 따라가야 한다. 본 논문 전체에서 instance에는 항상 해가 있고 과제는 그 해를 내놓는 것이다; 시스템이 infeasible한지 판정하는 것은 범위 밖이다(3.1절). 중요한 instance는 우변이 각 행 범위의 한가운데 근처에 있으며, 크기에 비해 어렵다.', body_s)
 P('이런 instance에서는 세 가지 성질이 표준 도구를 무력하게 만든다. 목적함수가 없으므로 branch-and-bound의 bound 기반 가지치기가 기댈 것이 없다. linear relaxation은 항상 '
-  'feasible하지만 정보가 적다: relaxation polytope가 넓고 그 vertex가 {0,1}<sup><i>n</i></sup>에서 멀어, vertex를 반올림해도 root에서 변수 값을 우연보다 조금 나은 정도로만 맞힌다. '
+  'feasible하지만 정보가 적다. relaxation polytope {<b>x</b>∈[0,1]<sup><i>n</i></sup>: <i>A</i><b>x</b>=<b>b</b>}는 차원이 <i>n</i>−rank <i>A</i>≈0.65<i>n</i>이고 ½·<b>1</b> 근처의 점을 포함하는데, 모든 우변이 행 범위의 한가운데에 있기 '
+  '때문이다. simplex가 돌려주는 vertex는 분수 좌표가 많아야 <i>m</i>개이지만 나머지 <i>n</i>−<i>m</i>개 좌표가 0과 1 중 어느 쪽에 놓이는지는 <i>S</i>가 아니라 pivot 경로가 정한다: root vertex를 '
+  '반올림하면 변수의 59%가 해와 일치하며, 우연은 50%, 3.3절의 Bayes 상한은 69%다. '
   'constraint solver의 주력인 unit propagation은 행이 포화될 때만 발동하는데 root에서는 결코, 그 근처에서도 거의 일어나지 않는다. 이 계열의 고전적 처방인 enumeration을 갖춘 lattice basis '
   'reduction은 건전하고 우리가 다루는 모든 instance를 풀지만 비용이 complete search보다 크기에 따라 빠르게 커진다; lattice가 남기는 instance와 그것이 멈추는 크기에서 complete search를 '
   '결정하는 것은 branching 결정의 품질이고, 그것이 본 논문의 대상이다.', body_s)

@@ -1699,3 +1699,4 @@ n_free ≥ 50 → M1, 그 외 M0. C 30개: node 중앙 14,170 vs M0 8,657(인스
 - 261012 교정(사용자 지시): run-in `\paragraph` 제목 전부를 번호 있는 `\subsection`/`\subsubsection`으로 전환(서론 1.1–1.3, 관련연구 2.1–2.4, 방법 4.3.x/4.4.x, 설정 5.1.1–5.1.4, 결과 5.2.x–5.5.x); 결과 절(RQ1–RQ4)·초록의 긴 문장을 내용·수치 변경 없이 분할. EN 19쪽, KR 23쪽(제목 전환만, 문장 분할은 미적용). 보류 결정: LP probing 모방 baseline·Stage 2 학습 seed·n=90은 리뷰 지적 시 진행, band 구조 인스턴스는 진행 안 함.
 - 261012: SCIP 통계 실측(24×70 inst-0003: presolve·heuristic 0건, conflict 3,327개, LP 해 정수화로 해 발견)에 따라 Gurobi–SCIP 격차 설명을 'LP 엔진과 탐색 구현'으로, solver 격차를 'clause learning과 compiled node'로 정정(EN·KR).
 - 261012 KR: 결과 절(RQ1–RQ4)·초록 본문을 영문 교정본(문장 분할)에 맞춰 재번역, 23쪽.
+- 261012: 서론의 relaxation 무정보 문장을 실측으로 교체(polytope 차원 n−rank A≈0.65n, vertex 분수 좌표 ≤m, root 반올림 일치율 59% vs 우연 50%·상한 69%; 28×80 30개에서 root vertex 분수 좌표 비율 35%=m/n 확인). EN·KR.
