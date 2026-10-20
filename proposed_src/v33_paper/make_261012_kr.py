@@ -99,7 +99,7 @@ P('Binary linear system(BLS)은 0/1 행렬 <i>A</i>에 대해 <i>A</i><b>x</b>=<
   '정확히 산출하며, Stage 1 규칙에서 출발해 network를 동결한 채 그 비용으로 actor-critic fine-tuning하면 branching 순서만 바뀐다. 고전 규칙 7종(most-integral·most-fractional LP branching, maxSD '
   'counting, dom/wdeg, impact, 전수 LP probing, uniform)과 참조 신호 2종(정확한 marginal, belief propagation)을 같은 탐색 루프에서, 세 크기 100개 세트로 평가한다. 학습 규칙은 모든 '
   '크기에서 node당 relaxation을 하나만 푸는 규칙(단일 relaxation 규칙) 전부보다 node를 적게 쓰고(가장 강한 규칙 대비 1.5~3.2배, sign test <i>p</i>≤0.035), 28×80에서는 시간도 전부보다 빠르다(2.0~3.1배, '
-  '<i>p</i>≤0.002). 모든 node에서 자유 변수당 relaxation을 하나씩 푸는 LP probing만이 node를 더 적게 쓰되 5~8배의 시간이 든다. <i>n</i>≤60에서 학습한 규칙은 <i>n</i>=70, 80에서 우위를 유지하고 그 우위는 크기와 함께 커진다. 값×변수 교차 ablation은 이득이 변수 선택에 '
+  '<i>p</i>≤0.002). 모든 node에서 자유 변수당 relaxation을 한두 번 푸는 LP probing만이 node를 더 적게 쓰되 5~8배의 시간이 든다. <i>n</i>≤60에서 학습한 규칙은 <i>n</i>=70, 80에서 우위를 유지하고 그 우위는 크기와 함께 커진다. 값×변수 교차 ablation은 이득이 변수 선택에 '
   '있음을 보인다: 비용 조정 변수에 LP 반올림 값을 붙이면 전체 규칙과 같고, LP 변수에 정확한 marginal 값을 붙이면 28배 나쁘다. SCIP에 branching 규칙으로 꽂으면 policy는 conflict analysis '
   'on/off 모두에서 reliability pseudocost branching보다 node를 1.9~3.8배 적게 쓰고 큰 두 크기에서 시간은 동률이며, presolve와 clause learning을 갖춘 complete solver는 end-to-end에서 여전히 '
   '더 빠르다; 격차는 tree 크기가 아니라 node당 비용에 있다.', abs_s)
@@ -112,7 +112,7 @@ EQ('find <b>x</b>∈{0,1}<sup><i>n</i></sup> such that <i>A</i><b>x</b>=<b>b</b>
 P('이며 해집합을 <i>S</i>로 쓴다. 레이저 기반 비파괴검사에서 이진 점유 영상이 정수 투영 집합을 정확히 재현해야 하는 복원 과제의 일반형이다: 스캔 대상은 존재하므로 해가 존재하고 '
   '유일하지 않은 경우가 흔하며, 복원은 생산 라인의 속도를 따라가야 한다. 본 논문 전체에서 instance에는 항상 해가 있고 과제는 그 해를 내놓는 것이다; 시스템이 infeasible한지 판정하는 것은 범위 밖이다(3.1절). 중요한 instance는 우변이 각 행 범위의 한가운데 근처에 있으며, 크기에 비해 어렵다.', body_s)
 P('이런 instance에서는 세 가지 성질이 표준 도구를 무력하게 만든다. 목적함수가 없으므로 branch-and-bound의 bound 기반 가지치기가 기댈 것이 없다. linear relaxation은 항상 '
-  'feasible하지만 정보가 적다. relaxation polytope {<b>x</b>∈[0,1]<sup><i>n</i></sup>: <i>A</i><b>x</b>=<b>b</b>}는 차원이 <i>n</i>−rank <i>A</i>≈0.65<i>n</i>이고 ½·<b>1</b> 근처의 점을 포함하는데, 모든 우변이 행 범위의 한가운데에 있기 '
+  'feasible하지만 정보가 적다. relaxation polytope {<b>x</b>∈[0,1]<sup><i>n</i></sup>: <i>A</i><b>x</b>=<b>b</b>}는 차원이 <i>n</i>−rank <i>A</i>≈0.65<i>n</i>이고 ½·<b>1</b> 근처의 점을 포함하는데, 모든 우변이 행 범위의 한가운데 근처에 있기 '
   '때문이다. simplex가 돌려주는 vertex는 분수 좌표가 많아야 <i>m</i>개이지만 나머지 <i>n</i>−<i>m</i>개 좌표가 0과 1 중 어느 쪽에 놓이는지는 <i>S</i>가 아니라 pivot 경로가 정한다: root vertex를 '
   '반올림하면 변수의 59%가 해와 일치하며, 우연은 50%, 3.3절의 Bayes 상한은 69%다. '
   'constraint solver의 주력인 unit propagation은 행이 포화될 때만 발동하는데 root에서는 결코, 그 근처에서도 거의 일어나지 않는다. 이 계열의 고전적 처방인 enumeration을 갖춘 lattice basis '
@@ -121,7 +121,7 @@ P('이런 instance에서는 세 가지 성질이 표준 도구를 무력하게 �
 H2('1.1 학습된 branching이 여기에 남겨 둔 것')
 P('세 계열의 연구가 branching 결정을 학습하며 2절이 검토한다: strong branching 모방, message passing에 의한 근사 marginal, subtree 크기에 '
   '대한 강화학습. 각각은 목적함수가 있는 문제, 희소한 제약 graph, 또는 희소한 보상을 위해 개발됐고, BLS에 적용하면 각각 무언가를 잃는다. 목적함수가 없으면 strong branching은 점수 매길 bound '
-  '개선이 없어 node마다 자유 변수당 relaxation 하나를 지불하는 규칙인 LP probing으로 퇴화한다. BLS의 밀집 factor graph에서 belief propagation은 강한 damping과 추정 한 번에 수백 번의 반복이 '
+  '개선이 없어 node마다 자유 변수당 relaxation을 한두 번 지불하는 규칙인 LP probing으로 퇴화한다. BLS의 밀집 factor graph에서 belief propagation은 강한 damping과 추정 한 번에 수백 번의 반복이 '
   '필요하고, root 수준의 사용법은 complete search가 모든 node에서 필요로 하는 conditional marginal을 제공하지 않는다. from-scratch 강화학습은 어느 변수로 분기할지를 가르치는 같은 희박한 '
   '신호로부터 어느 값을 먼저 시도할지를 스스로 발견해야 하지만, BLS는 열거할 수 있을 만큼 작은 instance에서 최적의 첫 값을 정확히 제공한다. 빠진 것은 BLS가 제공하는 정확한 신호 — 자유 변수의 '
   'conditional marginal과 branching 결정의 정확한 비용 — 를 취해 값과 변수를 따로 학습하고, 그 신호를 감당할 수 있는 크기에서 한 번 학습해 감당할 수 없는 크기에 배포하는 branching 규칙이다. 본 '
@@ -174,7 +174,7 @@ P('Cornuéjols and Dawande(1999)의 market split 문제는 (1)과 같은 시스�
 H2('2.4 이 접근들이 BLS에 남겨 둔 것')
 P('우리 설정에 가장 가까운 세 learned-branching 계열은 feasibility 시스템으로 옮겨오면 각각 본질적인 무언가를 잃는다. <i>strong branching 모방</i>(Khalil '
   'et al., 2016; Gasse et al., 2019)은 목적함수를 전제한다: expert는 두 자식의 bound 개선으로 후보를 점수 매기는데 BLS에는 개선할 bound가 없다. feasibility 시스템에서 strong branching이 보유하는 '
-  '유일한 정보는 자식의 relaxation이 infeasible한지 여부이므로 expert는 LP probing — 반증할 수 있는 것을 고정하고 LP 값으로 분기하는 규칙 — 으로 퇴화하며 node마다 자유 변수당 relaxation 하나를 '
+  '유일한 정보는 자식의 relaxation이 infeasible한지 여부이므로 expert는 LP probing — 반증할 수 있는 것을 고정하고 LP 값으로 분기하는 규칙 — 으로 퇴화하며 node마다 자유 변수당 relaxation을 한두 번 '
   '지불한다; 그것을 모방하면 node당 비용 없이 순위를 물려받겠지만 학습된 모방이 expert의 tree를 유지하는지는 열어 두는 질문이며(6절), 우리가 시험하는 것은 expert 그 자체다. <i>message passing에 의한 근사 marginal</i>(Li and Si, 2022; '
   'Montanari et al., 2007)은 BLS에서 잘 정의된다: 각 행은 cardinality factor이고 정확한 factor message를 쓰는 sum-product는 구현 가능하다. 두 가지가 잘못된다. factor graph가 밀집해 모든 행이 '
   '변수의 약 3분의 1에 닿으므로 loopy belief propagation은 강한 damping이 필요하고 수렴하는 곳에서도 수백 번 반복한다; 그리고 NSNet식 사용법은 root에서 한 번 marginal을 추정해 incomplete '
@@ -191,9 +191,9 @@ P('우리 설정에 가장 가까운 세 learned-branching 계열은 feasibility
 H1('3. 문제 정의와 준비')
 H2('3.1 Instance와 범위')
 P('우리는 (1)의 feasible instance를 다룬다: 모든 instance는 해를 심어 생성하므로 <i>S</i>≠∅이며 infeasibility 판별은 본 논문의 범위 밖이다. 구성은 2절의 market-split 방식에 0/1 계수를 '
-  '적용한 것이다. 생성기는 각 원소가 확률 0.3으로 1인 무작위 <i>A</i>를 뽑고 정확히 <i>n</i>/2개가 1인 무작위 <b>x</b>*를 심어 <b>b</b>=<i>A</i><b>x</b>*로 두므로, 모든 우변은 행 범위의 '
-  '한가운데, 즉 0/1 완성의 수가 가장 많고 propagation이 발동할 수 없는 곳에 놓인다. <i>A</i>마다 후보 planting 20개 중 relaxation polytope가 가장 넓은 것(무작위 선형 목적 4개가 돌려주는 '
-  'vertex 간 평균 거리로 측정)을 남기므로 채택된 instance의 relaxation은 생성기가 만들 수 있는 만큼 무정보하다. 유일성은 강제하지 않는다; 열거가 완료되는 크기에서 해의 수 중앙값은 '
+  '적용한 것이다. 생성기는 각 원소가 확률 0.3으로 1인 무작위 <i>A</i>를 뽑되 1이 두 개 미만인 행이나 1이 없는 열이 있으면 다시 뽑고, 정확히 ⌊<i>n</i>/2⌋개가 1인 무작위 <b>x</b>*를 심어 <b>b</b>=<i>A</i><b>x</b>*로 두므로, 모든 우변은 행 범위의 '
+  '한가운데 근처, 즉 0/1 완성의 수가 가장 많고 propagation이 발동할 수 없는 곳에 놓인다. <i>A</i>마다 후보 planting 20개 중 relaxation polytope가 가장 넓은 것(계수가 표준정규분포인 선형 목적 4개가 돌려주는 서로 다른 '
+  'vertex 간 평균 Euclid 거리로 측정)을 남기므로 채택된 instance의 relaxation은 생성기가 만들 수 있는 만큼 무정보하다. 유일성은 강제하지 않는다; 열거가 완료되는 크기에서 해의 수 중앙값은 '
   '<i>n</i>=25, 50, 60에서 64, 112, 113이다.', body_s)
 H2('3.2 Conditioning은 reduction이다')
 IMG('reduction', W, '그림 2. 명제 1과 그것이 유도하는 분할. <b>x</b><sub><i>F</i></sub>=<b>v</b>인 node는 더 작은 BLS <i>A<sub>K</sub></i><b>y</b>=<b>b</b>−<i>A<sub>F</sub></i><b>v</b>이고 그 '
@@ -231,10 +231,10 @@ H2('4.2 Guided depth-first search')
 P('모든 instance는 알고리즘 1의 depth-first 절차로 처음부터 탐색한다. node는 partial assignment이며 명제 1에 따라 축소 instance '
   '(<i>A</i>′, <b>b</b>′)=(<i>A<sub>K</sub></i>, <b>b</b>−<i>A<sub>F</sub></i><b>v</b>)로 다루고, <i>r<sub>i</sub></i>는 <i>A</i>′의 행 <i>i</i>에 남은 자유 변수 수다.', body_s)
 TBL([['단계', '알고리즘 1: guided depth-first search의 node 하나'],
-     ['1', '<b>Reduce.</b> (<i>F</i>,<b>v</b>)를 pop; <i>A</i>′=<i>A<sub>K</sub></i>, <b>b</b>′=<b>b</b>−<i>A<sub>F</sub></i><b>v</b>를 만든다. <i>r<sub>i</sub></i>=0인 행은 버린다; 행이 남지 않으면 <i>A</i><b>x</b>=<b>b</b>를 검증하고 <b>x</b>를 반환한다.'],
-     ['2', '<b>Bound check.</b> 어떤 행에서 <i>b</i>′<sub><i>i</i></sub>&lt;0 또는 <i>b</i>′<sub><i>i</i></sub>&gt;<i>r<sub>i</sub></i>이면 node를 버린다.'],
+     ['1', '<b>Reduce.</b> (<i>F</i>,<b>v</b>)를 pop; <i>A</i>′=<i>A<sub>K</sub></i>, <b>b</b>′=<b>b</b>−<i>A<sub>F</sub></i><b>v</b>를 만든다.'],
+     ['2', '<b>Bound check.</b> 어떤 행에서 <i>b</i>′<sub><i>i</i></sub>&lt;0 또는 <i>b</i>′<sub><i>i</i></sub>&gt;<i>r<sub>i</sub></i>이면(<i>r<sub>i</sub></i>=0이면서 <i>b</i>′<sub><i>i</i></sub>≠0인 행 포함) node를 버린다. 그다음 <i>r<sub>i</sub></i>=0인 행을 버리는데, 이 행들은 이제 모두 <i>b</i>′<sub><i>i</i></sub>=0이다; 행이 남지 않으면 모든 행이 성립하므로 <b>x</b>는 해다.'],
      ['3', '<b>Propagate.</b> <i>b</i>′<sub><i>i</i></sub>=0(그 행의 자유 변수를 0으로 고정) 또는 <i>b</i>′<sub><i>i</i></sub>=<i>r<sub>i</sub></i>(1로 고정)인 행이 있는 동안 고정을 적용한다; 모순이면 node를 버리고, 변수가 고정됐으면 축소 node를 push하고 돌아간다.'],
-     ['4', '<b>Relax.</b> <i>F</i>의 bound를 <b>v</b>로 조인 단일 warm-start relaxation {<i>A</i><b>x</b>=<b>b</b>, 0≤<b>x</b>≤1}을 재최적화한다(이전 basis에서 dual simplex, 0.08 ms). infeasible이면 node를 버리고, 아니면 vertex <b>x</b><sup>LP</sup><sub><i>K</i></sub>를 읽는다.'],
+     ['4', '<b>Relax.</b> <i>F</i>의 bound를 <b>v</b>로 조인 단일 warm-start relaxation {<i>A</i><b>x</b>=<b>b</b>, 0≤<b>x</b>≤1}을 재최적화한다(이전 basis에서 dual simplex; bound 갱신을 포함해 node당 0.4~0.6 ms, 표 3). infeasible이면 node를 버리고, 아니면 vertex <b>x</b><sup>LP</sup><sub><i>K</i></sub>를 읽는다.'],
      ['5', '<b>Predict.</b> (<i>A</i>′, <b>b</b>′, <b>x</b><sup>LP</sup><sub><i>K</i></sub>)의 bipartite graph 위에서 network를 한 번 forward하여 <i>j</i>∈<i>K</i>에 대한 p^<sub><i>j</i></sub>와 <i>g<sub>j</sub></i>를 얻는다(4.5절의 dense 경로에서 0.3~0.5 ms). <i>j</i>*=argmax<sub><i>j</i></sub> <i>g<sub>j</sub></i>, <i>v</i>=1[p^<sub><i>j</i>*</sub>≥1/2]를 고른다.'],
      ['6', '<b>Branch.</b> 자식 <i>x</i><sub><i>j</i>*</sub>=1−<i>v</i>를 먼저, 자식 <i>x</i><sub><i>j</i>*</sub>=<i>v</i>를 나중에 push하여 <i>v</i>를 먼저, backtrack 시 1−<i>v</i>를 탐색한다.']],
     [1.2*cm, W - 1.2*cm],
@@ -242,7 +242,7 @@ TBL([['단계', '알고리즘 1: guided depth-first search의 node 하나'],
 P('세 가지 설계 선택이 이후에 중요하다. 0/1 행에서 propagation은 "이 행의 자유 변수 <i>r<sub>i</sub></i>개 중 정확히 <i>b</i>′<sub><i>i</i></sub>개가 1"이라 읽히며 '
   '<i>b</i>′<sub><i>i</i></sub>∈{0, <i>r<sub>i</sub></i>}일 때만 변수를 고정할 수 있으므로 우리 instance의 root 근처에서는 작동하지 않는다. relaxation은 node마다 다시 만들지 않는다: '
   '원래 <i>n</i>개 변수 위의 linear program 하나를 탐색 내내 유지하고 node를 bound 변경 집합으로 표현하므로, 자식이든 backtrack 후의 형제든 연속한 node는 bound 몇 개만 다르고 '
-  'dual simplex는 부모 basis에서 재개한다; 이는 재구성보다 50배 싸며 Python 루프가 초당 약 1,000 node를 처리하게 하는 요인이다. 그 infeasibility 판정은 행들의 선형결합을 보므로 '
+  'dual simplex는 부모 basis에서 재개한다; 이것이 Python 루프가 규칙과 크기에 따라 초당 1,200~2,100 node를 처리하게 하는 요인이다(표 3). 그 infeasibility 판정은 행들의 선형결합을 보므로 '
   'propagation보다 엄격히 강하고 network 앞의 마지막 건전 단계다. 그것이 돌려주는 vertex <b>x</b><sup>LP</sup>가 network의 주 입력 특징이다.', body_s)
 H2('4.3 Stage 1: 정확한 conditional marginal을 target으로')
 IMG('network', W, '그림 4. network. 축소 instance가 변수당·행당 특징 3개를 지닌 bipartite graph로 들어가고, graph-attention 4 라운드의 trunk가 변수와 행마다 embedding을 만들며, '
@@ -254,12 +254,12 @@ P('network <i>f</i><sub>θ</sub>(그림 4)는 graph attention(Velickovic et al.,
   '변수 node는 특징 3개(relaxation 값 <i>x</i><sup>LP</sup><sub><i>j</i></sub>, 열 밀도, fractionality |<i>x</i><sup>LP</sup><sub><i>j</i></sub>−round(<i>x</i><sup>LP</sup><sub><i>j</i></sub>)|), '
   '제약 node는 3개(우변 <i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>, 밀도 <i>r<sub>i</sub></i>/|<i>K</i>|, relaxation 잔차 (<i>b</i>′<sub><i>i</i></sub>−(<i>A</i>′<b>x</b><sup>LP</sup>)<sub><i>i</i></sub>)/<i>r<sub>i</sub></i>)를 '
   '지니고, <i>a</i>′<sub><i>ij</i></sub>=1인 곳에 간선이 있다. linear layer가 둘을 폭 64로 올리고, attention 4 라운드가 변수→제약, 제약→변수 message를 번갈아 주고받으며(residual 연결, '
-  'layer normalization), 2층 marginal head가 각 변수 embedding <b>h</b><sub><i>j</i></sub>를 logit 하나로 사상한다: p^<sub><i>j</i></sub>=σ(<i>m<sub>j</sub></i>); 파라미터는 총 21,761개. '
+  'layer normalization; 모든 라운드가 같은 single-head attention 층 둘(ELU 활성화)과 같은 layer norm 둘을 공유한다), 2층 marginal head가 각 변수 embedding <b>h</b><sub><i>j</i></sub>를 logit 하나로 사상한다: p^<sub><i>j</i></sub>=σ(<i>m<sub>j</sub></i>); 파라미터는 총 21,761개. '
   'Stage 2에서 더하는 head 둘은 4.4절에 있다. architecture는 표준이고 기여는 target이다.', body_s)
 H3('Target과 학습 상태')
 P('열거 가능한 instance(10×25)에서 <i>S</i>는 constraint solver의 all-solutions mode로 얻고 <i>p<sub>j</sub></i>는 개수로 계산한다. 소진까지 완료된 열거만 '
   '인정한다; 해를 이미 모은 채 시간제한에 걸린 열거는 잘린 <i>S</i>를 대입해 모든 라벨을 편향시킨다. 학습 상태는 도달 가능한 in-tree 상태다: depth <i>d</i>∈{0,…,12}를 균등하게 뽑고 '
-  'LP 확신도 순서의 prefix를 무작위로 고른 실제 해의 값으로 고정한 뒤 축소 instance를 다시 열거해 자유 변수의 <i>p<sub>j</sub></i>를 얻는다. network는 soft target에 대한 cross-entropy', body_s)
+  'root relaxation의 most-integral 순서(instance당 한 번 계산)의 앞 <i>d</i>개 변수를 <i>S</i>에서 균등하게 뽑은 해의 값으로 고정한 뒤, 그 prefix와 일치하는 <i>S</i>의 해들로 자유 변수의 <i>p<sub>j</sub></i>를 계산한다; 명제 1에 따라 이는 축소 instance를 열거하는 것과 같다. network는 soft target에 대한 cross-entropy', body_s)
 EQ('<i>L</i><sub>1</sub> = −(1/|<i>K</i>|) Σ<sub><i>j</i>∈<i>K</i></sub> [ <i>p<sub>j</sub></i> log p^<sub><i>j</i></sub> + (1−<i>p<sub>j</sub></i>) log(1−p^<sub><i>j</i></sub>) ] &nbsp;&nbsp;(4)')
 P('로 학습하며 이는 p^=<i>p</i>에서 정확히 최소화된다; <i>p<sub>j</sub></i> 자리에 심어진 해를 넣는 통상적 선택은 |<i>S</i>|&gt;1이면 잡음 섞인 대리 target이다.', body_s)
 H3('Branching 규칙')
@@ -279,18 +279,18 @@ EQ('<i>g<sub>j</sub></i>(<i>s</i>) = log |p^<sub><i>j</i></sub> − 1/2| + <i>h<
 P('이며 <i>h</i><sub>φ</sub>는 마지막 층을 0으로 초기화한 2층 network라서 π(<i>j</i>|<i>s</i>) ∝ exp(<i>g<sub>j</sub></i>/τ)는 규칙 (5)를 부드럽게 한 것에서 출발하고 그 argmax는 정확히 '
   '그 규칙이다. value head <i>V</i><sub>ψ</sub>(<i>s</i>)는 mean·max pooling한 변수·제약 embedding과 log|<i>K</i>|, log <i>m</i>으로 log <i>c</i>를 예측한다.', body_s)
 H3('갱신')
-P('매 epoch 자유 변수 45~60개인 학습 상태 400개를 뽑아 표집 policy(τ=1)를 해까지 전개하고 모든 결정을 정확한 비용과 함께 기록한다(epoch당 약 21,000 결정). epoch 안에서 '
+P('매 epoch 자유 변수가 45, 50, 55, 60개인 학습 상태 400개를 뽑아 표집 policy(τ=1)를 해까지 전개하고, rollout마다 결정을 최대 60개까지 균등 추출해 정확한 비용과 함께 남긴다(epoch당 약 21,000 결정). epoch 안에서 '
   '표준화한 advantage α(<i>u</i>)=<i>V</i><sub>ψ</sub>(<i>s<sub>u</sub></i>)−log <i>c</i>(<i>u</i>)로', body_s)
 EQ('<i>L</i><sub>2</sub> = Σ<sub><i>u</i></sub> [ −α(<i>u</i>) log π(<i>j<sub>u</sub></i>|<i>s<sub>u</sub></i>) − λ H(π(·|<i>s<sub>u</sub></i>)) + (<i>V</i><sub>ψ</sub>(<i>s<sub>u</sub></i>) − log <i>c</i>(<i>u</i>))<sup>2</sup> ], &nbsp;λ=0.01 &nbsp;&nbsp;(7)')
 P('이는 Monte-Carlo return을 쓰는 on-policy actor-critic 갱신이며(Williams, 1992) return이 정확하므로 bootstrapping이 필요 없다. φ, ψ만 학습한다; θ는 고정이므로 값을 고르고 '
-  'FORCED/FREE 분할을 정의하는 marginal은 변하지 않고 어떤 개선도 branching 순서만으로 귀속된다. critic은 규칙 (5) 하에서 기록한 결정으로 사전학습하며 그 held-out 순위 상관이 actor '
-  '갱신의 관문이다 — 비용 순위를 못 매기는 baseline은 advantage를 잡음으로 만든다. epoch는 학습 풀의 held-out 상태 아래 총 node 수로 고르며 평가 instance는 결코 쓰지 않는다. '
+  'FORCED/FREE 분할을 정의하는 marginal은 변하지 않고 어떤 개선도 branching 순서만으로 귀속된다. 갱신은 결정 하나씩 Adam(학습률 3×10<sup>−4</sup>)과 gradient clipping 1.0으로 적용한다. critic은 규칙 (5) 하에서 기록한 결정으로 미리 학습하고, log <i>c</i>와의 held-out Spearman 상관이 0.5 이상일 때만 '
+  'fine-tuning을 시작한다 — 비용 순위를 못 매기는 baseline은 advantage를 잡음으로 만들기 때문이며, 이는 학습 안의 관문이 아니라 학습 전 1회 점검이다. epoch는 Stage 2 풀에서 따로 떼어 둔 100개 instance의 상태 150개 아래 총 node 수로 고르며 평가 instance는 결코 쓰지 않는다. '
   '배포 시 policy는 greedy다: <i>j</i>*=argmax<sub><i>j</i></sub> <i>g<sub>j</sub></i>(<i>s</i>).', body_s)
 H2('4.5 Node당 비용')
 P('자유 변수 |<i>K</i>|개인 node에서 guided search는 warm-start relaxation 하나와 forward pass 하나를 지불한다. forward pass는 dense adjacency tensor 위에서 TorchScript로 돈다(graph가 최대 '
   '변수 80개·행 28개라 sparse message passing은 얻는 것이 없다); 단일 thread로 자유 변수 수에 따라 0.3~0.5 ms이며 Stage 2의 head는 측정 가능한 비용을 더하지 않는다. 단일 relaxation 고전 규칙은 '
   'relaxation만 지불하므로 학습 규칙의 node는 1.3~1.5배 비싸며, 그 비율은 relaxation이 크기와 함께 커짐에 따라 줄어든다(5.2절, 표 3). 같은 FORCED 변수를 탐지하는 건전 절차인 LP '
-  'probing(<i>x<sub>j</sub></i>를 각 값으로 고정해 relaxation이 infeasible해지는 쪽을 가지치기)은 node마다 relaxation |<i>K</i>|개를 지불한다.', body_s)
+  'probing(<i>x<sub>j</sub></i>를 각 값으로 고정해 relaxation이 infeasible해지는 쪽을 가지치기)은 node마다 자유 변수당 relaxation을 한두 번, 최대 2|<i>K</i>|개 지불한다.', body_s)
 
 def TT(name, header, widths, caption, font=7.2, right_from=1):
 	"""Korean table from a generated LaTeX table: Korean header row, group-label rows spanning the first cell."""
@@ -306,12 +306,12 @@ P('실험은 1절의 네 질문에 설정 다음에 차례로 답한다(5.2~5.5�
 H2('5.1 설정')
 H3('Instance')
 P('instance는 3.1절대로 생성한다. 크기는 10×25, 18×50, 21×60, 24×70, 28×80이고 제약 밀도 <i>m</i>/<i>n</i>≈0.35를 유지한다; 평가 세트는 작은 두 크기에서 30개, 큰 세 크기에서 '
-  '각 100개이며 생성기 seed로 학습 풀과 분리된다. Stage 1은 별도의 10×25 instance 1,600개의 in-tree 상태로, Stage 2는 별도의 21×60 instance 500개의 상태로 학습한다. <i>n</i>=100에서는 '
+  '각 100개이며 생성기 seed로 학습 풀과 분리된다(평가 instance <i>i</i>는 모든 크기에서 seed 700000+<i>i</i>, Stage 1 풀은 910000부터, Stage 2 풀은 810000부터). Stage 1은 별도의 10×25 instance 1,600개로 이루어진 풀의 in-tree 상태로, Stage 2는 별도의 21×60 instance 500개로 이루어진 풀의 상태로 학습한다. <i>n</i>=100에서는 '
   'CP-SAT로 20 s 안에 어떤 방법도 instance를 풀지 못하므로 <i>n</i>=80이 마지막 크기다.', body_s)
 H3('학습')
-P('Stage 1: 소진까지 열거한 10×25 instance 1,600개, instance당 depth 0~12의 in-tree 상태 8개, 학습 상태 10,000개·테스트 상태 2,000개; Adam, 학습률 10<sup>−3</sup>, 20 epoch, batch 1, '
+P('Stage 1: 소진까지 열거해 instance 단위로 80/20 분할한(학습 1,280개·테스트 320개) 10×25 instance 1,600개, instance당 depth 0~12의 in-tree 상태 8개 중 앞의 학습 상태 10,000개·테스트 상태 2,000개; Adam, 학습률 10<sup>−3</sup>, 20 epoch, batch 1, '
   'gradient clipping 1.0, CPU 코어 하나로 약 20분, 튜닝한 hyperparameter 없음, validation split 없음. 테스트 상태의 FORCED 변수 정확도는 79.1%로 Bayes 상한 83.3%, relaxation rounding '
-  '76.0~77.5%와 비교된다. Stage 2: 자유 변수 45~60개인 21×60 상태에서 Stage 1 규칙으로 기록한 결정으로 critic을 사전학습하고(log <i>c</i>와의 held-out Spearman 상관 0.81, 상태 크기만 아는 '
+  '76.0~77.5%와 비교된다. Stage 2: 자유 변수가 45, 50, 55, 60개인 21×60 상태에서 Stage 1 규칙으로 상태당 25개씩 기록한 결정 39,275개(held-out 9,825개)로 critic을 사전학습하고(Adam, 학습률 10<sup>−3</sup>, 15 epoch; log <i>c</i>와의 held-out Spearman 상관 0.81, 상태 크기만 아는 '
   'baseline 0.75), 갱신 (7)을 6 epoch; epoch는 held-out 학습 상태로 고른다(epoch 6, 그 상태 아래 node 수가 Stage 1 규칙의 0.36).', body_s)
 TBL([['그룹', '규칙', '분기 변수', '첫 값'],
      ['고전', 'LP rule (most-integral)', 'argmax<sub><i>j</i></sub> |<i>x</i><sup>LP</sup><sub><i>j</i></sub>−1/2|', 'round(<i>x</i><sup>LP</sup><sub><i>j</i></sub>)'],
@@ -327,16 +327,16 @@ TBL([['그룹', '규칙', '분기 변수', '첫 값'],
      ['', 'Stage 1+2', '비용 조정 점수, argmax<sub><i>j</i></sub> <i>g<sub>j</sub></i>', '1[p^<sub><i>j</i></sub>≥1/2]']],
     [1.2*cm, 5.2*cm, 6.4*cm, W - 12.8*cm],
     '표 1. 비교하는 branching 규칙. 모두 같은 depth-first 루프(알고리즘 1: node당 warm-start relaxation 하나, 같은 propagation, 같은 예산)에서 돌고 5단계만 다르다. 단일 relaxation 고전 규칙은 '
-    'node당 relaxation 하나, LP probing은 자유 변수당 하나를 지불한다; 참조 신호는 배포 불가능하며 값 신호가 할 수 있는 것의 상한이다.', right_from=9, font=7.4)
+    'node당 relaxation 하나, LP probing은 자유 변수당 한두 개를 지불한다; 참조 신호는 배포 불가능하며 값 신호가 할 수 있는 것의 상한이다.', right_from=9, font=7.4)
 H3('규칙')
-P('표 1이 규칙을 나열한다. node당 relaxation을 하나만 푸는 규칙을 <i>단일 relaxation</i> 규칙이라 부른다; 표의 고전 규칙은 모든 node에서 자유 변수당 한 번씩 relaxation을 다시 푸는 LP probing을 빼고 전부 여기에 든다. LP 규칙 둘은 most-integral과 most-fractional vertex 규칙이다; maxSD는 counting-based search로 0/1 행의 solution density가 정확히 '
+P('표 1이 규칙을 나열한다. node당 relaxation을 하나만 푸는 규칙을 <i>단일 relaxation</i> 규칙이라 부른다; 표의 고전 규칙은 모든 node에서 자유 변수당 한두 번 relaxation을 다시 푸는 LP probing을 빼고 전부 여기에 든다. LP 규칙 둘은 most-integral과 most-fractional vertex 규칙이다; maxSD는 counting-based search로 0/1 행의 solution density가 정확히 '
   '<i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>라 계산 비용이 없다; dom/wdeg와 impact는 constraint programming의 표준 적응형 규칙 둘로 우리 루프의 실패·축소 통계로 구현했다; LP probing은 '
   '목적함수 없는 strong branching이 환원되는 것이다; uniform 규칙은 instance가 어렵다는 점검이다. oracle은 모든 node에서 <i>S</i>(<i>F</i>,<b>v</b>)를 열거하며 감당 가능한 곳에서만 돌린다; '
-  'BP 규칙은 정확한 cardinality-factor message, damping 0.9, 최대 300회 반복의 sum-product를 돌린다. 2절의 학습 baseline은 다음과 같이 나타난다: LP probing은 strong branching 모방을(expert '
+  'BP 규칙은 정확한 cardinality-factor message, damping 0.9, 허용오차 10<sup>−4</sup>, 최대 100회 반복의 sum-product를 모든 node에서 돌린다. 2절의 학습 baseline은 다음과 같이 나타난다: LP probing은 strong branching 모방을(expert '
   '그 자체다), BP는 message-passing marginal을, 5.4절에서 무작위 head와 LP 규칙에서 출발한 비용 조정 policy는 from scratch와 고전 규칙에서 출발하는 강화학습을 대표한다.', body_s)
 H3('프로토콜과 통계')
 P('instance마다 두 지표를 기록한다: 해에 도달하기까지 전개한 node 수(4.4절의 <i>c</i>(root); branching 품질을 재며 탐색이 relaxation vertex가 주어지면 결정적이므로 '
-  'seed 불변)와 단일 thread wall-clock 시간(node당 비용도 반영). 예산은 다섯 크기에 대해 instance당 60, 300, 600, 1,200, 1,200 s이며 프로세스 종료로 강제한다; 20코어 Intel Core Ultra 7 265KF 머신(메모리 32 GB)에서 instance 6개를 '
+  'seed 불변)와 단일 thread wall-clock 시간(node당 비용도 반영). 예산은 다섯 크기에 대해 instance당 60, 300, 600, 1,200, 1,200 s이며 매 node에서 검사하고, 예산 60 s 뒤 프로세스를 종료하는 것은 안전장치다; 시계는 instance·network·relaxation 모델을 불러온 뒤 시작한다; 20코어 Intel Core Ultra 7 265KF 머신(메모리 32 GB)에서 instance 6개를 '
   '동시에 돌리고 GPU는 쓰지 않으며 학습 arm은 4.5절의 dense TorchScript 경로를 쓴다. 루프는 Python 3.10과 NumPy 2.2, relaxation은 LP 엔진으로 쓴 Gurobi 13.0, network는 PyTorch 2.10이고, solver 비교는 '
   'PySCIPOpt 6.1을 통한 SCIP 10.0, OR-Tools CP-SAT 9.15, Gurobi 13.0, fpylll 0.6을 쓴다. 비교는 instance별로 짝짓는다: 두 규칙이 모두 푼 instance에서 instance별 비율의 중앙값, 그 중앙값의 '
   '95% bootstrap 구간(instance 1,000회 재표집), 각 규칙이 이긴 instance 수, 동률을 제외한 양측 exact sign test를 보고하며, PAR-2(미해결 instance를 예산의 두 배로 센 평균 시간)가 해결률과 시간을 '
@@ -354,7 +354,7 @@ P('표 2와 그림 6이 주 결과다. 세 크기 각각에서 학습 규칙은 
   'most-fractional branching 대비로는 2.27배, 3.67배, 3.98배(<i>p</i>≤2×10<sup>−4</sup>)다. most-integral LP rule 대비로는 작은 두 크기에서 24배와 38배이고, 28×80에서 그 규칙은 100개 중 40개만 예산 안에 '
   '풀며 그 위에서 19배 많은 node를 쓴다(PAR-2 1,688 대 75 s).', body_s)
 P('이득은 분포적이지 보편적이지 않다: 학습 규칙은 싼 규칙들에 대해 100개 중 61~80개에서 이기고 나머지에서 진다. 더 작은 tree를 만드는 유일한 규칙은 LP probing으로, 푸는 instance에서 2.7~2.9배다. '
-  '이것은 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 많고, 그 대가로 node당 relaxation |<i>K</i>|개를 지불한다. Stage 1 '
+  '이것은 strong branching의 전이형이다: 모든 node에서 relaxation이 반증할 수 있는 모든 변수를 고정하므로 어떤 점수보다 node당 정보가 많고, 그 대가로 node당 relaxation을 최대 2|<i>K</i>|개 지불한다. Stage 1 '
   '단독(비용 조정 순서 없는 marginal 규칙)은 세 크기에서 전체 규칙보다 node를 2.3배, 3.2배, 5.0배 더 쓴다(짝 중앙값). 그 자체로는 21×60과 24×70 모두에서 LP rule보다 약 12배 아래이고, 21×60에서 싼 '
   '고전 규칙과 동급, 24×70부터는 그 뒤이며, 28×80 instance 10개를 풀지 못한다. 따라서 marginal만으로는 경쟁력 있는 값 신호이자 평범한 변수 점수이고, 규칙을 앞서게 하는 것은 비용 조정 순서다.', body_s)
 TT('profile', ['크기', '규칙', 'ms / node', 'LP 비중', 'forward 비중', '비용 비율'], [1.6*cm, 4.4*cm, 1.7*cm, 1.5*cm, 1.8*cm, 1.7*cm],
@@ -365,7 +365,7 @@ P('작은 tree는 node당 비용이 허락할 때만 시간을 사며, 표 3이 
   'relaxation이다. 학습 규칙의 node는 0.71, 0.73, 0.82 ms이며 forward pass가 28~32%, relaxation이 57~62%다. 따라서 overhead 비율은 <i>n</i>=60에서 1.5배, <i>n</i>=70, 80에서 1.3배인데 forward pass가 '
   'relaxation보다 크기에 따라 느리게 커지기 때문이고, 그동안 node 우위는 1.5배에서 3.2배로 오르며 wall-clock이 그 뒤를 따른다(표 2). 21×60에서 학습 규칙은 most-fractional·maxSD branching과 같은 '
   '속도이고 dom/wdeg보다 느리다(0.83배, <i>p</i>=0.021). 24×70에서는 most-fractional(2.4배, <i>p</i>=4×10<sup>−4</sup>)과 maxSD(1.5배, <i>p</i>=0.004)보다 빠르고 dom/wdeg와 동률이다. 28×80에서는 전부보다 '
-  '3.1배, 2.4배, 2.0배 빠르고(<i>p</i>≤0.002), most-fractional 99개·uniform 91개 대비 100/100을 풀며, PAR-2가 가장 낮다. LP probing은 node당 relaxation을 자유 변수당 하나씩 13~18 ms 지불하여 더 작은 '
+  '3.1배, 2.4배, 2.0배 빠르고(<i>p</i>≤0.002), most-fractional 99개·uniform 91개 대비 100/100을 풀며, PAR-2가 가장 낮다. LP probing은 node당 relaxation을 자유 변수당 한두 번씩 13~18 ms 지불하여 더 작은 '
   'tree에도 세 크기에서 학습 규칙보다 5~8배 느리고, 28×80에서 instance 22개를 풀지 못한다(PAR-2 820 대 75 s). 역시 probing하는 impact-based search는 21×60에서 7배, 24×70에서 19배 느리면서 node를 '
   '6~9배 쓰고(짝 중앙값), 28×80에서는 49/100을 푼다(PAR-2 1,428 s).', body_s)
 P('작은 두 크기(10×25, 18×50; 30개, tree 14~120 node)에서는 모든 규칙이 수백분의 1초 안에 있다. 학습 규칙은 10×25에서 가장 느린데, 14-node tree는 forward pass 14번을 상각할 수 없기 때문이다. 이 '
@@ -420,7 +420,7 @@ TT('rq3_variants', ['변형', 'node (21×60)', '비율', 'node (24×70)', '비�
    '명시하지 않는 한 동결된 기준 trunk를 공유한다.', font=6.4)
 H3('각 단계는 필요한가, 레시피의 어느 부분이 중요한가?')
 P('표 5는 나머지를 고정한 채 각 단계의 학습을 바꾼다. Stage 1 레시피는 tree를 바꾸기는 한다 — 21×60에서 최대 1.5배, 28×80에서 약 ±25% — 그러나 값 정확도가 예측하는 방향으로는 아니고, 전체 규칙에 '
-  '근접할 만큼도 아니다. Stage 1에서는 레시피의 어느 것도 값 정확도를 움직이지 않는다. 라벨 형태(심어진 0/1 해 대 soft marginal), 학습 seed, 학습 상태 수(10,000 대 '
+  '근접할 만큼도 아니다. Stage 1에서는 레시피의 어느 것도 값 정확도를 움직이지 않는다. 라벨 형태(살아남은 해 집합에서 균등하게 뽑은 0/1 해 대 soft marginal), 학습 seed, 학습 상태 수(10,000 대 '
   '2,771)는 FORCED 변수의 테스트 정확도를 기껏 0.2 point 바꾼다(상한 83.3% 대비 79.0~79.2%). 같은 상태로 학습한 NSNet architecture(Li and Si, 2022)의 network는 80.4%에 이르고, 10×25 대신 21×60 '
   '상태로 학습하면(M1) 21×60 상태의 정확도가 2.4 point 오른다. tree는 다른 이야기를 한다. 기준 레시피의 학습 seed 둘은 21×60에서 기준의 628 대비 553과 562 node를 쓰므로 Stage 1 규칙에는 약 ±10%의 '
   'seed 분산이 있고, 어떤 라벨·architecture 선택도 올바른 방향으로 그것을 넘지 못한다. 값 정확도가 <b>더 높은</b> 두 network인 M1과 NSNet architecture가 <b>가장 큰</b> tree를 쓴다: 21×60에서 912와 '
@@ -458,7 +458,7 @@ TT('rq4_e2e', ['방법', '해결', '초 중앙값', 'PAR-2 s'], [5.2*cm, 2.0*cm,
    '엔진 간 비교 불가라 생략한다.', font=7.2)
 H3('End-to-end')
 P('표 7은 학습 탐색을 기본 설정의 complete solver(thread 하나의 Gurobi, Gurobi Optimization, 2024; worker 하나의 CP-SAT, Perron and Didier, 2023; presolve·cut·heuristic·conflict '
-  'analysis·RPB를 갖춘 SCIP)와 bounded enumeration을 갖춘 lattice reduction(BKZ block 40, 열 순열 30개, 300 s 캡의 fpylll enumeration, FPLLL team, 2023) 옆에 같은 instance와 예산으로 놓는다. '
+  'analysis·RPB를 갖춘 SCIP)와 bounded enumeration을 갖춘 lattice reduction(열 순열 30개에서 BKZ block 40을 시도하고, 모두 해를 못 내면 순열하지 않은 basis에서 300 s 캡의 fpylll enumeration, FPLLL team, 2023) 옆에 같은 instance와 예산으로 놓는다. '
   '모든 방법이 모든 instance를 푼다. Gurobi가 모든 크기에서 가장 빠르고(<i>n</i>=60, 70, 80에서 중앙 0.05, 0.31, 6.6 s) CP-SAT가 그 다음이다(0.04, 0.36, 12.2 s; 28×80에서 꼬리가 무겁다). 기본 설정 '
   'SCIP는 24×70에서 학습 탐색과 동률(2.33 대 2.39 s)이고 28×80에서 2.8배 빠르다(16.5 대 46.6 s). 두 MIP solver 사이의 2.5~8배 격차는 우리 설정 탓이 아니다. 둘 다 thread 하나에서 기본 설정으로 돌며, '
   '차이는 탐색이 빨리 닫히는 instance에서 효과를 보는 LP 엔진과 탐색 구현에서 온다(SCIP 자체 통계에서 presolve와 primal heuristic은 이 instance에서 아무것도 찾지 못한다). 표 6의 plug-in 비교는 '
@@ -505,12 +505,12 @@ P('모든 규칙은 알고리즘 1을 공유하고 5단계만 다르며, 각 규
   'argmax<sub><i>j</i></sub> |<i>x</i><sup>LP</sup><sub><i>j</i></sub>−1/2|와 argmin<sub><i>j</i></sub> |<i>x</i><sup>LP</sup><sub><i>j</i></sub>−1/2|로 분기하고 반올림 값을 먼저 시도한다. <i>maxSD</i>: 자유 변수 '
   '<i>r<sub>i</sub></i>개와 우변 <i>b</i>′<sub><i>i</i></sub>를 가진 0/1 등식 행에서 <i>x<sub>j</sub></i>=1의 solution density는 그 행의 모든 변수에 대해 <i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>, <i>x<sub>j</sub></i>=0은 '
   '1−<i>b</i>′<sub><i>i</i></sub>/<i>r<sub>i</sub></i>다; 규칙은 모든 행과 변수에 걸쳐 밀도가 최대인 변수–값 쌍을 취하고, 동률은 그 변수를 포함하는 행들의 밀도 합으로 깬다. <i>dom/wdeg</i>: 모든 자유 변수의 '
-  'domain 크기가 2이므로 규칙은 conflict 가중 차수의 최대로 환원된다; 원래 행마다 가중치(초기 0)가 있어 2~3단계의 bound check나 propagation이 그 행 때문에 node를 버릴 때마다 1씩 늘고, 변수의 점수는 '
+  'domain 크기가 2이므로 규칙은 conflict 가중 차수의 최대로 환원된다; 원래 행마다 가중치(초기 0)가 있다; 2단계의 bound check가 node를 버리면 위반한 행이, 3단계 propagation이 모순에 이르면 그 node에서 전파 중이던 행(<i>b</i>′<sub><i>i</i></sub>=0 또는 <i>b</i>′<sub><i>i</i></sub>=<i>r<sub>i</sub></i>) 전부가 1씩 늘고, relaxation infeasible은 아무것도 늘리지 않으며, 변수의 점수는 '
   '그 변수가 나타나는 행들의 (1+가중치) 합이며 반올림 LP 값을 먼저 시도한다. <i>impact</i>: node에서 모든 자유 변수와 두 값에 대해 값을 고정하고 propagation을 돌린다; 쌍의 impact는 1 더하기 '
   'propagation이 고정하는 변수 수이고, 모순인 쌍은 반증된 것으로 기록해(LP probing처럼) 반대 값을 고정하며, 규칙은 impact 합이 최대인 변수로 분기하고 impact가 작은 값을 먼저 시도한다. <i>LP probing</i>: '
-  '모든 자유 변수와 두 값에 대해 그 값을 고정한 relaxation을 다시 풀고, relaxation이 infeasible한 값은 반증해 반대 값을 고정하며, 반증이 없으면 most-integral 선택으로 돌아간다. <i>uniform</i>: 자유 변수와 '
+  '모든 자유 변수에 대해 <i>x<sub>j</sub></i>=0으로, 그것이 feasible하면 <i>x<sub>j</sub></i>=1로도 고정한 relaxation을 다시 풀고, relaxation이 infeasible한 값은 반증해 반대 값을 고정하며, 반증이 없으면 most-integral 선택으로 돌아간다. <i>uniform</i>: 자유 변수와 '
   '값을 균등하게 뽑는다. <i>oracle</i>: 모든 node에서 CP-SAT로 <i>S</i>(<i>F</i>,<b>v</b>)를 열거하고 정확한 marginal에 규칙 (5)를 적용한다. <i>BP</i>: 정확한 cardinality-factor message를 prefix–suffix '
-  'convolution으로 계산하는 damped sum-product(damping 0.9, 허용오차 10<sup>−5</sup>, 최대 300회)이며 추정치에 규칙 (5)를 적용한다.', body_s)
+  'convolution으로 계산하는 node마다의 damped sum-product(damping 0.9, 허용오차 10<sup>−4</sup>, 최대 100회)이며 추정치에 규칙 (5)를 적용한다; 5.2절 local search의 초기 배정에 쓰는 root 추정 1회만 허용오차 10<sup>−5</sup>, 최대 300회다.', body_s)
 H1('부록 D. 타이밍 복제')
 TT('seeds', ['크기', 'arm', 'seed 0', 'seed 1', 'seed 2'], [1.8*cm, 2.2*cm, 3.0*cm, 3.0*cm, 3.0*cm],
    '표 A3. 평가 seed 셋에 걸친 학습 arm의 타이밍 복제(seed 0이 본문 표에 보고한 것): 해결 instance 수와 wall-clock 중앙값. 탐색은 relaxation vertex가 주어지면 결정적이므로 node 수는 '
@@ -518,8 +518,8 @@ TT('seeds', ['크기', 'arm', 'seed 0', 'seed 1', 'seed 2'], [1.8*cm, 2.2*cm, 3.
 P('node 수는 seed 불변이다; 표 A3은 학습 arm의 wall-clock을 평가 seed 두 개로 더 복제한다. 작은 두 크기의 seed 0 run은 더 가벼운 동시 부하에서 돈 seed 1, 2보다 20~30% 느리며, 본문의 비율은 전부 '
   'seed 0을 쓰므로 학습 arm에 보수적이다. 28×80에서 세 seed는 1% 안에서 일치한다.', body_s)
 
-H1('데이터와 코드 공개')
-P('instance 생성기, 학습·평가 코드, 학습된 network, 모든 표의 instance별 기록은 출판 시 공개 저장소에 공개한다.', body_s)
+H1('데이터 이용')
+P('instance, 학습된 network, 모든 표의 instance별 기록은 합리적인 요청이 있으면 교신저자를 통해 제공한다.', body_s)
 H1('참고문헌')
 for r in sorted([
  'Hottung, A., Tanaka, S., and Tierney, K. (2020). Deep learning assisted heuristic tree search for the container pre-marshalling problem. <i>Computers & Operations Research</i>, 113:104781.',
