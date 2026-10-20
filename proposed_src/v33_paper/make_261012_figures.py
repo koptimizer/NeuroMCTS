@@ -138,7 +138,7 @@ ax.plot(ds, [100 * B[str(d)]['ceil'] for d in ds], color='k', ls='--', lw=1.0, l
 ax.plot(ds, [100 * B[str(d)]['model'] for d in ds], color=C['model'], marker='o', ms=2.5, label='Stage 1 network')
 ax.plot(ds, [100 * B[str(d)]['lp'] for d in ds], color=C['lp'], marker='s', ms=2.5, label='LP rounding')
 ax.set_xlabel('depth of the in-tree state'); ax.set_ylabel('accuracy on free variables (%)'); ax.legend(frameon=False, fontsize=6); ax.tick_params(labelsize=6.5)
-sub(ax, 'held-out $10\\times25$ in-tree states, $p=0.3$', dy=-0.22)
+sub(ax, 'held-out $10\\times25$ in-tree states', dy=-0.22)
 save(fig, 'prediction')
 
 # ---------------- reduction identity + FORCED/FREE partition (p=0.3 numbers) ----------------
@@ -150,6 +150,6 @@ box(ax, 3.35, 1.35, 3.4, 1.9, 'node = reduced instance\n$A_K\\, y = b - A_F v$, 
 arrow(ax, 6.75, 2.3, 7.35, 2.3)
 box(ax, 7.35, 2.35, 2.5, 0.9, 'FORCED: $p_j \\in \\{0, 1\\}$\nwrong branch empties\nthe subtree', fc='#fde2e2')
 box(ax, 7.35, 1.35, 2.5, 0.9, 'FREE: $0 < p_j < 1$\neither branch still\nreaches a solution', fc='#e3f2e1')
-ax.text(0.15, 0.6, 'Only errors on FORCED variables cost a backtrack. Their share is 3% at the root, 41% at depth 5 and 73% at depth 8 ($10\\times25$ in-tree states, $p=0.3$),\n'
+ax.text(0.15, 0.6, 'Only errors on FORCED variables cost a backtrack. Their share is 3% at the root, 41% at depth 5 and 73% at depth 8 ($10\\times25$ in-tree states),\n'
                    'so the network is trained on reduced instances (in-tree states); labels are exact because $\\mathcal{S}$ is enumerated.', fontsize=6.4, va='center', color='#333')
 save(fig, 'reduction')
